@@ -39,7 +39,7 @@
         "chart.js": "^4.5.1",
         "country-flag-emoji": "^1.0.3",
         "date-fns": "^3.6.0",
-        "driver.js": "^1.9.0",
+        "driver.js": "^1.10.1",
         "floating-vue": "^5.4.0",
         "laravel-vue-i18n": "^2.9.0",
         "pluralize": "^8.0.0",
