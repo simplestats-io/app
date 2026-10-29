@@ -2,6 +2,24 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.5.2 - 2026-10-29
+
+### Security
+
+- Updated `symfony/mime` to 7.4.22 for [CVE-2026-45070](https://symfony.com/cve-2026-45070) (email header injection through MIME parameter names). Thanks @edgrosvenor!
+- Updated the `qs` build dependency to 6.17.1 for [GHSA-6pq8-jhm2-2vcw](https://github.com/advisories/GHSA-6pq8-jhm2-2vcw). Thanks @edgrosvenor!
+
+### Fixed
+
+- Dropdown lists with long select options can now grow taller instead of cutting the options off.
+
+### What's Changed
+
+* Update qs to fix GHSA-6pq8-jhm2-2vcw by @edgrosvenor in https://github.com/simplestats-io/app/pull/397
+* Update symfony/mime to fix CVE-2026-45070 by @edgrosvenor in https://github.com/simplestats-io/app/pull/396
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.5.1...v6.5.2
+
 ## v6.5.1 - 2026-10-27
 
 ### Changed
