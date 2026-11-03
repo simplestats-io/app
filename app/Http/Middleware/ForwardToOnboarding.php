@@ -19,6 +19,12 @@ class ForwardToOnboarding
     {
         $currentTeam = $request->user()?->currentTeam;
 
+        // Members limited to selected projects can't create projects, so the
+        // project setup would be a dead end once all their projects are gone.
+        if ($currentTeam && $request->user()->hasRestrictedProjectAccess($currentTeam)) {
+            return $next($request);
+        }
+
         if (Str::of($request->getRequestUri())->contains(RouteServiceProvider::HOME)) {
             // we use the currency as the indicator that team onboarding is not finished
             if (! $currentTeam->currency) {

@@ -2,7 +2,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Http\Controllers\TeamInvitationController;
 use App\Models\Team;
+use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Rules\SignedUrl;
 use Illuminate\Http\Request;
@@ -10,9 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-use Laravel\Jetstream\Http\Controllers\TeamInvitationController;
 use Laravel\Jetstream\Jetstream;
-use Laravel\Jetstream\TeamInvitation;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -93,7 +93,7 @@ class CreateNewUser implements CreatesNewUsers
     protected function acceptTeamInvitation(Request $request, TeamInvitation $invitation, User $user): void
     {
         $teamInvitation = resolve(TeamInvitationController::class);
-        $teamInvitation->accept($request, $invitation->id);
+        $teamInvitation->accept($request, $invitation);
     }
 
     /**

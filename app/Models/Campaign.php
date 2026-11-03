@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasProjectAccessScope;
 use App\Concerns\HasPublicUuid;
 use App\Concerns\HasTeamScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Campaign extends Model
 {
     use HasFactory;
+    use HasProjectAccessScope;
     use HasPublicUuid;
     use HasTeamScope;
 

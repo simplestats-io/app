@@ -16,7 +16,18 @@ class Membership extends JetstreamMembership
     protected $hidden = [
         'user_id',
         'team_id',
+        'project_ids',
         'created_at',
         'updated_at',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'project_ids' => 'array',
+        ];
+    }
 }

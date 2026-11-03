@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasProjectAccessScope;
 use App\Concerns\HasProjectScope;
 use App\Concerns\HasTeamScope;
 use App\Enums\StatsRangeType;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
 abstract class BaseStat extends Model
 {
     use HasFactory;
+    use HasProjectAccessScope;
     use HasProjectScope;
     use HasTeamScope;
 

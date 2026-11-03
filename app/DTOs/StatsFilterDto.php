@@ -154,14 +154,25 @@ class StatsFilterDto
     {
         $dimensions = [...array_keys(self::FILTER_DIMENSION_COLUMNS), ...array_keys(self::FILTER_SPECIAL_KEYS)];
 
-        return md5(json_encode([
+        $hashParts = [
             AppHelper::getTeamId(),
             $this->projectId,
             $this->rangeType,
             ...array_map(fn (string $property) => $this->$property, $dimensions),
             $this->cohortStart?->format('Y-m-d H:i:s'),
             $this->cohortEnd?->format('Y-m-d H:i:s'),
-        ]));
+        ];
+
+        // A restricted member's "all" covers fewer projects than the team-wide
+        // "all", and a project outside their access resolves to no stats, so
+        // neither may share a cache entry. A project they can access returns the
+        // same result for everyone and keeps the shared entry.
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
+        if ($accessibleProjectIds !== null && ! in_array($this->projectId, $accessibleProjectIds, true)) {
+            $hashParts[] = $accessibleProjectIds;
+        }
+
+        return md5(json_encode($hashParts));
     }
 
     /**

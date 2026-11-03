@@ -20,6 +20,8 @@ class CampaignPolicy
     public function view(User $user, Campaign $campaign): bool
     {
         return $user->hasTeamPermission($campaign->team, 'action:read')
+            && $campaign->project !== null
+            && $user->canAccessProject($campaign->project)
             && $campaign->project->hasUsages([Project::USAGE_PAYMENTS]);
     }
 
@@ -31,6 +33,8 @@ class CampaignPolicy
 
     public function update(User $user, Campaign $campaign): bool
     {
-        return $user->hasTeamPermission($campaign->team, 'action:update');
+        return $user->hasTeamPermission($campaign->team, 'action:update')
+            && $campaign->project !== null
+            && $user->canAccessProject($campaign->project);
     }
 }

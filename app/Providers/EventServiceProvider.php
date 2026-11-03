@@ -6,6 +6,7 @@ use App\Listeners\CreateTeamMemberNotifications;
 use App\Listeners\DeleteTeamMemberNotifications;
 use App\Listeners\EmailVerificationListener;
 use App\Listeners\SetCurrentTeam;
+use App\Listeners\SyncTeamMemberNotifications;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -17,6 +18,7 @@ use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
 use Laravel\Jetstream\Events\TeamMemberAdded;
 use Laravel\Jetstream\Events\TeamMemberRemoved;
+use Laravel\Jetstream\Events\TeamMemberUpdated;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -38,6 +40,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         TeamMemberRemoved::class => [
             DeleteTeamMemberNotifications::class,
+        ],
+        TeamMemberUpdated::class => [
+            SyncTeamMemberNotifications::class,
         ],
     ];
 

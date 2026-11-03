@@ -8,6 +8,7 @@ use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Rules\File;
 
 class DataImportRequest extends FormRequest
@@ -37,6 +38,8 @@ class DataImportRequest extends FormRequest
      */
     public function rules(): array
     {
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
+
         return [
             'project_id' => [
                 'required',
@@ -45,7 +48,7 @@ class DataImportRequest extends FormRequest
                     $query->where([
                         'team_id' => $this->user()->current_team_id,
                     ]);
-                }),
+                })->when($accessibleProjectIds !== null, fn (Exists $rule): Exists => $rule->whereIn('id', $accessibleProjectIds)),
             ],
             'type' => [
                 'required',

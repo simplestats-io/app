@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\DataProviders\TeamShowDataProvider;
 use App\Models\Team;
-use App\Services\Ai\TeamAiConfig;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -24,33 +24,11 @@ class TeamController extends Controller
 {
     use RedirectsActions;
 
-    public function show(Request $request, Team $team): Response
+    public function show(Request $request, Team $team, TeamShowDataProvider $dataProvider): Response
     {
         Gate::authorize('view', $team);
 
-        return Jetstream::inertia()->render($request, 'Teams/Show', [
-            'team' => $team->load('owner', 'users', 'teamInvitations'),
-            'availableRoles' => array_values(Jetstream::$roles),
-            'availablePermissions' => Jetstream::$permissions,
-            'defaultPermissions' => Jetstream::$defaultPermissions,
-            'permissions' => [
-                'canAddTeamMembers' => Gate::check('addTeamMember', $team),
-                'canDeleteTeam' => Gate::check('delete', $team),
-                'canRemoveTeamMembers' => Gate::check('removeTeamMember', $team),
-                'canUpdateTeam' => Gate::check('update', $team),
-                'canUpdateTeamMembers' => Gate::check('updateTeamMember', $team),
-            ],
-            'projectsEventUsage' => $team->projects()
-                ->select('id', 'uuid', 'name', 'domain', 'events_count_monthly')
-                ->orderByDesc('events_count_monthly')
-                ->get(),
-            'aiSettings' => [
-                'provider' => $team->ai_provider,
-                'model' => $team->ai_model,
-                'keySet' => $team->ai_api_key !== null,
-                'availableProviders' => TeamAiConfig::allowedProviders(),
-            ],
-        ]);
+        return Jetstream::inertia()->render($request, 'Teams/Show', $dataProvider->toArray());
     }
 
     public function update(Request $request, Team $team): RedirectResponse

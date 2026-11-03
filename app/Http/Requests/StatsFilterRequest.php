@@ -62,6 +62,18 @@ class StatsFilterRequest extends FormRequest
                 'project_id' => $project->id,
             ]);
         }
+
+        // Members limited to selected projects have no "All" view (see
+        // AbstractStatsDataProvider::loadTeamStats()), so default to their first project.
+        if (empty($this->input('project_id')) && $this->user()->hasRestrictedProjectAccess($this->user()->currentTeam)) {
+            $firstProjectId = $projects->orderBy('id')->value('id');
+
+            if ($firstProjectId) {
+                $this->merge([
+                    'project_id' => $firstProjectId,
+                ]);
+            }
+        }
     }
 
     /**

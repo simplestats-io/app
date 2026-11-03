@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\HasPublicUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
@@ -18,12 +19,16 @@ class Team extends JetstreamTeam
 
     /**
      * The team is serialized to the frontend on the team settings page; the
-     * decrypted BYOK key must never leave the backend.
+     * decrypted BYOK key must never leave the backend. The event counters cover
+     * every project, so the team page passes them only to members who may see
+     * all projects (Jetstream shares the current team with every member).
      *
      * @var list<string>
      */
     protected $hidden = [
         'ai_api_key',
+        'events_count_monthly',
+        'events_count_overall',
         'id',
         'user_id',
     ];
@@ -52,6 +57,20 @@ class Team extends JetstreamTeam
     public function billingOwner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id')->withTrashed();
+    }
+
+    /**
+     * Mirrors the Jetstream relation, plus the per-member project restriction.
+     *
+     * @return BelongsToMany<User, $this, Membership, 'membership'>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'team_user')
+            ->using(Membership::class)
+            ->withPivot('role', 'project_ids')
+            ->withTimestamps()
+            ->as('membership');
     }
 
     /**

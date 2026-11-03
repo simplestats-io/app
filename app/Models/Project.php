@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasApiPlainTokens;
+use App\Concerns\HasProjectAccessScope;
 use App\Concerns\HasPublicUuid;
 use App\Concerns\HasTeamScope;
 use App\Contracts\NotifiableToUser;
@@ -27,6 +28,7 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
     use Authenticatable;
     use HasApiPlainTokens;
     use HasFactory;
+    use HasProjectAccessScope;
     use HasPublicUuid;
     use HasTeamScope;
 
@@ -60,6 +62,11 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function projectAccessColumn(): string
+    {
+        return 'id';
     }
 
     /**

@@ -12,6 +12,10 @@ defineProps({
     availableRoles: Array,
     permissions: Object,
     aiSettings: Object,
+    eventsCountMonthly: Number,
+    availableProjects: Array,
+    memberProjects: Object,
+    invitationProjects: Object,
 });
 </script>
 
@@ -27,9 +31,10 @@ defineProps({
             <UpdateTeamNameForm id="team-details" :team="team" :permissions="permissions" />
 
             <TeamEventUsage
+                v-if="permissions.canViewEventUsage"
                 id="event-usage"
                 class="mt-10 sm:mt-0"
-                :team="team"
+                :events-count-monthly="eventsCountMonthly"
             />
 
             <template v-if="$page.props.currentPlanOptions?.AiAssistant">
@@ -50,6 +55,9 @@ defineProps({
                 :team="team"
                 :available-roles="availableRoles"
                 :user-permissions="permissions"
+                :available-projects="availableProjects"
+                :member-projects="memberProjects"
+                :invitation-projects="invitationProjects"
             />
 
             <template v-if="permissions.canDeleteTeam && ! team.personal_team">

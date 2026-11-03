@@ -23,6 +23,7 @@ use App\Http\Controllers\SetupTeamController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TeamAiSettingsController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\TimezoneController;
 use App\Http\Controllers\TrackingController;
@@ -126,6 +127,8 @@ Route::middleware([
     Route::put('/teams/{team}/members/{user}', [TeamMemberController::class, 'update'])->name('team-members.update');
     Route::delete('/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('team-members.destroy');
     Route::put('/teams/{team}/ai-settings', [TeamAiSettingsController::class, 'update'])->name('teams.ai-settings.update');
+    // Overrides the Jetstream accept route so the invitation's project access is applied.
+    Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, 'accept'])->middleware(['signed'])->name('team-invitations.accept');
 
     Route::get('dashboard', [StatsController::class, 'index'])->name('dashboard');
     Route::get('dashboard/metric/{kpi}', [StatsController::class, 'metric'])->name('dashboard.metric');

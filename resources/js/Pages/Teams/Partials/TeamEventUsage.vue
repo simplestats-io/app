@@ -6,11 +6,11 @@ import {format} from 'date-fns';
 import ProjectFavicon from "@/Components/ProjectFavicon.vue";
 
 const props = defineProps({
-    team: Object,
+    eventsCountMonthly: Number,
 });
 
 const page = usePage();
-const used = props.team.events_count_monthly || 0;
+const used = props.eventsCountMonthly || 0;
 const total = page.props.currentPlanOptions?.Events || 0;
 const isUnlimited = total === -1;
 const projects = page.props.projectsEventUsage || [];

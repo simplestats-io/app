@@ -34,6 +34,17 @@ class StatsFilterConditionsBuilder
             $projectCondition .= " AND stats.project_id = {$filters->projectId} ";
         }
 
+        // Members limited to selected projects: "all" only spans their projects,
+        // and a project outside the selection yields nothing instead of its data.
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
+        if ($accessibleProjectIds !== null) {
+            if (empty($filters->projectId) && filled($accessibleProjectIds)) {
+                $projectCondition .= ' AND stats.project_id IN ('.implode(',', $accessibleProjectIds).') ';
+            } elseif (! in_array($filters->projectId, $accessibleProjectIds, true)) {
+                $projectCondition .= ' AND FALSE ';
+            }
+        }
+
         $conditions['teamCondition'] = $teamCondition;
         $conditions['projectCondition'] = $teamCondition.$projectCondition;
 
