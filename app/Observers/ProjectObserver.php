@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Actions\CreateUserNotification;
+use App\Models\Membership;
 use App\Models\Project;
+use App\Models\TeamInvitation;
 use App\Models\UserNotification;
 use App\ValueObjects\UserNotificationTypeObject;
 use Illuminate\Support\Arr;
@@ -55,6 +57,28 @@ class ProjectObserver
 
         $teamId = $project->team_id;
         $projectId = $project->id;
+
+        Membership::query()
+            ->select([
+                'id',
+                'project_ids',
+            ])
+            ->where('team_id', $teamId)
+            ->whereJsonContains('project_ids', $projectId)
+            ->each(fn (Membership $membership): bool => $membership->update([
+                'project_ids' => array_values(array_diff($membership->project_ids, [$projectId])),
+            ]));
+
+        TeamInvitation::query()
+            ->select([
+                'id',
+                'project_ids',
+            ])
+            ->where('team_id', $teamId)
+            ->whereJsonContains('project_ids', $projectId)
+            ->each(fn (TeamInvitation $invitation): bool => $invitation->update([
+                'project_ids' => array_values(array_diff($invitation->project_ids, [$projectId])),
+            ]));
 
         $project->team->allUsers()->each(function ($user) use ($teamId, $projectId): void {
             $settings = $user->settings;

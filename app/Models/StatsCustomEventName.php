@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasProjectAccessScope;
 use App\Concerns\HasTeamScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StatsCustomEventName extends Model
 {
     use HasFactory;
+    use HasProjectAccessScope;
     use HasTeamScope;
 
     protected $guarded = false;

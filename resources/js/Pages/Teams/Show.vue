@@ -12,6 +12,9 @@ defineProps({
     availableRoles: Array,
     permissions: Object,
     aiSettings: Object,
+    availableProjects: Array,
+    memberProjects: Object,
+    invitationProjects: Object,
 });
 </script>
 
@@ -50,6 +53,9 @@ defineProps({
                 :team="team"
                 :available-roles="availableRoles"
                 :user-permissions="permissions"
+                :available-projects="availableProjects"
+                :member-projects="memberProjects"
+                :invitation-projects="invitationProjects"
             />
 
             <template v-if="permissions.canDeleteTeam && ! team.personal_team">

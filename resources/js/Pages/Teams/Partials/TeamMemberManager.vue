@@ -17,12 +17,21 @@ import EyeIcon from "bootstrap-icons/icons/eye-fill.svg?component";
 import KeyIcon from "bootstrap-icons/icons/key-fill.svg?component";
 import PencilIcon from "bootstrap-icons/icons/pencil-fill.svg?component";
 import CheckCircleIcon from "bootstrap-icons/icons/check-circle.svg?component";
+import ProjectAccessField from '@/Pages/Teams/Partials/ProjectAccessField.vue';
 
 const props = defineProps({
     team: Object,
     availableRoles: Array,
     userPermissions: Object,
+    // Only filled for members who manage the team: [{uuid, name}]
+    availableProjects: {type: Array, default: () => []},
+    // {userUuid: [projectUuid] | null} and {invitationId: [projectUuid] | null}, null = all projects
+    memberProjects: {type: Object, default: () => ({})},
+    invitationProjects: {type: Object, default: () => ({})},
 });
+
+// Administrators always see every project, so only these roles can be limited.
+const restrictableRoles = ['editor', 'viewer'];
 
 const roleIcons = {
     'admin': KeyIcon,
@@ -35,10 +44,14 @@ const page = usePage();
 const addTeamMemberForm = useForm({
     email: '',
     role: null,
+    project_access: 'all',
+    projects: [],
 });
 
 const updateRoleForm = useForm({
     role: null,
+    project_access: 'all',
+    projects: [],
 });
 
 const leaveTeamForm = useForm({});
@@ -64,8 +77,13 @@ const cancelTeamInvitation = (invitation) => {
 };
 
 const manageRole = (teamMember) => {
+    const projectUuids = props.memberProjects[teamMember.uuid] ?? null;
+
     managingRoleFor.value = teamMember;
+    updateRoleForm.clearErrors();
     updateRoleForm.role = teamMember.membership.role;
+    updateRoleForm.project_access = projectUuids === null ? 'all' : 'selected';
+    updateRoleForm.projects = projectUuids ?? [];
     currentlyManagingRole.value = true;
 };
 
@@ -99,6 +117,23 @@ const removeTeamMember = () => {
 
 const displayableRole = (role) => {
     return props.availableRoles.find(r => r.key === role).name;
+};
+
+const canLimitProjects = (role) => restrictableRoles.includes(role) && props.availableProjects.length > 0;
+
+const projectAccessError = (form) => form.errors.projects ?? Object.entries(form.errors).find(([key]) => key.startsWith('projects.'))?.[1];
+
+// Names of the projects a limited member or invitee may access, null for all projects.
+const projectNames = (projectUuids) => {
+    if (! projectUuids) {
+        return null;
+    }
+
+    const names = props.availableProjects
+        .filter(project => projectUuids.includes(project.uuid))
+        .map(project => project.name);
+
+    return names.length > 0 ? names.join(', ') : 'No projects';
 };
 </script>
 
@@ -169,6 +204,16 @@ const displayableRole = (role) => {
                             </button>
                         </div>
                     </div>
+
+                    <!-- Project Access -->
+                    <ProjectAccessField
+                        v-if="canLimitProjects(addTeamMemberForm.role)"
+                        v-model:access="addTeamMemberForm.project_access"
+                        v-model:projects="addTeamMemberForm.projects"
+                        class="col-span-6 lg:col-span-4"
+                        :available-projects="availableProjects"
+                        :error="projectAccessError(addTeamMemberForm)"
+                    />
                 </template>
 
                 <template #actions>
@@ -201,7 +246,11 @@ const displayableRole = (role) => {
                     <div class="space-y-6">
                         <div v-for="invitation in team.team_invitations" :key="invitation.id" class="flex items-center justify-between">
                             <div class="text-gray-600 dark:text-dark-400">
-                                {{ invitation.email }}
+                                <div>{{ invitation.email }}</div>
+
+                                <div v-if="projectNames(invitationProjects[invitation.id])" class="text-xs text-gray-400">
+                                    {{ projectNames(invitationProjects[invitation.id]) }}
+                                </div>
                             </div>
 
                             <div class="flex items-center">
@@ -230,7 +279,12 @@ const displayableRole = (role) => {
                 </template>
 
                 <template #description>
-                    All of the people that are part of this team.
+                    <template v-if="userPermissions.canViewTeamMembers">
+                        All of the people that are part of this team.
+                    </template>
+                    <template v-else>
+                        Your membership of this team.
+                    </template>
                 </template>
 
                 <!-- Team Member List -->
@@ -240,7 +294,11 @@ const displayableRole = (role) => {
                             <div class="flex items-center">
                                 <img class="w-8 h-8 rounded-full object-cover" :src="user.profile_photo_url" :alt="user.name">
                                 <div class="ms-4 dark:text-white">
-                                    {{ user.name }}
+                                    <div>{{ user.name }}</div>
+
+                                    <div v-if="projectNames(memberProjects[user.uuid])" class="text-xs text-gray-400">
+                                        {{ projectNames(memberProjects[user.uuid]) }}
+                                    </div>
                                 </div>
                             </div>
 
@@ -285,7 +343,7 @@ const displayableRole = (role) => {
         <!-- Role Management Modal -->
         <DialogModal :show="currentlyManagingRole" @close="currentlyManagingRole = false">
             <template #title>
-                Manage Role
+                Manage Access
             </template>
 
             <template #content>
@@ -316,6 +374,18 @@ const displayableRole = (role) => {
                             </div>
                         </button>
                     </div>
+
+                    <InputError :message="updateRoleForm.errors.role" class="mt-2" />
+
+                    <!-- Project Access -->
+                    <ProjectAccessField
+                        v-if="canLimitProjects(updateRoleForm.role)"
+                        v-model:access="updateRoleForm.project_access"
+                        v-model:projects="updateRoleForm.projects"
+                        class="mt-6"
+                        :available-projects="availableProjects"
+                        :error="projectAccessError(updateRoleForm)"
+                    />
                 </div>
             </template>
 

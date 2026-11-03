@@ -12,6 +12,7 @@ use App\Models\StatsTrackCampaign;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -151,12 +152,14 @@ class AdSpendService
 
         $window = [$windowStart->format('Y-m-d H:i:s'), $windowEnd->format('Y-m-d H:i:s')];
         $teamId = AppHelper::getTeamId();
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
 
         $users = DB::table('stats_users as su')
             ->leftJoin('stats_payments as p', fn (JoinClause $join) => $join
                 ->on('p.stats_user_id', '=', 'su.id')
                 ->on('p.project_id', '=', 'su.project_id'))
             ->where('su.team_id', $teamId)
+            ->when($accessibleProjectIds !== null, fn (QueryBuilder $query): QueryBuilder => $query->whereIn('su.project_id', $accessibleProjectIds))
             ->where('su.registered', true)
             ->whereIn('su.stats_track_campaign_id', $utmIds)
             ->whereBetween('su.time', $window)
@@ -173,6 +176,7 @@ class AdSpendService
                 ->on('p.project_id', '=', 'sv.project_id')
                 ->whereNull('p.stats_user_id'))
             ->where('sv.team_id', $teamId)
+            ->when($accessibleProjectIds !== null, fn (QueryBuilder $query): QueryBuilder => $query->whereIn('sv.project_id', $accessibleProjectIds))
             ->whereIn('sv.stats_track_campaign_id', $utmIds)
             ->whereBetween('sv.time', $window)
             ->groupBy('sv.stats_track_campaign_id')

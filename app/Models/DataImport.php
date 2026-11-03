@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasProjectAccessScope;
 use App\Concerns\HasPublicUuid;
 use App\Concerns\HasTeamScope;
 use App\Enums\DataImportType;
@@ -15,6 +16,7 @@ use Junges\TrackableJobs\Models\TrackedJob;
 class DataImport extends Model
 {
     use HasFactory;
+    use HasProjectAccessScope;
     use HasPublicUuid;
     use HasTeamScope;
 

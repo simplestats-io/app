@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\HasPublicUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
@@ -52,6 +53,20 @@ class Team extends JetstreamTeam
     public function billingOwner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id')->withTrashed();
+    }
+
+    /**
+     * Mirrors the Jetstream relation, plus the per-member project restriction.
+     *
+     * @return BelongsToMany<User, $this, Membership, 'membership'>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'team_user')
+            ->using(Membership::class)
+            ->withPivot('role', 'project_ids')
+            ->withTimestamps()
+            ->as('membership');
     }
 
     /**

@@ -26,6 +26,8 @@ We collect this data in a GDPR-compliant way, aggregate it and make it filterabl
 
 You can invite co-workers to your **team** and assign roles, such as _Administrator_, _Editor_, _Viewer_ to them. Each team can have multiple **projects**. You can view and analyze each project separately – or get an aggregated overview at the team level that combines the stats of all your projects.
 
+Editors and viewers can also be limited to selected projects, for example to give a client access to the stats of their own project only. A limited member only sees those projects (one at a time, without the aggregated overview), only gets reports and alerts for them, and doesn't see the other team members. Administrators always see all projects.
+
 ## Server-Side vs Client-Side Tracking
 
 **Ad blockers** and other privacy tools have a significant impact on the effectiveness of client-side analytics. Estimates suggest that up to **30-50%** of tracking data can be **blocked** when using client-side analytics due to these tools.

@@ -20,8 +20,10 @@ class InviteTeamMember implements InvitesTeamMembers
 {
     /**
      * Invite a new team member to the given team.
+     *
+     * @param  array<int, int>|null  $projectIds  null grants access to all projects
      */
-    public function invite(User $user, Team $team, string $email, ?string $role = null): void
+    public function invite(User $user, Team $team, string $email, ?string $role = null, ?array $projectIds = null): void
     {
         Gate::forUser($user)->authorize('addTeamMember', $team);
 
@@ -32,6 +34,7 @@ class InviteTeamMember implements InvitesTeamMembers
         $invitation = $team->teamInvitations()->create([
             'email' => $email,
             'role' => $role,
+            'project_ids' => $role === 'admin' ? null : $projectIds,
         ]);
 
         Mail::to($email)->queue(new TeamInvitation($invitation));

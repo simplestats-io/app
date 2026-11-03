@@ -18,8 +18,10 @@ class AddTeamMember implements AddsTeamMembers
 {
     /**
      * Add a new team member to the given team.
+     *
+     * @param  array<int, int>|null  $projectIds  null grants access to all projects
      */
-    public function add(User $user, Team $team, string $email, ?string $role = null): void
+    public function add(User $user, Team $team, string $email, ?string $role = null, ?array $projectIds = null): void
     {
         Gate::forUser($user)->authorize('addTeamMember', $team);
 
@@ -29,9 +31,12 @@ class AddTeamMember implements AddsTeamMembers
 
         event(new AddingTeamMember($team, $newTeamMember));
 
-        $team->users()->attach(
-            $newTeamMember, ['role' => $role]
-        );
+        // Set together with the role, before TeamMemberAdded creates the member's
+        // notifications, so a limited member never receives other projects' reports.
+        $team->users()->attach($newTeamMember, [
+            'role' => $role,
+            'project_ids' => $role === 'admin' ? null : $projectIds,
+        ]);
 
         event(new TeamMemberAdded($team, $newTeamMember));
     }

@@ -40,6 +40,12 @@ class StatsAggregationsService
             return;
         }
 
+        // A restricted "all" would be stored as a team-wide row (project_id NULL),
+        // which StatsIncrementService keeps incrementing with every project's stats.
+        if (! $filters->projectId && AppHelper::accessibleProjectIds() !== null) {
+            return;
+        }
+
         $teamId = AppHelper::getTeamId();
         $filterHash = $filters->makeHash();
         $filterJson = json_encode($filters->toFilterArray());

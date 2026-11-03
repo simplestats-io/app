@@ -89,7 +89,14 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
         $teamStats = $user->currentTeam()->with('projects')->get()->first();
 
         // do this before prepend all filters...
-        $teamStats->totalProjectsCount = $teamStats->projects->count();
+        $projectIds = $teamStats->projects->modelKeys();
+        $teamStats->totalProjectsCount = count($projectIds);
+
+        // Members limited to selected projects only get per-project views: their
+        // "all" could not use the shared aggregation cache. Without any project
+        // left they keep the "All" entry, so the frontend still has a scope.
+        $perProjectOnly = $projectIds !== [] && $user->hasRestrictedProjectAccess($teamStats);
+        $firstProjectId = $projectIds === [] ? StatsFilterDto::TRACK_ALL : min($projectIds);
 
         // we need to do prepend before keyBy('id')
         $mergedUsageBits = $teamStats->projects->reduce(fn ($carry, $project): int|string => $carry | $project['usage'], 0);
@@ -97,7 +104,9 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
         // "All Projects" view only when every project has it, so KPIs are hidden across all
         // projects only if they are redundant for all of them.
         $mergedFlags = $teamStats->projects->reduce(fn ($carry, $project): int|string => $carry & $project['flags'], Project::getFlagBitsCount());
-        $teamStats->projects->prepend($this->statsDetailsService->getAllFilterFor('Projects', $mergedUsageBits, $mergedFlags));
+        if (! $perProjectOnly) {
+            $teamStats->projects->prepend($this->statsDetailsService->getAllFilterFor('Projects', $mergedUsageBits, $mergedFlags));
+        }
 
         // we can't just do: $teamStats->projects = $teamStats->projects->keyBy(...);
         // this would not update $teamStats cause of laravel intern relation management...
@@ -105,8 +114,8 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
         // frontend carries in filters.project_id.
         $teamStats->setRelation('projects', $teamStats->projects->keyBy('uuid'));
 
-        if ($filters->projectId !== StatsFilterDto::TRACK_ALL && ! $teamStats->projects->contains('id', $filters->projectId)) {
-            $filters->projectId = StatsFilterDto::TRACK_ALL;
+        if (! $teamStats->projects->contains('id', $filters->projectId)) {
+            $filters->projectId = $perProjectOnly ? $firstProjectId : StatsFilterDto::TRACK_ALL;
         }
 
         return $teamStats;

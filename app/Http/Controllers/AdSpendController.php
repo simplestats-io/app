@@ -24,6 +24,8 @@ class AdSpendController extends Controller
 
     public function destroy(AdSpend $adSpend): RedirectResponse
     {
+        $this->authorize('delete', $adSpend);
+
         $adSpend->delete();
 
         return back();

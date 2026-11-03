@@ -6,6 +6,7 @@ use App\Helpers\AppHelper;
 use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 class CampaignRequest extends FormRequest
 {
@@ -27,8 +28,16 @@ class CampaignRequest extends FormRequest
      */
     public function rules(): array
     {
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
+
         return [
-            'project_id' => ['required', 'integer', Rule::exists('projects', 'id')->where('team_id', AppHelper::getTeamId())],
+            'project_id' => [
+                'required',
+                'integer',
+                Rule::exists('projects', 'id')
+                    ->where('team_id', AppHelper::getTeamId())
+                    ->when($accessibleProjectIds !== null, fn (Exists $rule): Exists => $rule->whereIn('id', $accessibleProjectIds)),
+            ],
             'name' => ['required', 'string', 'max:255'],
         ];
     }

@@ -8,7 +8,9 @@ use App\Services\SubscriptionService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -77,6 +79,14 @@ abstract class UserBase extends Authenticatable implements MustVerifyEmail, Pass
         'inactive_since',
         'deleted_at',
     ];
+
+    /**
+     * Memo for accessibleProjectIds(): it backs a global scope that runs on
+     * every project-owned query, so the pivot lookup happens once per team.
+     *
+     * @var array<int, array<int, int>|null>
+     */
+    protected array $accessibleProjectIdsByTeam = [];
 
     // Archive into deleted_models only on the final forceDelete (the purge job),
     // not on the soft delete that opens the grace window.
@@ -239,6 +249,73 @@ abstract class UserBase extends Authenticatable implements MustVerifyEmail, Pass
     {
         $this->is_admin = 1;
         $this->save();
+    }
+
+    /**
+     * Mirrors the Jetstream relation, plus the per-member project restriction.
+     *
+     * @return BelongsToMany<Team, $this, Membership, 'membership'>
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_user')
+            ->using(Membership::class)
+            ->withPivot('role', 'project_ids')
+            ->withTimestamps()
+            ->as('membership');
+    }
+
+    /**
+     * The project ids this user may access in the given team, or null for all
+     * of them. The owner and administrators always see every project; editors
+     * and viewers can be limited to a selection by a team administrator.
+     *
+     * Takes any Model like Jetstream's team relations (Jetstream::teamModel()).
+     *
+     * @return array<int, int>|null
+     */
+    public function accessibleProjectIds(Model|int $team): ?array
+    {
+        $teamId = (int) ($team instanceof Model ? $team->getKey() : $team);
+
+        if (array_key_exists($teamId, $this->accessibleProjectIdsByTeam)) {
+            return $this->accessibleProjectIdsByTeam[$teamId];
+        }
+
+        if ((int) Team::query()->whereKey($teamId)->value('user_id') === $this->id) {
+            return $this->accessibleProjectIdsByTeam[$teamId] = null;
+        }
+
+        $membership = Membership::query()
+            ->select([
+                'role',
+                'project_ids',
+            ])
+            ->where('team_id', $teamId)
+            ->where('user_id', $this->id)
+            ->first();
+
+        if ($membership === null) {
+            return $this->accessibleProjectIdsByTeam[$teamId] = [];
+        }
+
+        if ($membership->role === 'admin' || $membership->project_ids === null) {
+            return $this->accessibleProjectIdsByTeam[$teamId] = null;
+        }
+
+        return $this->accessibleProjectIdsByTeam[$teamId] = array_map(intval(...), $membership->project_ids);
+    }
+
+    public function hasRestrictedProjectAccess(Model|int|null $team): bool
+    {
+        return $team !== null && $this->accessibleProjectIds($team) !== null;
+    }
+
+    public function canAccessProject(Project $project): bool
+    {
+        $projectIds = $this->accessibleProjectIds($project->team_id);
+
+        return $projectIds === null || in_array($project->id, $projectIds, true);
     }
 
     /**

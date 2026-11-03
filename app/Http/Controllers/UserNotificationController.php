@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateUserNotificationRequest;
 use App\Models\UserNotification;
 use App\Notifications\ProjectReportNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 use function Illuminate\Support\defer;
@@ -39,6 +40,8 @@ class UserNotificationController extends Controller
      */
     public function trigger(Request $request, UserNotification $notification)
     {
+        Gate::allowIf($notification->user()->is($request->user()));
+
         if ($notification->frequency === UserNotificationFrequency::DISABLED) {
             return back()->with('flash', [
                 'bannerStyle' => 'danger',

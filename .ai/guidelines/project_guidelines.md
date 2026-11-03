@@ -323,6 +323,18 @@ The dashboard displays these key performance indicators:
 - Team members have roles: Administrator, Editor, Viewer
 - Stats can be viewed per-project or aggregated at team level
 
+### Project Access (Members Limited to Selected Projects)
+
+An administrator can limit an Editor or Viewer to selected projects (typically a client of an agency team). The owner and Administrators are never limited.
+
+- **Storage:** `team_user.project_ids` (and `team_invitations.project_ids`, copied on accept): jsonb, `NULL` = all projects, an array of internal project ids = limited. `UserBase::accessibleProjectIds($team)` is the single source of truth (null = unrestricted, memoized per team on the user instance); `AppHelper::accessibleProjectIds()` resolves it for the authenticated user and current team. API/MCP auth is a `Project`, so it resolves to null there.
+- **Eloquent:** `HasProjectAccessScope` (global scope `project_access`) filters `Project` (by `id`) and the project-owned models (`BaseStat`, `Campaign`, `DataImport`, custom event/property names and values, by `project_id`). Any new model with a `project_id` that is read in the web app needs it too. **Never** put it on `StatsAggregation`: invalidation must keep deleting the team-wide `project_id IS NULL` rows when a limited editor touches a project.
+- **Raw SQL:** `StatsFilterConditionsBuilder` intersects `projectCondition` with the accessible ids (`IN (...)` for "all", `AND FALSE` for a foreign project). Raw stats queries that bypass the builder (e.g. `AdSpendService::cohortRevenueByUtm()`) must apply `AppHelper::accessibleProjectIds()` themselves.
+- **Cache:** a limited member's "all" is never stored (`storeAggregatedData()` returns early) and gets its own `makeHash()`. Otherwise `StatsIncrementService` would keep incrementing those `project_id IS NULL` rows with every project's stats. The dashboard therefore shows limited members per-project views only (no "All" entry, `loadTeamStats()` / `StatsFilterRequest`).
+- **Notifications:** report and alert recipients are the `user_notifications` rows, so `CreateUserNotification` skips projects the user cannot access, and `SyncTeamMemberNotifications` (on `TeamMemberUpdated`) adds/removes rows when access changes. Deleting a project prunes its id from all selections (`ProjectObserver::deleted`).
+- **Policies:** limited members cannot create projects, and `ProjectPolicy` / `CampaignPolicy` / `AdSpendPolicy` check `canAccessProject()`. The team page only shows a limited member themselves (no other members, no invitations).
+- Member management (`TeamMemberController`, `TeamMemberAccessRequest`, `UpdateTeamMember`) and invitation accept (`TeamInvitationController`, overriding the Jetstream route) resolve projects within the managed team via `withoutGlobalScopes()`, because it is not necessarily the admin's current team.
+
 ### The Team Owner Can Be Soft-Deleted (`billingOwner` vs `owner`)
 
 `app:check-inactive-users` **soft-deletes** inactive owners, and `app:purge-pending-deleted-users` only hard-deletes them (cascading into teams, projects and stats) **two months later**. Throughout that grace window the team, its projects and its API tokens keep working normally, but `Team::owner()` is a plain `belongsTo(User::class)` and `User` uses `SoftDeletes`, so **`$team->owner` is `null` while the account is fully alive**. Never assume a live team has a non-null `owner`.

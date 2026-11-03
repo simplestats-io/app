@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,28 @@ class AppHelper
         return Context::get('team_id')
             ?? auth()->user()?->team_id
             ?? auth()->user()?->current_team_id;
+    }
+
+    /**
+     * The project ids the authenticated user may access in the current team, or
+     * null when nothing is restricted. API and MCP requests authenticate as a
+     * Project (already limited to itself), console code without a user and
+     * unrestricted members all resolve to null.
+     *
+     * Resolved from auth instead of Context on purpose: route model binding runs
+     * before SetTeamContext, and console loops switch users via auth()->setUser().
+     *
+     * @return array<int, int>|null
+     */
+    public static function accessibleProjectIds(): ?array
+    {
+        $user = auth()->user();
+
+        if (! $user instanceof User || ! ($teamId = self::getTeamId())) {
+            return null;
+        }
+
+        return $user->accessibleProjectIds($teamId);
     }
 
     /**
