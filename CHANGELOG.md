@@ -2,6 +2,39 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.6.0 - 2026-11-03
+
+### Upgrade notes
+
+- Contains a migration (`project_ids` on `team_user` and `team_invitations`). It runs automatically on container start (Docker) or with `php artisan migrate --force`.
+
+### Added
+
+- Per-project access for team members: administrators can limit an Editor or Viewer to selected projects, both when inviting and when updating a member. Limited members only see their projects, get per-project dashboards, only receive reports and alerts for their projects and don't see the other team members. Thanks @jhhazelaar!
+
+### Security
+
+- Tightened authorization for ad spend changes and for manually triggering reports.
+
+### Changed
+
+- Pull requests now come with a template that asks for screenshots of UI changes.
+- Updated npm dependencies.
+
+### What's Changed
+
+* Bump the npm-minor-and-patch group with 3 updates by @dependabot[bot] in https://github.com/simplestats-io/app/pull/398
+* Bump follow-redirects from 1.16.1 to 1.16.2 by @dependabot[bot] in https://github.com/simplestats-io/app/pull/400
+* Bump glob and sucrase by @dependabot[bot] in https://github.com/simplestats-io/app/pull/401
+* Bump minimatch and sucrase by @dependabot[bot] in https://github.com/simplestats-io/app/pull/402
+* Add per-project access for editors and viewers by @jhhazelaar in https://github.com/simplestats-io/app/pull/399
+
+### New Contributors
+
+* @jhhazelaar made their first contribution in https://github.com/simplestats-io/app/pull/399
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.5.2...v6.6.0
+
 ## v6.5.2 - 2026-10-29
 
 ### Security
