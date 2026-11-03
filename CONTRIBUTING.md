@@ -41,6 +41,7 @@ CI runs on the self-hosted build (`composer.json`). Tests for SaaS-only features
 - Make sure `composer check` and `composer test` pass.
 - Follow the conventions of the surrounding code (naming, structure, comments only where they explain a non-obvious why).
 - Write a short description of what changed and why.
+- Add screenshots (or a short screen recording) for every change that is visible in the UI.
 
 ## The hosted version
 
