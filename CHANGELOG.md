@@ -2,6 +2,16 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.6.1 - 2026-11-03
+
+### Fixed
+
+- Dropdowns inside dialogs (e.g. "Manage Access") are no longer cut off.
+- Dropdowns open upwards when there is not enough room below them.
+- Team invitations that are limited to selected projects now name those projects in the invitation mail.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.6.0...v6.6.1
+
 ## v6.6.0 - 2026-11-03
 
 ### Upgrade notes
