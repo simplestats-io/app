@@ -144,7 +144,7 @@ class DatabaseSeeder extends Seeder
 
     protected function seedLocalLimitedTeamMember(): void
     {
-        $team = User::where('email', config('app.test.user')['email'])->firstOrFail()->currentTeam;
+        $team = Team::findOrFail(User::where('email', config('app.test.user')['email'])->firstOrFail()->current_team_id);
         $project = Project::query()->whereBelongsTo($team)->where('name', 'My great App')->firstOrFail();
 
         $member = User::factory()->create([
