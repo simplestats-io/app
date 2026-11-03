@@ -42,7 +42,9 @@ class StatsAggregationsService
 
         // A restricted "all" would be stored as a team-wide row (project_id NULL),
         // which StatsIncrementService keeps incrementing with every project's stats.
-        if (! $filters->projectId && AppHelper::accessibleProjectIds() !== null) {
+        // A project outside the access only yields empty rows.
+        $accessibleProjectIds = AppHelper::accessibleProjectIds();
+        if ($accessibleProjectIds !== null && ! in_array($filters->projectId, $accessibleProjectIds, true)) {
             return;
         }
 

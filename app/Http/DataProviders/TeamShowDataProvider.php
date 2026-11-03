@@ -29,14 +29,15 @@ class TeamShowDataProvider extends AbstractDataProvider
         $user = $this->request->user();
 
         // Members limited to selected projects are typically clients: they must
-        // not see who else is on the team, only themselves (to leave it).
-        $canViewTeamMembers = ! $user->hasRestrictedProjectAccess($team);
+        // not see who else is on the team, only themselves (to leave it), nor the
+        // event usage of the projects of other clients.
+        $canViewWholeTeam = ! $user->hasRestrictedProjectAccess($team);
         $canManageProjectAccess = Gate::check('addTeamMember', $team) || Gate::check('updateTeamMember', $team);
 
         $team->load([
             'owner',
-            'users' => fn (BelongsToMany $relation): BelongsToMany => $canViewTeamMembers ? $relation : $relation->whereKey($user->id),
-            'teamInvitations' => fn (HasMany $relation): HasMany => $canViewTeamMembers ? $relation : $relation->whereRaw('false'),
+            'users' => fn (BelongsToMany $relation): BelongsToMany => $canViewWholeTeam ? $relation : $relation->whereKey($user->id),
+            'teamInvitations' => fn (HasMany $relation): HasMany => $canViewWholeTeam ? $relation : $relation->whereRaw('false'),
         ]);
 
         return [
@@ -50,17 +51,19 @@ class TeamShowDataProvider extends AbstractDataProvider
                 'canRemoveTeamMembers' => Gate::check('removeTeamMember', $team),
                 'canUpdateTeam' => Gate::check('update', $team),
                 'canUpdateTeamMembers' => Gate::check('updateTeamMember', $team),
-                'canViewTeamMembers' => $canViewTeamMembers,
+                'canViewTeamMembers' => $canViewWholeTeam,
+                'canViewEventUsage' => $canViewWholeTeam,
             ],
             ...($canManageProjectAccess ? $this->projectAccess($team) : [
                 'availableProjects' => [],
                 'memberProjects' => (object) [],
                 'invitationProjects' => (object) [],
             ]),
-            'projectsEventUsage' => $team->projects()
+            'eventsCountMonthly' => $canViewWholeTeam ? $team->events_count_monthly : null,
+            'projectsEventUsage' => $canViewWholeTeam ? $team->projects()
                 ->select('id', 'uuid', 'name', 'domain', 'events_count_monthly')
                 ->orderByDesc('events_count_monthly')
-                ->get(),
+                ->get() : [],
             'aiSettings' => [
                 'provider' => $team->ai_provider,
                 'model' => $team->ai_model,

@@ -12,6 +12,7 @@ defineProps({
     availableRoles: Array,
     permissions: Object,
     aiSettings: Object,
+    eventsCountMonthly: Number,
     availableProjects: Array,
     memberProjects: Object,
     invitationProjects: Object,
@@ -30,9 +31,10 @@ defineProps({
             <UpdateTeamNameForm id="team-details" :team="team" :permissions="permissions" />
 
             <TeamEventUsage
+                v-if="permissions.canViewEventUsage"
                 id="event-usage"
                 class="mt-10 sm:mt-0"
-                :team="team"
+                :events-count-monthly="eventsCountMonthly"
             />
 
             <template v-if="$page.props.currentPlanOptions?.AiAssistant">

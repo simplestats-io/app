@@ -6,7 +6,6 @@ use App\Models\Project;
 use App\Models\Team;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -21,11 +20,15 @@ class TeamMemberAccessRequest extends FormRequest
     public const ACCESS_SELECTED = 'selected';
 
     /**
-     * Authorization stays in the actions (addTeamMember / updateTeamMember).
+     * The actions authorize again; checking here keeps validation (and its
+     * project lookup) from running for users who cannot manage the team.
      */
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user()?->can(
+            $this->isMethod('post') ? 'addTeamMember' : 'updateTeamMember',
+            $this->team(),
+        );
     }
 
     protected function prepareForValidation(): void
@@ -34,22 +37,6 @@ class TeamMemberAccessRequest extends FormRequest
         if ($this->isMethod('post')) {
             $this->errorBag = 'addTeamMember';
         }
-
-        $projectUuids = $this->collect('projects')
-            ->filter(fn (mixed $uuid): bool => is_string($uuid) && Str::isUuid($uuid))
-            ->values()
-            ->all();
-
-        // Resolved within the managed team, which is not necessarily the
-        // admin's current team that the global scopes would narrow to.
-        $this->merge([
-            'project_ids' => Project::query()
-                ->withoutGlobalScopes()
-                ->whereBelongsTo($this->team())
-                ->whereIn('uuid', $projectUuids)
-                ->pluck('id')
-                ->all(),
-        ]);
     }
 
     /**
@@ -70,11 +57,11 @@ class TeamMemberAccessRequest extends FormRequest
                 'array',
             ],
             'projects.*' => [
+                'bail',
                 'string',
+                'uuid',
                 Rule::exists('projects', 'uuid')->where('team_id', $this->team()->id),
             ],
-            'project_ids' => ['array'],
-            'project_ids.*' => ['integer'],
         ];
     }
 
@@ -85,6 +72,7 @@ class TeamMemberAccessRequest extends FormRequest
     {
         return [
             'projects.required' => 'Select at least one project.',
+            'projects.*.uuid' => 'One of the selected projects does not belong to this team.',
             'projects.*.exists' => 'One of the selected projects does not belong to this team.',
         ];
     }
@@ -101,7 +89,15 @@ class TeamMemberAccessRequest extends FormRequest
             return null;
         }
 
-        return array_map(intval(...), $this->validated('project_ids'));
+        // Resolved within the managed team, which is not necessarily the
+        // admin's current team that the global scopes would narrow to.
+        return Project::query()
+            ->withoutGlobalScopes()
+            ->whereBelongsTo($this->team())
+            ->whereIn('uuid', $this->validated('projects'))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
     }
 
     private function restrictsProjects(): bool

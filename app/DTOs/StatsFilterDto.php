@@ -164,10 +164,11 @@ class StatsFilterDto
         ];
 
         // A restricted member's "all" covers fewer projects than the team-wide
-        // "all", so it must never share a cache entry with it. Only appended when
-        // restricted, so every existing hash stays valid.
+        // "all", and a project outside their access resolves to no stats, so
+        // neither may share a cache entry. A project they can access returns the
+        // same result for everyone and keeps the shared entry.
         $accessibleProjectIds = AppHelper::accessibleProjectIds();
-        if ($accessibleProjectIds !== null) {
+        if ($accessibleProjectIds !== null && ! in_array($this->projectId, $accessibleProjectIds, true)) {
             $hashParts[] = $accessibleProjectIds;
         }
 

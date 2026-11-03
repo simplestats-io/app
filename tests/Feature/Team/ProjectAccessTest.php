@@ -2,6 +2,7 @@
 
 use App\Actions\CreateUserNotification;
 use App\Builder\StatsFilterConditionsBuilder;
+use App\Concerns\HasProjectAccessScope;
 use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangeType;
 use App\Mail\TeamInvitation as TeamInvitationMail;
@@ -15,10 +16,14 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Services\StatsAggregationsService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia;
+use Symfony\Component\Finder\SplFileInfo;
 
 beforeEach(function (): void {
     $this->owner = User::factory()->withPersonalTeam()->create();
@@ -179,8 +184,30 @@ it('only sees itself on the team page', function (): void {
             ->where('team.users.0.uuid', $this->member->uuid)
             ->has('team.team_invitations', 0)
             ->where('permissions.canViewTeamMembers', false)
-            ->has('projectsEventUsage', 1)
             ->has('availableProjects', 0));
+});
+
+it('never sees the event usage of the whole team', function (): void {
+    $this->team->update(['events_count_monthly' => 1234]);
+
+    $this->get(route('teams.show', $this->team))
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->where('permissions.canViewEventUsage', true)
+            ->where('eventsCountMonthly', 1234)
+            ->has('projectsEventUsage', 2));
+
+    projectAccessActAs($this->member);
+
+    $this->get(route('teams.show', $this->team))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->where('permissions.canViewEventUsage', false)
+            ->where('eventsCountMonthly', null)
+            ->has('projectsEventUsage', 0)
+            ->missing('team.events_count_monthly')
+            ->has('auth.user.current_team.name')
+            ->missing('auth.user.current_team.events_count_monthly')
+            ->missing('auth.user.current_team.events_count_overall'));
 });
 
 it('only lists the accessible projects to the AI assistant', function (): void {
@@ -231,6 +258,33 @@ it('never shares or stores the cached "all" aggregate of a restricted member', f
     expect(StatsAggregation::withoutGlobalScopes()->count())->toBe(0);
 });
 
+it('shares the cache entry of an accessible project with administrators', function (): void {
+    Context::add('team_id', $this->team->id);
+    $ownerHash = projectAccessFilter($this->projectA->id)->makeHash();
+
+    projectAccessActAs($this->member);
+    Context::add('team_id', $this->team->id);
+
+    expect(projectAccessFilter($this->projectA->id)->makeHash())->toBe($ownerHash);
+});
+
+it('never shares or stores the cache entry of a project outside the selection', function (): void {
+    Context::add('team_id', $this->team->id);
+    $ownerHash = projectAccessFilter($this->projectB->id)->makeHash();
+
+    projectAccessActAs($this->member);
+    Context::add('team_id', $this->team->id);
+
+    expect(projectAccessFilter($this->projectB->id)->makeHash())->not->toBe($ownerHash);
+
+    resolve(StatsAggregationsService::class)->storeAggregatedData(
+        collect([['date_clear' => now()->format('Y-m-d 00:00:00')]]),
+        projectAccessFilter($this->projectB->id),
+    );
+
+    expect(StatsAggregation::withoutGlobalScopes()->count())->toBe(0);
+});
+
 it('invites a member limited to selected projects', function (): void {
     Mail::fake();
 
@@ -270,6 +324,26 @@ it('rejects projects of another team', function (): void {
         'project_access' => 'selected',
         'projects' => [$foreignProject->uuid],
     ])->assertSessionHasErrorsIn('addTeamMember', 'projects.0');
+});
+
+it('forbids members who cannot manage the team to change project access', function (): void {
+    Mail::fake();
+    projectAccessActAs($this->member);
+
+    $this->post(route('team-members.store', $this->team), [
+        'email' => 'client@example.com',
+        'role' => 'viewer',
+        'project_access' => 'selected',
+        'projects' => [$this->projectB->uuid],
+    ])->assertForbidden();
+
+    $this->put(route('team-members.update', [$this->team, $this->member]), [
+        'role' => 'viewer',
+        'project_access' => 'all',
+    ])->assertForbidden();
+
+    expect(TeamInvitation::count())->toBe(0)
+        ->and($this->member->fresh()->accessibleProjectIds($this->team))->toBe([$this->projectA->id]);
 });
 
 it('applies the project selection of an accepted invitation', function (): void {
@@ -353,4 +427,21 @@ it('forbids triggering the report of another user', function (): void {
     projectAccessActAs($this->member);
 
     $this->post(route('notifications.trigger', $notification))->assertForbidden();
+});
+
+it('applies the project access scope to every model with a project', function (): void {
+    // Cache invalidation must keep reaching the team-wide rows (project_id NULL).
+    $exemptModels = [StatsAggregation::class];
+
+    $unscopedModels = collect(File::files(app_path('Models')))
+        ->map(fn (SplFileInfo $file): string => 'App\\Models\\'.$file->getFilenameWithoutExtension())
+        ->filter(fn (string $class): bool => rescue(fn (): bool => is_subclass_of($class, Model::class), rescue: false, report: false))
+        ->reject(fn (string $class): bool => (new ReflectionClass($class))->isAbstract())
+        ->filter(fn (string $class): bool => Schema::hasColumn((new $class)->getTable(), 'project_id'))
+        ->reject(fn (string $class): bool => in_array(HasProjectAccessScope::class, class_uses_recursive($class), true))
+        ->diff($exemptModels)
+        ->values()
+        ->all();
+
+    expect($unscopedModels)->toBe([]);
 });

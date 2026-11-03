@@ -19,12 +19,16 @@ class Team extends JetstreamTeam
 
     /**
      * The team is serialized to the frontend on the team settings page; the
-     * decrypted BYOK key must never leave the backend.
+     * decrypted BYOK key must never leave the backend. The event counters cover
+     * every project, so the team page passes them only to members who may see
+     * all projects (Jetstream shares the current team with every member).
      *
      * @var list<string>
      */
     protected $hidden = [
         'ai_api_key',
+        'events_count_monthly',
+        'events_count_overall',
         'id',
         'user_id',
     ];
