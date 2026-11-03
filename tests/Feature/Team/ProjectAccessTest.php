@@ -299,6 +299,24 @@ it('invites a member limited to selected projects', function (): void {
     Mail::assertQueued(TeamInvitationMail::class);
 });
 
+it('names the selected projects in the invitation mail', function (): void {
+    $limited = $this->team->teamInvitations()->create([
+        'email' => 'client@example.com',
+        'role' => 'viewer',
+        'project_ids' => [$this->projectB->id],
+    ]);
+    $unrestricted = $this->team->teamInvitations()->create([
+        'email' => 'colleague@example.com',
+        'role' => 'viewer',
+    ]);
+
+    expect((new TeamInvitationMail($limited))->render())
+        ->toContain('You will only have access to the project Client B.')
+        ->not->toContain('Client A')
+        ->and((new TeamInvitationMail($unrestricted))->render())
+        ->not->toContain('You will only have access');
+});
+
 it('requires at least one project for a limited member', function (): void {
     Mail::fake();
 

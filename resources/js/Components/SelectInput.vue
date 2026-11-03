@@ -4,6 +4,7 @@ import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui
 import SearchableSelectInput from '@/Components/SearchableSelectInput.vue'
 import ChevronUpDownIcon from 'bootstrap-icons/icons/chevron-expand.svg?component'
 import CheckIcon from 'bootstrap-icons/icons/check2.svg?component'
+import {useDropUp} from '@/Composables/useDropUp.js'
 
 const SEARCH_THRESHOLD = 15
 
@@ -29,6 +30,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const open = ref(false)
+const {container: dropdownContainer, dropUp} = useDropUp(open)
 const internalSelectedValues = ref([])
 const initialSelectedValues = ref([])
 
@@ -121,7 +123,7 @@ watch(open, (val) => {
         as="div"
         v-slot="{ open: isOpen }"
     >
-        <div class="relative">
+        <div ref="dropdownContainer" class="relative">
             <ListboxButton :class="['relative flex items-center gap-2 cursor-default rounded-md border bg-white dark:bg-dark-900 py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-dark-700 text-gray-900 dark:text-dark-200', props.class]">
                 <slot name="prefix" :option="selected" />
                 <span class="min-w-0 flex-1 truncate">
@@ -137,7 +139,7 @@ watch(open, (val) => {
                 </span>
             </ListboxButton>
 
-            <ListboxOptions :class="[normalizedOptions.length > 20 ? 'max-h-[min(30rem,70vh)]' : '', props.optionsClass]" class="absolute z-10 mt-1 w-full overflow-auto rounded-md bg-white dark:bg-dark-800 py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+            <ListboxOptions :class="[normalizedOptions.length > 20 ? 'max-h-[min(30rem,70vh)]' : '', props.optionsClass, dropUp ? 'bottom-full mb-1' : 'mt-1']" class="absolute z-10 w-full overflow-auto rounded-md bg-white dark:bg-dark-800 py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
                 <ListboxOption
                     v-for="option in normalizedOptions"
                     :key="option[trackBy]"

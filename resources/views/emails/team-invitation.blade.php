@@ -9,6 +9,12 @@ $teamOwner = $invitation->team->owner()->first()->name;
 'owner' => $teamOwner,
 ]) }}
 
+@if ($projectNames !== null)
+{{ trans_choice('You will only have access to the project :projects.|You will only have access to the projects :projects.', count($projectNames), [
+'projects' => implode(', ', $projectNames),
+]) }}
+@endif
+
 @if ($invitedUserAlreadyHasAccount)
 @component('mail::button', ['url' => $acceptUrl])
 {{ __('Join Team') }}

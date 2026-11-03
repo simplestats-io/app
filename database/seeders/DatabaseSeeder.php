@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
 
         if (app()->isLocal()) {
             $this->seedLocalDemoProject();
+            $this->seedLocalLimitedTeamMember();
         }
 
         // Seed all stats with the observer disabled: its per-row work (events
@@ -139,5 +140,22 @@ class DatabaseSeeder extends Seeder
                     'project_id' => $project->id,
                 ]);
             })->create();
+    }
+
+    protected function seedLocalLimitedTeamMember(): void
+    {
+        $team = User::where('email', config('app.test.user')['email'])->firstOrFail()->currentTeam;
+        $project = Project::query()->whereBelongsTo($team)->where('name', 'My great App')->firstOrFail();
+
+        $member = User::factory()->create([
+            'name' => 'Client Viewer',
+            'email' => 'client@simplestats.test',
+            'current_team_id' => $team->id,
+        ]);
+
+        $team->users()->attach($member, [
+            'role' => 'viewer',
+            'project_ids' => [$project->id],
+        ]);
     }
 }

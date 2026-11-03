@@ -3,6 +3,7 @@ import {computed, nextTick, ref, watch} from 'vue'
 import {Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions} from '@headlessui/vue'
 import ChevronUpDownIcon from 'bootstrap-icons/icons/chevron-expand.svg?component'
 import CheckIcon from 'bootstrap-icons/icons/check2.svg?component'
+import {useDropUp} from '@/Composables/useDropUp.js'
 import SearchIcon from 'bootstrap-icons/icons/search.svg?component'
 
 const props = defineProps({
@@ -21,6 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const open = ref(false)
+const {container: dropdownContainer, dropUp} = useDropUp(open)
 const query = ref('')
 const inputRef = ref(null)
 const internalSelectedValues = ref([])
@@ -119,7 +121,7 @@ watch(open, (val) => {
         as="div"
         v-slot="{ open: isOpen }"
     >
-        <div class="relative" @blur.capture="onBlurCapture">
+        <div ref="dropdownContainer" class="relative" @blur.capture="onBlurCapture">
             <!-- Headless UI hardcodes tabindex="-1" on the button because it expects the
                  input to be the trigger, but ours lives inside the panel. -->
             <ComboboxButton
@@ -141,7 +143,7 @@ watch(open, (val) => {
                 </span>
             </ComboboxButton>
 
-            <ComboboxOptions as="div" :class="[normalizedOptions.length > 20 ? 'max-h-[min(30rem,70vh)]' : '', props.optionsClass]" class="absolute z-10 mt-1 w-full overflow-auto rounded-md bg-white dark:bg-dark-800 shadow-lg ring-1 ring-black/5 focus:outline-none">
+            <ComboboxOptions as="div" :class="[normalizedOptions.length > 20 ? 'max-h-[min(30rem,70vh)]' : '', props.optionsClass, dropUp ? 'bottom-full mb-1' : 'mt-1']" class="absolute z-10 w-full overflow-auto rounded-md bg-white dark:bg-dark-800 shadow-lg ring-1 ring-black/5 focus:outline-none">
                 <!-- The panel swallows mousedown to keep the input focused, which would
                      also stop clicks from placing the caret inside the search field. -->
                 <div class="sticky top-0 z-10 flex items-center gap-2 border-b border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 px-3 py-2" @mousedown.stop>
