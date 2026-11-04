@@ -4,7 +4,26 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Root files only: docs/ and resources/markdown/ are served by the app and covered by tests.
+      - '*.md'
+      - 'LICENSE'
+      - '.ai/**'
+      - '.github/*.md'
+      - '.github/workflows/cla.yml'
+      - '.github/workflows/docker.yml'
+      - '.github/workflows/security-audit.yml'
+      - '.github/workflows/update-changelog.yml'
   pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '.ai/**'
+      - '.github/*.md'
+      - '.github/workflows/cla.yml'
+      - '.github/workflows/docker.yml'
+      - '.github/workflows/security-audit.yml'
+      - '.github/workflows/update-changelog.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
