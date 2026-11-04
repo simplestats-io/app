@@ -2,6 +2,29 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.7.0 - 2026-11-04
+
+### Upgrade notes
+
+- Contains a new migration (`teams.installation_reminder_sent_at`). It runs automatically when the `app` container starts, no manual steps needed.
+
+### Added
+
+- New users are guided to their first data: until a team has received its first event, the dashboard shows a setup window with the installation steps (including the API token) and checks for incoming data live. As soon as the first data arrives it switches to a success message with an optional dashboard tour.
+
+### Changed
+
+- The dashboard tour no longer starts automatically, it is offered after the first data arrived.
+- Removed the "Open Docs" banner, the setup window covers it.
+- The setup page now ends with "Go to dashboard".
+
+### Development
+
+- `composer test` and CI run the test suite in parallel.
+- Tests no longer send real HTTP requests: stray requests are blocked and the Paddle customer, pricing preview and self-tracking calls are stubbed.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.6.2...v6.7.0
+
 ## v6.6.2 - 2026-11-04
 
 ### Fixed
