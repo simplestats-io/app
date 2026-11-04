@@ -52,8 +52,8 @@ onMounted(() => {
 const baseRoute = props.showRetention ? 'retention' : 'dashboard';
 
 // Retention mode swaps the breakdown to the curated Signups + checkpoint columns.
-// Keyed on retention_cohorts (like the cohort grid above), so a project without
-// registration tracking degrades to the plain default breakdown.
+// Without retention_cohorts (no registration tracking) the whole page collapses to
+// an empty state, since the default charts would only duplicate the dashboard.
 const retentionBreakdown = props.showRetention && !! props.retention_cohorts;
 
 const currentProject = props.teamStats.projects[props.filters.project_id] ?? props.teamStats.projects[0];
@@ -110,6 +110,9 @@ const currentProject = props.teamStats.projects[props.filters.project_id] ?? pro
                             :filters="filters"
                         />
                     </div>
+                    <div v-else-if="showRetention" class="bg-white dark:bg-dark-800 border rounded-md p-8 text-center text-gray-500 dark:text-dark-400">
+                        This project does not track registrations, so there is nothing to show here.
+                    </div>
                     <StatsCharts
                         v-else
                         :filters="filters"
@@ -122,7 +125,7 @@ const currentProject = props.teamStats.projects[props.filters.project_id] ?? pro
                         :campaignSummary="campaign_summary"
                     />
                 </div>
-                <div class="space-y-3">
+                <div v-if="! showRetention || retention_cohorts" class="space-y-3">
                     <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">
                         Breakdown
                     </h2>
