@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.6.2 - 2026-11-04
+
+### Fixed
+
+- The Retention page now shows a clear notice for projects that do not track registrations, instead of repeating the dashboard charts and breakdown.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.6.1...v6.6.2
+
 ## v6.6.1 - 2026-11-03
 
 ### Fixed
