@@ -15,6 +15,9 @@ class PersonalAccessToken extends SanctumPersonalAccessToken
         $this->casts['token_plain'] = 'encrypted';
     }
 
+    /**
+     * @return Attribute<string, never>
+     */
     protected function tokenPlainPart(): Attribute
     {
         return Attribute::make(

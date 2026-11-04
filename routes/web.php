@@ -143,13 +143,13 @@ Route::middleware([
     Route::delete('campaigns/{campaign}/track-campaigns/{trackCampaign}', [CampaignController::class, 'unlinkTrackCampaign'])->name('campaigns.track-campaigns.unlink');
     Route::resource('ad-spends', AdSpendController::class)->only(['store', 'update', 'destroy']);
     Route::get('stats/grouped', [StatsController::class, 'groups'])->name('stats.grouped');
+    Route::get('stats/status', [StatsController::class, 'status'])->name('stats.status');
 
     // AI chat assistant
     Route::post('ai/chat', [AiChatController::class, 'store'])->middleware('throttle:30,1')->name('ai.chat.store');
     Route::get('ai/conversations', [AiConversationController::class, 'index'])->name('ai.conversations.index');
     Route::get('ai/conversations/{conversation}', [AiConversationController::class, 'show'])->name('ai.conversations.show');
     Route::post('stats/hide-free-plan-warning', [StatsController::class, 'hideFreePlanWarning'])->name('stats.hide-free-plan-warning');
-    Route::post('stats/hide-read-docs-warning', [StatsController::class, 'hideReadDocsWarning'])->name('stats.hide-read-docs-warning');
 
     Route::resource('custom-presets', CustomStatsRangePresetController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('custom-presets/builtin-visibility', [CustomStatsRangePresetController::class, 'updateBuiltinVisibility'])->name('custom-presets.builtin-visibility');

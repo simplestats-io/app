@@ -7,9 +7,9 @@ import RetentionCurveChart from "@/Pages/Dashboard/Partials/RetentionCurveChart.
 import EngagementCharts from "@/Pages/Dashboard/Partials/EngagementCharts.vue";
 import StatsGroups from "@/Pages/Dashboard/Partials/StatsGroups/StatsGroups.vue";
 import FreePlanWarning from "@/Pages/Dashboard/Partials/FreePlanWarning.vue";
-import ReadDocsWarning from "@/Pages/Dashboard/Partials/ReadDocsWarning.vue";
+import AwaitingFirstData from "@/Pages/Dashboard/Partials/AwaitingFirstData.vue";
 import SubscriptionPlanAlarm from "@/Pages/Dashboard/Partials/SubscriptionPlanAlarm.vue";
-import {onMounted} from "vue";
+import {ref} from "vue";
 import {useOnboardingTour} from "@/Composables/useOnboardingTour.js";
 
 const props = defineProps({
@@ -26,7 +26,6 @@ const props = defineProps({
     topReferers: Object,
     rangeTypes: Array,
     freePlanWarning: Object,
-    readDocsWarning: Object,
     subscriptionPlanAlarm: Array,
     usageBits: Object,
     flagBits: Object,
@@ -37,15 +36,23 @@ const props = defineProps({
     engagement_series: {type: Array, default: null},
     showRetention: {type: Boolean, default: false},
     retention_cohorts: {type: Object, default: null},
+    awaitingFirstData: {type: Object, default: null},
 });
 
-const {startTour} = useOnboardingTour();
+const {canShowTour, startTour} = useOnboardingTour();
 
-onMounted(() => {
-    if (! props.showRetention) {
+// Snapshot instead of the live prop: once the first data arrives the page reloads in
+// the background (prop becomes null), but the success modal has to stay until the
+// user dismisses it.
+const awaiting = ref(props.awaitingFirstData);
+
+function finishAwaiting(withTour = false) {
+    awaiting.value = null;
+
+    if (withTour) {
         startTour();
     }
-})
+}
 
 // Filtering and drill-down links must stay on the current route (dashboard or
 // retention), so everything navigation-related is keyed off this base route.
@@ -66,12 +73,17 @@ const currentProject = props.teamStats.projects[props.filters.project_id] ?? pro
         <div v-if="freePlanWarning.show">
             <FreePlanWarning />
         </div>
-        <div v-if="readDocsWarning.show">
-            <ReadDocsWarning />
-        </div>
         <div v-if="subscriptionPlanAlarm.length > 0" class="mb-6">
             <SubscriptionPlanAlarm :subscriptionPlanAlarm="subscriptionPlanAlarm" />
         </div>
+        <AwaitingFirstData
+            v-if="awaiting"
+            :project="awaiting.project"
+            :token="awaiting.token"
+            :canShowTour="canShowTour()"
+            @done="finishAwaiting()"
+            @tour="finishAwaiting(true)"
+        />
         <div>
             <StatsFilter
                 :teamStats="teamStats"

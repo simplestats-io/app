@@ -34,7 +34,6 @@ test('dashboard renders Dashboard/Index with expected props', function (): void 
             ->has('rangeTypes')
             ->has('rangeCurrent')
             ->has('freePlanWarning')
-            ->has('readDocsWarning')
             ->has('subscriptionPlanAlarm')
             ->has('usageBits')
             ->has('comparisonTypes')
@@ -568,4 +567,42 @@ test('metric route does not build revenue_churn for a non-churn kpi', function (
             ->component('Dashboard/Metric')
             ->where('revenue_churn', null)
         );
+});
+
+test('dashboard shows the installation steps with the token until the team receives data', function (): void {
+    $project = $this->user->currentTeam->projects()->first();
+
+    $this->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->where('awaitingFirstData.project.uuid', $project->uuid)
+            ->where('awaitingFirstData.token', $project->tokens()->first()->token_plain_part)
+        );
+});
+
+test('dashboard drops the installation steps once the team has received data', function (): void {
+    $this->user->currentTeam->update(['events_count_overall' => 1]);
+
+    $this->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('awaitingFirstData', null));
+});
+
+test('dashboard hides the api token from viewers while awaiting data', function (): void {
+    $viewer = User::factory()->create();
+    $this->user->currentTeam->users()->attach($viewer, ['role' => 'viewer']);
+    $viewer->switchTeam($this->user->currentTeam);
+
+    $this->actingAs($viewer)
+        ->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page
+            ->has('awaitingFirstData.project')
+            ->where('awaitingFirstData.token', null)
+        );
+});
+
+test('stats status reports whether the team has received data', function (): void {
+    $this->getJson(route('stats.status'))->assertExactJson(['hasData' => false]);
+
+    $this->user->currentTeam->update(['events_count_overall' => 3]);
+
+    $this->getJson(route('stats.status'))->assertExactJson(['hasData' => true]);
 });

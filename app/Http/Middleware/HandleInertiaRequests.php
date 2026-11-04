@@ -66,7 +66,6 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()) {
             $merge['isAdmin'] = auth()->user()->isAdmin();
-            $merge['tourCompleted'] = $request->user()->settings['tourCompleted'] ?? false;
             $merge['loginSummaryEligible'] = resolve(LoginSummaryService::class)->isEligible($request->user());
             $merge['feedbackTypes'] = FeedbackType::toOptions();
 

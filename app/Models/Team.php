@@ -30,6 +30,7 @@ class Team extends JetstreamTeam
         'events_count_monthly',
         'events_count_overall',
         'id',
+        'installation_reminder_sent_at',
         'user_id',
     ];
 
@@ -81,6 +82,11 @@ class Team extends JetstreamTeam
         return $this->hasMany(Project::class);
     }
 
+    public function hasReceivedData(): bool
+    {
+        return $this->events_count_overall > 0;
+    }
+
     public function tracksUsage(int $bit): bool
     {
         return $this->projects()
@@ -122,6 +128,7 @@ class Team extends JetstreamTeam
         return [
             'personal_team' => 'boolean',
             'events_reset_at' => 'datetime',
+            'installation_reminder_sent_at' => 'datetime',
             'ai_api_key' => 'encrypted',
         ];
     }

@@ -256,13 +256,6 @@ class StatsService
             && ! ($user->settings['hideFreePlanWarning'] ?? false);
     }
 
-    public static function showReadDocsWarning(User $user): bool
-    {
-        return $user->currentTeam->events_count_overall <= 0
-            && $user->created_at->diffInDays(now()) > 1
-            && ! ($user->settings['hideReadDocsWarning'] ?? false);
-    }
-
     /**
      * The active-subscription window for an as-of MRR snapshot: a monthly sub counts
      * while its last payment is within a month (plus grace), a yearly one within a

@@ -7,13 +7,16 @@ use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangeType;
 use App\Http\Requests\StatsFilterRequest;
 use App\Models\Campaign;
+use App\Models\PersonalAccessToken;
 use App\Models\Project;
 use App\Models\Team;
+use App\Models\User;
 use App\Services\AdSpendService;
 use App\Services\RefererService;
 use App\Services\StatsDetailsService;
 use App\Services\StatsService;
 use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\Gate;
 
 class StatsIndexDataProvider extends AbstractStatsDataProvider
 {
@@ -53,7 +56,41 @@ class StatsIndexDataProvider extends AbstractStatsDataProvider
             'showRetention' => $showRetention,
             'retention_cohorts' => $showRetention ? $this->buildRetentionCohorts($teamStats, $filters) : null,
             'plan_breakdown' => $this->planBreakdown($teamStats, $filters),
+            'awaitingFirstData' => $this->awaitingFirstData($user),
         ]);
+    }
+
+    /**
+     * Until the team has received its first event the dashboard shows the installation
+     * steps instead of empty charts. The token is only included for members allowed to
+     * read it, everybody else is pointed to an administrator.
+     *
+     * @return array{project: array{uuid: string, name: string}, token: string|null}|null
+     */
+    private function awaitingFirstData(User $user): ?array
+    {
+        /** @var Team $team */
+        $team = $user->currentTeam;
+
+        if ($team->hasReceivedData()) {
+            return null;
+        }
+
+        $project = $team->projects()->oldest()->first();
+
+        if (! $project) {
+            return null;
+        }
+
+        /** @var PersonalAccessToken|null $token */
+        $token = Gate::forUser($user)->check('viewProjectToken', $project)
+            ? $project->tokens()->first()
+            : null;
+
+        return [
+            'project' => ['uuid' => $project->uuid, 'name' => $project->name],
+            'token' => $token?->token_plain_part,
+        ];
     }
 
     /**

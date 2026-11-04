@@ -1,20 +1,11 @@
 import {driver} from 'driver.js';
 import 'driver.js/dist/driver.css';
-import {usePage} from '@inertiajs/vue3';
 import axios from 'axios';
 
 export function useOnboardingTour() {
-    const page = usePage();
-
-    function isDesktop() {
+    // The tour targets the desktop sidebar and multi-column layout.
+    function canShowTour() {
         return window.innerWidth >= 1024;
-    }
-
-    function shouldShowTour() {
-        if (!isDesktop()) return false;
-        if (page.props.tourCompleted) return false;
-        if (!page.props.onboardingPassed) return false;
-        return true;
     }
 
     function completeTour() {
@@ -57,17 +48,11 @@ export function useOnboardingTour() {
     }
 
     async function startTour() {
-        if (!shouldShowTour()) return;
+        if (!canShowTour()) return;
 
         await waitForElement('[data-tour="stats-groups"]');
 
         const steps = [
-            {
-                popover: {
-                    title: 'Welcome to SimpleStats!',
-                    description: 'Want a quick tour of the dashboard? It only takes a few seconds. You can close this at any time to skip.',
-                },
-            },
             {
                 element: '[data-tour="presets"]',
                 popover: {
@@ -104,15 +89,12 @@ export function useOnboardingTour() {
                     align: 'end',
                 },
             },
-        ].filter(step => {
-            if (!step.element) return true;
-            return isVisible(step.element);
-        });
+        ].filter(step => isVisible(step.element));
 
-        if (steps.length <= 1) return;
+        if (steps.length === 0) return;
 
         runTour(steps, completeTour);
     }
 
-    return {startTour};
+    return {canShowTour, startTour};
 }

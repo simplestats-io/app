@@ -53,7 +53,6 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
             'rangeTypes' => $this->statsDetailsService->getRangeTypes(),
             'rangeCurrent' => now()->format($filters->rangeType->dateFormat()['php']),
             'freePlanWarning' => ['show' => StatsService::showFreePlanWarning($user)],
-            'readDocsWarning' => ['show' => StatsService::showReadDocsWarning($user)],
             'subscriptionPlanAlarm' => $this->subscriptionService->getPlanAlarm($user->team),
             'usageBits' => Project::getUsages()->mapWithKeys(fn ($item, $key): array => [$key => $item['bit']]),
             'flagBits' => Project::getFlags()->mapWithKeys(fn ($item, $key): array => [$key => $item['bit']]),

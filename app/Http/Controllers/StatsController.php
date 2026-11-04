@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\DataProviders\RevenueDataProvider;
 use App\Http\DataProviders\StatsGroupsDataProvider;
 use App\Http\DataProviders\StatsIndexDataProvider;
+use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -33,16 +34,20 @@ class StatsController extends Controller
         return $dataProvider->toArray();
     }
 
+    /**
+     * @return array{hasData: bool}
+     */
+    public function status(Request $request): array
+    {
+        /** @var Team $team */
+        $team = $request->user()->currentTeam;
+
+        return ['hasData' => $team->hasReceivedData()];
+    }
+
     public function hideFreePlanWarning(Request $request): RedirectResponse
     {
         $request->user()->updateSettings('hideFreePlanWarning', true);
-
-        return back();
-    }
-
-    public function hideReadDocsWarning(Request $request): RedirectResponse
-    {
-        $request->user()->updateSettings('hideReadDocsWarning', true);
 
         return back();
     }
