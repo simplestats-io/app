@@ -34,6 +34,9 @@
              to be a datacenter IP would silently drop the visitor. Tests for
              the filter itself re-enable it via config() with Location::fake. -->
         <env name="LOCATION_DATACENTER_IP_FILTER" value="false"/>
+        <!-- Without a running SSR server every public page would fire a request
+             to it (blocked by Http::preventStrayRequests() in TestCase). -->
+        <env name="INERTIA_SSR_ENABLED" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

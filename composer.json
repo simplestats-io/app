@@ -88,7 +88,7 @@
         "refactor": "rector",
         "test": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan test --compact"
+            "pest --parallel --compact"
         ],
         "test:arch": "pest --testsuite=Arch",
         "test:lint": "pint --test",

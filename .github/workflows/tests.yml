@@ -55,4 +55,4 @@ jobs:
           php artisan key:generate
 
       - name: Run tests
-        run: php artisan test --compact
+        run: composer test
