@@ -52,6 +52,10 @@ class ProjectRequest extends FormRequest
                     if (($value & Project::USAGE_SUBSCRIPTION) && (($value & $required) !== $required)) {
                         $fail('Subscription tracking requires both Registrations and Payments.');
                     }
+
+                    if (($value & Project::USAGE_PAYMENTS) && ! ($value & (Project::USAGE_VISITORS | Project::USAGE_USERS))) {
+                        $fail('Payments must be linked to Visitors or Registrations.');
+                    }
                 },
             ],
             'flags' => [

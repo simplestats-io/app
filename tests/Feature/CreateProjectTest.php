@@ -75,6 +75,25 @@ test('recurring tracking is accepted together with registrations and payments', 
     ])->assertSessionHasNoErrors();
 });
 
+test('payments alone are rejected', function (): void {
+    $this->post(route('projects.store'), [
+        'name' => 'Payments Only',
+        'domain' => 'example.com',
+        'usage' => Project::USAGE_PAYMENTS,
+    ])->assertSessionHasErrors('usage');
+});
+
+test('payments are accepted together with visitors or registrations', function (int $source): void {
+    $this->post(route('projects.store'), [
+        'name' => 'Linked Payments',
+        'domain' => 'example.com',
+        'usage' => $source | Project::USAGE_PAYMENTS,
+    ])->assertSessionHasNoErrors();
+})->with([
+    'visitors' => Project::USAGE_VISITORS,
+    'registrations' => Project::USAGE_USERS,
+]);
+
 test('the paid-only flag requires registrations and payments', function (): void {
     $this->post(route('projects.store'), [
         'name' => 'Paywalled',
