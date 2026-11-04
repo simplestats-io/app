@@ -87,3 +87,12 @@ test('positions with a hosting flag stay cached beyond the short window', functi
 
     expect((new LocationService)->get('203.0.113.13')->isHosting)->toBeTrue();
 });
+
+test('country names are derived from the iso code', function (string $code, string $name): void {
+    expect(resolve(LocationService::class)->countryName($code))->toBe($name);
+})->with([
+    'plain cldr name' => ['NL', 'Netherlands'],
+    'lowercase code' => ['de', 'Germany'],
+    'ampersand spelled out' => ['BA', 'Bosnia and Herzegovina'],
+    'override' => ['CD', 'DR Congo'],
+]);

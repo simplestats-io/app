@@ -125,15 +125,20 @@ trait HasStatsTracking
                     ];
                 }
 
-                if ($position = resolve(LocationService::class)->get($value)) {
-                    return [
-                        'location_country' => "$position->countryName ($position->countryCode)",
-                        'location_region' => "$position->regionName ($position->countryCode)",
-                        'location_city' => "$position->cityName ($position->countryCode)",
-                    ];
+                $locationService = resolve(LocationService::class);
+                $position = $locationService->get($value);
+
+                if (! $position || blank($position->countryCode)) {
+                    return [];
                 }
 
-                return [];
+                $code = Str::upper($position->countryCode);
+
+                return array_filter([
+                    'location_country' => $locationService->countryName($code)." ($code)",
+                    'location_region' => filled($position->regionName) ? "$position->regionName ($code)" : null,
+                    'location_city' => filled($position->cityName) ? "$position->cityName ($code)" : null,
+                ]);
             },
         );
     }

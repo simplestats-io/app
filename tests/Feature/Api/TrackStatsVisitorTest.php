@@ -354,6 +354,37 @@ test('visitors are tracked when the location lookup fails', function (): void {
     expect(StatsVisitor::where('visitor_hash', $payload['visitor_hash'])->exists())->toBeTrue();
 });
 
+test('every provider spelling of a country ends up in the same country row', function (): void {
+    $ipInfo = new Position;
+    $ipInfo->countryCode = 'NL';
+
+    $maxMind = new Position;
+    $maxMind->countryName = 'The Netherlands';
+    $maxMind->countryCode = 'NL';
+    $maxMind->regionName = 'North Holland';
+    $maxMind->cityName = 'Amsterdam';
+
+    Location::fake(['198.51.100.20' => $ipInfo, '198.51.100.21' => $maxMind]);
+
+    $hashes = [];
+
+    foreach (['198.51.100.20', '198.51.100.21'] as $ip) {
+        $payload = validVisitorPayload(['ip' => $ip, 'visitor_hash' => 'country-'.fake()->uuid()]);
+        $this->postJson('/api/v1/stats-visitor', $payload, apiHeaders($this->token))->assertOk();
+        $hashes[$ip] = $payload['visitor_hash'];
+    }
+
+    setVisitorProjectContext($this->project);
+
+    $withoutNames = StatsVisitor::with(['statsLocationCountry', 'statsLocationRegion', 'statsLocationCity'])->where('visitor_hash', $hashes['198.51.100.20'])->firstOrFail();
+    $withNames = StatsVisitor::with('statsLocationCountry')->where('visitor_hash', $hashes['198.51.100.21'])->firstOrFail();
+
+    expect($withoutNames->statsLocationCountry->name)->toBe('Netherlands (NL)')
+        ->and($withNames->stats_location_country_id)->toBe($withoutNames->stats_location_country_id)
+        ->and($withoutNames->statsLocationRegion)->toBeNull()
+        ->and($withoutNames->statsLocationCity)->toBeNull();
+});
+
 test('visitor ingest still works while the team owner is soft deleted', function (): void {
     // Inactive owners are soft-deleted for a two month grace window while their
     // team, projects and API tokens keep running, so the event limit check must

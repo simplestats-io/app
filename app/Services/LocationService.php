@@ -4,11 +4,28 @@ namespace App\Services;
 
 use App\Location\Position;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Locale;
 use Stevebauman\Location\Facades\Location;
 use Stevebauman\Location\Position as BasePosition;
 
 class LocationService
 {
+    /**
+     * CLDR short names that read worse than the common English name the geo
+     * providers (and our existing data) mostly use.
+     */
+    protected const COUNTRY_NAME_OVERRIDES = [
+        'CD' => 'DR Congo',
+        'CG' => 'Republic of the Congo',
+        'CI' => 'Ivory Coast',
+        'HK' => 'Hong Kong',
+        'MM' => 'Myanmar',
+        'MO' => 'Macao',
+        'PS' => 'Palestine',
+        'VC' => 'Saint Vincent and the Grenadines',
+    ];
+
     /**
      * In-process memo so the datacenter check and the geo mutator resolve
      * the same IP with a single lookup within one job.
@@ -88,5 +105,24 @@ class LocationService
         $position->asn = $cached['asn'] ?? null;
 
         return $position;
+    }
+
+    /**
+     * Country names are derived from the ISO code instead of taken from the
+     * provider: every fallback driver spells them differently ("Netherlands" vs
+     * "The Netherlands") and IpInfo returns no name at all, and each spelling
+     * became its own country row.
+     */
+    public function countryName(string $countryCode): string
+    {
+        $countryCode = Str::upper($countryCode);
+
+        if (isset(self::COUNTRY_NAME_OVERRIDES[$countryCode])) {
+            return self::COUNTRY_NAME_OVERRIDES[$countryCode];
+        }
+
+        $name = Locale::getDisplayRegion('-'.$countryCode, 'en');
+
+        return str_replace([' & ', 'St. '], [' and ', 'Saint '], $name);
     }
 }
