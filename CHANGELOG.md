@@ -2,6 +2,19 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.8.0 - 2026-11-10
+
+### Upgrade notes
+
+- This release contains a data migration that runs `app:unify-locations` once. It merges duplicate country rows into one per country code. It commits per team, so it can take a while on large databases, but needs no manual action.
+
+### Fixed
+
+- Country names are now derived from the ISO country code, so the same country no longer shows up in several rows ("Netherlands" vs "The Netherlands"). Regions and cities without a name are no longer stored.
+- Projects that track payments now require visitors or registrations to be tracked as well.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.7.0...v6.8.0
+
 ## v6.7.0 - 2026-11-04
 
 ### Upgrade notes
