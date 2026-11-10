@@ -2,12 +2,13 @@
 
 namespace App\Filament\Pages;
 
-use App\Jobs\SendAnnouncementToUser;
 use App\Models\Announcement;
-use App\Models\User;
+use App\Services\AnnouncementService;
 use BackedEnum;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
@@ -27,7 +28,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
-use Spatie\DeletedModels\Models\DeletedModel;
 
 class Announcements extends Page implements HasTable
 {
@@ -99,6 +99,17 @@ class Announcements extends Page implements HasTable
                             ->live()
                             ->columnSpanFull(),
                     ]),
+                Section::make('Schedule (optional)')
+                    ->description('Pick a time to send the announcement later. Leave it empty to send right away.')
+                    ->schema([
+                        DateTimePicker::make('scheduled_at')
+                            ->label('Send at')
+                            ->seconds(false)
+                            ->timezone(fn (): string => $this->adminTimezone())
+                            ->helperText(fn (): string => "Time in {$this->adminTimezone()}.")
+                            ->after('now')
+                            ->live(),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -122,15 +133,24 @@ class Announcements extends Page implements HasTable
         return $table
             ->query(Announcement::query())
             ->heading('History')
-            ->description('Load a previous announcement to edit and re-send it.')
+            ->description('Load a previous or scheduled announcement to edit, re-send or reschedule it.')
             ->defaultSort('last_sent_at', 'desc')
             ->columns([
                 TextColumn::make('subject')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('scheduled_at')
+                    ->label('Scheduled for')
+                    ->dateTime('M d, Y H:i')
+                    ->timezone(fn (): string => $this->adminTimezone())
+                    ->badge()
+                    ->color('warning')
+                    ->placeholder('-')
+                    ->sortable(),
                 TextColumn::make('last_sent_at')
                     ->label('Last sent')
                     ->dateTime('M d, Y H:i')
+                    ->timezone(fn (): string => $this->adminTimezone())
                     ->sortable(),
             ])
             ->recordActions([
@@ -140,9 +160,21 @@ class Announcements extends Page implements HasTable
                         $this->form->fill([
                             'subject' => $record->subject,
                             'body' => $record->body,
+                            ...($record->scheduled_at ? [
+                                ...($record->recipients ?? []),
+                                'scheduled_at' => $record->scheduled_at,
+                            ] : []),
                         ]);
                         $this->loadedAnnouncementId = $record->id;
                     }),
+                Action::make('unschedule')
+                    ->label('Cancel schedule')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('gray')
+                    ->visible(fn (Announcement $record): bool => $record->scheduled_at !== null)
+                    ->requiresConfirmation()
+                    ->modalDescription('The announcement stays in the history but will not be sent.')
+                    ->action(fn (Announcement $record) => $record->update(['scheduled_at' => null])),
                 DeleteAction::make()
                     ->after(function (Announcement $record): void {
                         if ($this->loadedAnnouncementId === $record->id) {
@@ -150,80 +182,52 @@ class Announcements extends Page implements HasTable
                         }
                     }),
             ])
-            ->emptyStateHeading('No announcements sent yet')
+            ->emptyStateHeading('No announcements yet')
             ->paginated([10, 25]);
     }
 
     public function send(): void
     {
         $data = $this->form->getState();
-        $recipientCount = 0;
+        $recipients = [
+            'admins_only' => (bool) ($data['admins_only'] ?? false),
+            'include_deleted_users' => (bool) ($data['include_deleted_users'] ?? false),
+            'custom_emails' => array_values($data['custom_emails'] ?? []),
+        ];
 
-        Announcement::recordSend($data['subject'], $data['body'], $this->loadedAnnouncementId);
+        if (filled($data['scheduled_at'] ?? null)) {
+            $scheduledAt = CarbonImmutable::parse($data['scheduled_at'], config('app.timezone'));
 
-        $customEmails = collect($data['custom_emails'] ?? [])
-            ->map(fn (string $email): string => strtolower(trim($email)))
-            ->filter()
-            ->unique();
-
-        if ($customEmails->isNotEmpty()) {
-            foreach ($customEmails as $email) {
-                dispatch(new SendAnnouncementToUser('', $email, $data['subject'], $data['body']));
-                $recipientCount++;
-            }
+            Announcement::recordSchedule($data['subject'], $data['body'], $scheduledAt, $recipients, auth()->user(), $this->loadedAnnouncementId);
 
             $this->resetAnnouncementForm();
 
             Notification::make()
-                ->title('Announcement queued')
-                ->body("Sending to {$recipientCount} custom email address(es).")
+                ->title('Announcement scheduled')
+                ->body('It will be sent on '.$scheduledAt->setTimezone($this->adminTimezone())->format('M d, Y H:i').'.')
                 ->success()
                 ->send();
 
             return;
         }
 
-        $query = User::whereNotNull('email_verified_at');
+        Announcement::recordSend($data['subject'], $data['body'], $this->loadedAnnouncementId);
 
-        if ($data['admins_only'] ?? false) {
-            $query->where('is_admin', true);
-        } elseif (! app()->isProduction()) {
-            $query->where('id', auth()->id());
-        }
-
-        $users = $query->get();
-        $activeEmails = $users->pluck('email')->map(fn (string $email): string => strtolower($email))->toArray();
-
-        foreach ($users as $user) {
-            dispatch(new SendAnnouncementToUser($user->name, $user->email, $data['subject'], $data['body']));
-            $recipientCount++;
-        }
-
-        if ($data['include_deleted_users'] ?? false) {
-            $deletedUsers = DeletedModel::query()
-                ->where('model', (new User)->getMorphClass())
-                ->get();
-
-            foreach ($deletedUsers as $deletedUser) {
-                $email = $deletedUser->values['email'] ?? null;
-                $name = $deletedUser->values['name'] ?? '';
-
-                if (! $email || in_array(strtolower($email), $activeEmails, true)) {
-                    continue;
-                }
-
-                dispatch(new SendAnnouncementToUser($name, $email, $data['subject'], $data['body']));
-                $recipientCount++;
-            }
-        }
+        $recipientCount = resolve(AnnouncementService::class)->dispatch($data['subject'], $data['body'], $recipients, auth()->user());
+        $target = filled($recipients['custom_emails']) ? 'custom email address(es)' : 'user(s)';
 
         $this->resetAnnouncementForm();
 
         Notification::make()
             ->title('Announcement queued')
-            ->body("Sending to {$recipientCount} user(s).")
+            ->body("Sending to {$recipientCount} {$target}.")
             ->success()
             ->send();
+    }
+
+    protected function adminTimezone(): string
+    {
+        return auth()->user()?->currentTeam?->timezone ?? config('app.timezone');
     }
 
     protected function resetAnnouncementForm(): void
@@ -239,12 +243,16 @@ class Announcements extends Page implements HasTable
     {
         return [
             Action::make('send')
-                ->label('Send to all users')
-                ->icon('heroicon-o-paper-airplane')
+                ->label(fn (): string => filled($this->data['scheduled_at'] ?? null) ? 'Schedule announcement' : 'Send to all users')
+                ->icon(fn (): string => filled($this->data['scheduled_at'] ?? null) ? 'heroicon-o-clock' : 'heroicon-o-paper-airplane')
                 ->requiresConfirmation()
-                ->modalHeading('Send announcement')
+                ->modalHeading(fn (): string => filled($this->data['scheduled_at'] ?? null) ? 'Schedule announcement' : 'Send announcement')
                 ->modalDescription(function (): string {
                     $customEmails = collect($this->data['custom_emails'] ?? [])->filter();
+
+                    if (filled($this->data['scheduled_at'] ?? null)) {
+                        return 'The announcement will be sent automatically at the scheduled time, using the recipients selected above.';
+                    }
 
                     if ($customEmails->isNotEmpty()) {
                         return "This will only send the announcement to the {$customEmails->count()} custom email address(es) you entered.";

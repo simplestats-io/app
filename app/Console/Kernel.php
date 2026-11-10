@@ -56,6 +56,7 @@ class Kernel extends ConsoleKernel
                 $schedule->command('app:check-inactive-users')->daily()->at('03:45');
                 $schedule->command('app:purge-pending-deleted-users')->daily()->at('03:50');
                 $schedule->command('app:send-installation-reminders')->hourly();
+                $schedule->command('app:send-scheduled-announcements')->everyMinute()->withoutOverlapping();
             }
 
             // WEEKLY

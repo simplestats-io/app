@@ -256,3 +256,72 @@ test('non-admin users cannot access the send announcement page', function (): vo
         ->get('/admin/announcements')
         ->assertForbidden();
 });
+
+test('an announcement with a send time is scheduled instead of sent', function (): void {
+    Bus::fake();
+
+    Livewire::test(Announcements::class)
+        ->fillForm([
+            'subject' => 'Black Week',
+            'body' => 'Half price.',
+            'admins_only' => true,
+            'scheduled_at' => now()->addDay()->format('Y-m-d H:i'),
+        ])
+        ->call('send')
+        ->assertHasNoFormErrors()
+        ->assertNotified('Announcement scheduled');
+
+    Bus::assertNotDispatched(SendAnnouncementToUser::class);
+
+    $announcement = Announcement::sole();
+
+    expect($announcement->scheduled_at)->not->toBeNull()
+        ->and($announcement->last_sent_at)->toBeNull()
+        ->and($announcement->recipients['admins_only'])->toBeTrue()
+        ->and($announcement->scheduledBy->is($this->admin))->toBeTrue();
+});
+
+test('a send time in the past is rejected', function (): void {
+    Livewire::test(Announcements::class)
+        ->fillForm([
+            'subject' => 'Too late',
+            'body' => 'Content',
+            'scheduled_at' => now()->subHour()->format('Y-m-d H:i'),
+        ])
+        ->call('send')
+        ->assertHasFormErrors(['scheduled_at']);
+});
+
+test('a scheduled announcement can be cancelled from history', function (): void {
+    $announcement = Announcement::factory()->create(['last_sent_at' => null, 'scheduled_at' => now()->addDay()]);
+
+    Livewire::test(Announcements::class)
+        ->callAction(TestAction::make('unschedule')->table($announcement));
+
+    expect($announcement->refresh()->scheduled_at)->toBeNull();
+});
+
+test('due scheduled announcements are sent once with their stored recipients', function (): void {
+    Bus::fake();
+
+    $regularUser = User::factory()->create(['email_verified_at' => now(), 'is_admin' => false]);
+
+    $due = Announcement::factory()->create([
+        'last_sent_at' => null,
+        'scheduled_at' => now()->subMinute(),
+        'recipients' => ['custom_emails' => ['first@example.com']],
+    ]);
+    $future = Announcement::factory()->create(['last_sent_at' => null, 'scheduled_at' => now()->addHour()]);
+
+    $this->artisan('app:send-scheduled-announcements')->assertSuccessful();
+    $this->artisan('app:send-scheduled-announcements')->assertSuccessful();
+
+    Bus::assertDispatchedTimes(SendAnnouncementToUser::class, 1);
+    Bus::assertDispatched(SendAnnouncementToUser::class, fn ($job): bool => $job->recipientEmail === 'first@example.com'
+        && $job->subject === $due->subject);
+
+    expect($due->refresh()->scheduled_at)->toBeNull()
+        ->and($due->last_sent_at)->not->toBeNull()
+        ->and($future->refresh()->scheduled_at)->not->toBeNull()
+        ->and($future->last_sent_at)->toBeNull();
+});
