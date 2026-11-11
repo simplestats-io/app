@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.0.1 - 2026-11-11
+
+### Fixed
+
+- The app icons leave more room around the logo, so it no longer fills the whole launcher circle on Android. Reinstall the app to pick up the new icon.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.0.0...v7.0.1
+
 ## v7.0.0 - 2026-11-11
 
 ### Upgrade notes
