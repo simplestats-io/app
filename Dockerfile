@@ -9,8 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 # VITE_* values are baked into the bundle at build time, runtime env cannot change them.
-ENV VITE_APP_NAME=SimpleStats \
-    VITE_APP_ENV=production
+ENV VITE_APP_ENV=production
 RUN npx vite build
 
 FROM serversideup/php:${PHP_VERSION}-fpm-nginx-alpine AS runtime

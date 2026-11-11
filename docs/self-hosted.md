@@ -59,7 +59,7 @@ docker compose up -d
 docker compose exec app php artisan app:create-new-user "Jane Doe" jane@example.com "a-secure-password"
 ```
 
-All other settings from [.env.example](https://github.com/simplestats-io/app/blob/main/.env.example) (branding, backups, AI assistant, GeoIP, Horizon tuning, ...) can be added to the same `.env`, it is passed to every container. The data lives in Docker volumes: `pgdata` (database), `storage` (uploads, imports, local backups) and `redisdata`.
+All other settings from [.env.example](https://github.com/simplestats-io/app/blob/main/.env.example) (backups, AI assistant, GeoIP, Horizon tuning, ...) can be added to the same `.env`, it is passed to every container. The data lives in Docker volumes: `pgdata` (database), `storage` (uploads, imports, local backups) and `redisdata`.
 
 To use an external PostgreSQL or Redis, set `DB_HOST` / `REDIS_HOST` in `.env` and drop the bundled service in a `docker-compose.override.yml`.
 

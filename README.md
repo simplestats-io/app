@@ -138,11 +138,9 @@ composer install
 npm ci
 ```
 
-#### Branding and Environment
+#### Environment
 
-After that, set up your `.env` file.
-
-Here, you can customize the branding, including the name, logo, and background, to align with your corporate identity (CI). Be sure to review the other environment variables carefully and adjust them as needed.
+After that, set up your `.env` file. Review the environment variables carefully and adjust them as needed. The name and logo are not configurable, see the [Trademark Guidelines](https://simplestats.io/trademark).
 
 ```bash
 cp .env.example .env

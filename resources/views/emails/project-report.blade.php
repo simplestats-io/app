@@ -123,5 +123,6 @@ foreach ($statsGroups as $key => $statsGroup) {
 
 ---
 
+@include('emails.partials.self-hosted-funding')
 <small>Don't want to receive these notifications? <a href="{{ route('notifications.index') }}" target="_blank">Change notification settings</a></small>
 @endcomponent

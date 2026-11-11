@@ -58,7 +58,7 @@ Self-hosters are pointed to the official image `ghcr.io/simplestats-io/app` (bui
 
 - The image is the **self-hosted build** (`composer.json`), based on `serversideup/php` (nginx + PHP-FPM, Alpine). Its entrypoint runs `storage:link`, `migrate --force` and `optimize` on start of the `app` container (`AUTORUN_*` env vars).
 - **Never enable the view cache for self-hosted builds** (`view:cache`, plain `php artisan optimize`): it compiles every Blade file, and the SaaS-only views (Filament pages, og-image) reference components that do not exist without `composer.saas.json`, so the command fails. Use `php artisan optimize --except=views`; views compile lazily.
-- `VITE_*` values are baked into the bundle at image build time (`VITE_APP_NAME=SimpleStats`), runtime env cannot change them.
+- `VITE_*` values are baked into the bundle at image build time (`VITE_APP_ENV=production`), runtime env cannot change them. `VITE_APP_NAME` is not an env value at all, see "Branding Is Not Configurable".
 - Configuration is runtime env only (`env_file: .env` next to the compose file, template `.env.docker.example`). Nothing environment-specific belongs in the image.
 - nginx FastCGI buffers are raised to 32k in the `Dockerfile`: the Vite preload `Link` headers exceed the 8k default and cause a 502.
 - New PHP extensions, required env vars or changed processes must be reflected in `Dockerfile`, `docker-compose.yml` and `.env.docker.example`. A change that forces self-hosters to edit their compose file or `.env` is a **major** release.
@@ -473,6 +473,13 @@ Legacy compatibility: the `RedirectLegacyIdUrls` middleware 301-redirects old nu
 ### No Magic Strings for App Identity
 
 - Never hardcode "SimpleStats" or similar brand names. Use `config('app.name')` instead so values stay consistent across environments and rebranding is painless.
+
+### Branding Is Not Configurable
+
+The name and logo are trademarks (`resources/markdown/trademark.md`), modelled on Plausible CE: self-hosters cannot change them through env, only by changing the source code (which the trademark guidelines restrict for distributed or publicly hosted forks).
+
+- `config('app.name')` and `config('app.branding.*')` are hardcoded strings in `config/app.php`, never `env()`. The frontend counterpart `VITE_APP_NAME` is set via `define` in `vite.config.js`. Keep both in sync.
+- Self-hosted report and alert mails include `emails.partials.self-hosted-funding` (cloud funding note with a link to the SaaS, hidden when `APP_TYPE=saas`). New user-facing notification mails should include it too.
 
 ### Enums for Fixed Value Sets
 

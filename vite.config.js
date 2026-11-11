@@ -5,6 +5,10 @@ import svgLoader from 'vite-svg-loader';
 import shikiTransformPlugin from './vite/shikiTransformPlugin.js';
 
 export default defineConfig({
+    // Hardcoded like config('app.name'), never taken from .env (trademark).
+    define: {
+        'import.meta.env.VITE_APP_NAME': JSON.stringify('SimpleStats'),
+    },
     plugins: [
         shikiTransformPlugin(),
         laravel({

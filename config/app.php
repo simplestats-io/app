@@ -34,15 +34,17 @@ return [
     | Branding Settings
     |--------------------------------------------------------------------------
     |
-    | Change the brand images to your needs here.
+    | Hardcoded on purpose, never read from env: the name and logo are
+    | trademarks (resources/markdown/trademark.md), so changing them is a
+    | source code change, not a setting.
     |
     */
 
     'branding' => [
-        'app_mark' => env('APP_MARK_IMG'),
-        'app_logo' => env('APP_LOGO_IMG'),
-        'app_logo_mail' => env('APP_LOGO_MAIL', '/images/logo.png'),
-        'app_background' => env('APP_BACKGROUND', '/images/side_bg.jpg'),
+        'app_mark' => null,
+        'app_logo' => null,
+        'app_logo_mail' => '/images/logo.png',
+        'app_background' => '/images/side_bg.jpg',
     ],
 
     /*
@@ -111,9 +113,12 @@ return [
     | framework needs to place the application's name in a notification or
     | any other location as required by the application or its packages.
     |
+    | Not read from env on purpose, see the branding section. The frontend
+    | counterpart is VITE_APP_NAME in vite.config.js.
+    |
     */
 
-    'name' => env('APP_NAME', 'SimpleStats'),
+    'name' => 'SimpleStats',
 
     /*
     |--------------------------------------------------------------------------
