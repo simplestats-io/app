@@ -2,6 +2,24 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.0.0 - 2026-11-11
+
+### Upgrade notes
+
+- **The name and logo are no longer configurable through env.** `APP_NAME` no longer changes the displayed app name, and `APP_MARK_IMG`, `APP_LOGO_IMG`, `APP_LOGO_MAIL` and `APP_BACKGROUND` are no longer read. Installations that used them show the SimpleStats name and logo again after the upgrade. The name and logo are trademarks, see the [Trademark Guidelines](https://simplestats.io/trademark) for what is allowed with modified versions.
+- Keep `APP_NAME` in your `.env` if it is set: it still serves as the prefix for cache, session, Redis and Horizon keys. Removing or changing it logs out all users.
+- When building the frontend yourself, `VITE_APP_NAME` is no longer needed in `.env`.
+
+### Added
+
+- Self-hosted report and alert mails include a short note that cloud customers fund the development of the self-hosted edition.
+
+### Changed
+
+- The Trademark Guidelines now cover modified and publicly hosted versions and allow the name in a subdomain of your own installation.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.9.0...v7.0.0
+
 ## v6.9.0 - 2026-11-11
 
 ### Fixed
