@@ -2,6 +2,18 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v6.9.0 - 2026-11-11
+
+### Fixed
+
+- The web app manifest now carries the configured app name (`APP_NAME`), starts on the dashboard and ships sharp icons, including a maskable icon for Android. Chromium browsers offer to install the app.
+
+### Upgrade notes
+
+- Includes a migration (`add_scheduling_to_announcements_table`) that runs automatically on deploy. It only backs a SaaS admin feature, self-hosted installations need no action.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v6.8.0...v6.9.0
+
 ## v6.8.0 - 2026-11-10
 
 ### Upgrade notes
