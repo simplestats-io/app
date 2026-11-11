@@ -14,12 +14,15 @@ it('does not start a session for the manifest', function (): void {
     $this->get('/site.webmanifest')->assertCookieMissing(config('session.cookie'));
 });
 
-it('only references icons that exist', function (): void {
+it('references existing icons versioned by their content', function (): void {
     $icons = $this->get('/site.webmanifest')->json('icons');
 
     expect($icons)->not->toBeEmpty();
 
     foreach ($icons as $icon) {
-        expect(public_path($icon['src']))->toBeFile();
+        [$path, $version] = explode('?v=', $icon['src']);
+
+        expect(public_path($path))->toBeFile()
+            ->and($version)->toBe(substr(md5_file(public_path($path)), 0, 8));
     }
 });

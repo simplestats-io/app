@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class WebManifestController extends Controller
 {
@@ -18,11 +20,16 @@ class WebManifestController extends Controller
             'display' => 'standalone',
             'theme_color' => '#ffffff',
             'background_color' => '#ffffff',
-            'icons' => [
+            // Static files are cached for a year, so the content hash forces browsers
+            // to fetch an icon again once it changes.
+            'icons' => collect([
                 ['src' => '/android-chrome-192x192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => '/android-chrome-512x512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => '/maskable-512x512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
-            ],
+            ])->map(fn (array $icon): array => [
+                ...$icon,
+                'src' => $icon['src'].'?v='.Str::substr(File::hash(public_path($icon['src'])), 0, 8),
+            ])->all(),
         ], headers: ['Content-Type' => 'application/manifest+json']);
     }
 }
