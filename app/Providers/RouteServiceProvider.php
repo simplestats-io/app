@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\HealthUpController;
+use App\Http\Controllers\WebManifestController;
 use App\Models\Project;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -65,9 +66,10 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         $this->routes(function (): void {
-            // Outside the web group on purpose: container health probes hit it every
-            // few seconds and must not create a session per request.
+            // Outside the web group on purpose: health probes and browsers fetching the
+            // manifest hit these constantly and must not create a session per request.
             Route::get('up', HealthUpController::class)->name('health.up');
+            Route::get('site.webmanifest', WebManifestController::class)->name('web-manifest');
 
             Route::middleware('api')
                 ->prefix('api')
