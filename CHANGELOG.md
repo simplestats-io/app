@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.0.2 - 2026-11-11
+
+### Fixed
+
+- The web app manifest versions its icon URLs by content, so browsers that cached an older icon pick up the new one.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.0.1...v7.0.2
+
 ## v7.0.1 - 2026-11-11
 
 ### Fixed
