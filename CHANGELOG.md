@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.0.4 - 2026-11-12
+
+### Fixed
+
+- In dark mode the browser renders native UI dark as well (navigation bar, scrollbars, form controls), instead of light.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.0.3...v7.0.4
+
 ## v7.0.3 - 2026-11-12
 
 ### Fixed
