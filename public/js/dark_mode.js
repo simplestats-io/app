@@ -5,9 +5,13 @@ function getUserThemePreference() {
 
 const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-// Colors the browser UI (e.g. the status bar of the installed app) like the page
-// background, which the manifest's static theme_color cannot follow.
+// Colors the browser UI like the page background, which the manifest's static theme_color
+// cannot follow: theme-color drives the status bar, color-scheme the navigation bar.
 function updateThemeColor() {
+    const isDark = document.documentElement.classList.contains('dark');
+
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
     let meta = document.querySelector('meta[name="theme-color"]');
 
     if (!meta) {
@@ -16,7 +20,7 @@ function updateThemeColor() {
         document.head.appendChild(meta);
     }
 
-    meta.content = document.documentElement.classList.contains('dark') ? '#1a1a1a' : '#f9fafb';
+    meta.content = isDark ? '#1a1a1a' : '#f9fafb';
 }
 
 function updateDarkMode() {
