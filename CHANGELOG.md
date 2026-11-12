@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.0.3 - 2026-11-12
+
+### Fixed
+
+- The browser status bar, including the one of the installed app, now matches the light or dark theme instead of always being white.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.0.2...v7.0.3
+
 ## v7.0.2 - 2026-11-11
 
 ### Fixed
