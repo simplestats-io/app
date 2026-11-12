@@ -91,12 +91,12 @@ const appName = import.meta.env.VITE_APP_NAME;
                       :labels="$page.props.socialstream.labels" :providers="socialProviders">
             <template v-if="passkeySupported" #default>
                 <button type="button"
-                        class="flex gap-2 items-center justify-center transition duration-200 border border-gray-400 dark:border-dark-600 w-full py-2.5 rounded-lg text-sm shadow-sm hover:shadow-md dark:hover:border-dark-400 font-normal"
+                        class="@container flex gap-2 items-center justify-center transition duration-200 border border-gray-400 dark:border-dark-600 w-full py-2.5 rounded-lg text-sm shadow-sm hover:shadow-md dark:hover:border-dark-400 font-normal"
                         :class="{ 'opacity-25': passkeyLoading }"
                         :disabled="passkeyLoading"
                         @click="signInWithPasskey">
                     <FingerprintIcon class="size-6 mx-2 text-gray-700 dark:text-dark-300" />
-                    <span class="block font-medium text-sm text-gray-700 dark:text-dark-300">{{ $t('Passkey') }}</span>
+                    <span class="sr-only @[8rem]:not-sr-only block font-medium text-sm text-gray-700 dark:text-dark-300">{{ $t('Passkey') }}</span>
                 </button>
             </template>
         </Socialstream>
