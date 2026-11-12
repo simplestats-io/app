@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#f9fafb">
 
         @if (! app()->isProduction())
             <meta name="robots" content="noindex, nofollow">
@@ -89,6 +90,6 @@
 
         @inertia
 
-        <script src="/js/dark_mode.js"></script>
+        <script src="/js/dark_mode.js?v={{ substr(md5_file(public_path('js/dark_mode.js')), 0, 8) }}"></script>
     </body>
 </html>

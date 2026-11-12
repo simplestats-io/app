@@ -65,7 +65,7 @@
         }
     </style>
 
-    <script src="/js/dark_mode.js"></script>
+    <script src="/js/dark_mode.js?v={{ substr(md5_file(public_path('js/dark_mode.js')), 0, 8) }}"></script>
 
     @inertiaHead
 </head>

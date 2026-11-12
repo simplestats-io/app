@@ -18,7 +18,7 @@ class WebManifestController extends Controller
             'start_url' => RouteServiceProvider::HOME,
             'scope' => '/',
             'display' => 'standalone',
-            'theme_color' => '#ffffff',
+            'theme_color' => '#f9fafb',
             'background_color' => '#ffffff',
             // Static files are cached for a year, so the content hash forces browsers
             // to fetch an icon again once it changes.
