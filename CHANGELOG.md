@@ -2,6 +2,22 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.1.0 - 2026-11-15
+
+### Fixed
+
+- Dashboard views filtered to a registration cohort could show slightly inflated numbers for the current period (e.g. visitors or registrations that do not belong to the cohort), because their cached rows were incremented like unfiltered ones. These rows are now recomputed instead, and a migration clears the affected cache rows once.
+
+### Upgrade notes
+
+- Contains one migration (it only clears cache rows, they are rebuilt on the next page load). No action needed beyond the usual `php artisan migrate`.
+
+### What's Changed
+
+* Bump the npm-minor-and-patch group with 3 updates by @dependabot[bot] in https://github.com/simplestats-io/app/pull/403
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.0.4...v7.1.0
+
 ## v7.0.4 - 2026-11-12
 
 ### Fixed
