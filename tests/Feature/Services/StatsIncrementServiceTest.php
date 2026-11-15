@@ -542,6 +542,29 @@ it('invalidates custom-property filtered rows instead of incrementing them', fun
     expect(StatsAggregation::where('filter_hash', 'prop-filter-hash')->count())->toBe(0);
 });
 
+it('keeps a registration-cohort row in line with a full recompute when new stats arrive', function (): void {
+    $cohortFilter = ($this->dayFilter)([
+        'cohortStart' => CarbonImmutable::parse('2026-02-01 00:00:00'),
+        'cohortEnd' => CarbonImmutable::parse('2026-03-01 00:00:00'),
+    ]);
+
+    expect($this->service->getAggregatedData($cohortFilter)['2026-06-14'])
+        ->pd_visitor->toBe(0)
+        ->pd_reg->toBe(0);
+
+    // neither belongs to the February cohort: visitors never do, and the user registers today
+    StatsVisitor::factory()->create(array_merge(nullDims(), [
+        'team_id' => $this->team->id, 'project_id' => $this->pid, 'time' => $this->now,
+    ]));
+    StatsUser::factory()->create(array_merge(nullDims(), [
+        'team_id' => $this->team->id, 'project_id' => $this->pid, 'time' => $this->now,
+    ]));
+
+    expect($this->service->getAggregatedData($cohortFilter)['2026-06-14'])
+        ->pd_visitor->toBe(0)
+        ->pd_reg->toBe(0);
+});
+
 it('does nothing when the aggregation cache is disabled entirely', function (): void {
     config(['app.stats_aggregation_enabled' => false]);
 

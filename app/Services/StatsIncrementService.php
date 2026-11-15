@@ -233,7 +233,7 @@ class StatsIncrementService
      */
     private function hasSpecialFilterKey(array $filter): bool
     {
-        return Arr::hasAny($filter, array_values(StatsFilterDto::FILTER_SPECIAL_KEYS));
+        return Arr::hasAny($filter, [...array_values(StatsFilterDto::FILTER_SPECIAL_KEYS), StatsFilterDto::FILTER_COHORT_KEY]);
     }
 
     /**

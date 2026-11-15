@@ -41,6 +41,11 @@ class StatsFilterDto
         'campaign' => 'campaign',
     ];
 
+    // Marks a stored aggregation row as scoped to a registration cohort. Such a row
+    // cannot be incremented (the cohort window is not part of the stored dimensions),
+    // so StatsIncrementService invalidates it like the special keys above.
+    public const FILTER_COHORT_KEY = 'cohort';
+
     public function __construct(
         public int $projectId,
         public int $rangeAmount,
@@ -186,6 +191,22 @@ class StatsFilterDto
             if ($this->$property !== self::TRACK_ALL) {
                 $filter[$key] = $this->$property;
             }
+        }
+
+        return $filter;
+    }
+
+    /**
+     * The filter as stored with an aggregation row, see FILTER_COHORT_KEY.
+     *
+     * @return array<string, int>
+     */
+    public function toStoredFilterArray(): array
+    {
+        $filter = $this->toFilterArray();
+
+        if ($this->cohortStart instanceof CarbonInterface || $this->cohortEnd instanceof CarbonInterface) {
+            $filter[self::FILTER_COHORT_KEY] = 1;
         }
 
         return $filter;

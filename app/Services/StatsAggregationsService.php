@@ -50,7 +50,7 @@ class StatsAggregationsService
 
         $teamId = AppHelper::getTeamId();
         $filterHash = $filters->makeHash();
-        $filterJson = json_encode($filters->toFilterArray());
+        $filterJson = json_encode($filters->toStoredFilterArray());
 
         $upsertData = $data->map(fn ($item): array => [
             'team_id' => $teamId,
