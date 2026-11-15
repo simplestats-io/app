@@ -60,7 +60,7 @@ The middleware accepts the following values from the request itself (in addition
 | UTM term     | `utm_term`                                | `X-Utm-Term`                 |                                                      |
 | UTM content  | `utm_content`                             | `X-Utm-Content`              |                                                      |
 | Referer      | `document_referer`                        | `X-Document-Referer`         | The original `document.referrer`, not the API caller |
-| Page         | `page`                                    | `X-Page`                     | The path the visitor actually landed on              |
+| Page         | `page`                                    | `X-Page`                     | The path the visitor actually landed on. The query value must start with `/`, anything else (e.g. a pagination `?page=2`) is ignored |
 
 ## Frontend example
 
