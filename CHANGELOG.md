@@ -2,6 +2,18 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.2.1 - 2026-11-16
+
+### Fixed
+
+- Page view KPIs show "-" instead of 0 for periods before a project's first tracked page view. The Query API returns `null` for these periods.
+
+### Docs
+
+- The event definition in Plans and Limits now states that page views are not events.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.2.0...v7.2.1
+
 ## v7.2.0 - 2026-11-16
 
 ### Added
