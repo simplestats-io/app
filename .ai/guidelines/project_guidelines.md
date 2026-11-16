@@ -621,6 +621,7 @@ Announcement drafts live in `notes/announcements/*.md` and are sent via the Fila
 
 - No `#` heading at the top of the body: it would duplicate the subject and read awkwardly right after the greeting. Put the subject into an HTML comment on the first line instead (`<!-- Subject: ... -->`).
 - The first sentence must continue naturally after "Hey {name}," (e.g. "good news: you can now ..."). `##` section headings further down are fine.
+- Large announcements (several features, or long enough to need `##` sections) open with a TL;DR right after the greeting: "here is the TL;DR:" followed by 3 to 5 bullets of one line each (bold lead-in, then the benefit), before any details. Many readers stop after it, so every bullet must stand on its own. Small one-topic announcements skip it.
 
 ## Blog
 
