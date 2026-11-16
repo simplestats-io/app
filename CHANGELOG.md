@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.1 - 2026-11-16
+
+### Fixed
+
+- Entry pages and page views whose path merely ends in letters like a file extension (e.g. `/blog/accept-json`, `/blog/holding-you-back`) are no longer dropped. Only a real dotted extension of the last path segment (e.g. `/report.pdf`) marks a file now. The same fix ships in laravel-client v6.0.1.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.0...v7.3.1
+
 ## v7.3.0 - 2026-11-16
 
 ### Added
