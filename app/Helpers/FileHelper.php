@@ -22,8 +22,15 @@ class FileHelper
         ];
     }
 
+    /**
+     * Matches only a dotted extension of the last path segment, so slugs that merely end in
+     * those letters (e.g. "/accept-json", "/commit-hash", "/holding-you-back") stay pages.
+     */
     public static function hasNonExecutableWebFileExtension(string $filename): bool
     {
-        return Str::endsWith(Str::lower($filename), self::getFileExtensions4NonWebExecutables());
+        $lastSegment = Str::lower(Str::afterLast($filename, '/'));
+        $extensions = array_map(fn (string $extension): string => '.'.$extension, self::getFileExtensions4NonWebExecutables());
+
+        return Str::endsWith($lastSegment, $extensions);
     }
 }
