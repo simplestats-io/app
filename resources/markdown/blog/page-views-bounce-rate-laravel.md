@@ -2,7 +2,7 @@
 title: "Page Views, Bounce Rate and Top Pages for Your Laravel App"
 slug: "page-views-bounce-rate-laravel"
 date: "2026-11-16"
-excerpt: "SimpleStats now counts the pages your visitors open. See page views, views per visitor, bounce rate and your top pages, broken down by channel, campaign and entry page. Server-side, without a JavaScript snippet, and free on every plan."
+excerpt: "SimpleStats now counts the pages your visitors open. See page views, views per visitor, bounce rate and your top pages, broken down by channel, campaign and entry page. Server-side, free on every plan, and with an importer for your Fathom Analytics history."
 tags:
   - Laravel
   - Analytics
@@ -99,6 +99,16 @@ Query strings are ignored, so `/pricing?plan=pro` and `/pricing` are the same pa
 **You will likely see more page views than in a JavaScript tool.** Page views are counted on your server, so ad blockers and declined cookie banners can't hide them. If you want to know why that matters, read [Server-Side Analytics for Laravel](/blog/server-side-analytics-laravel).
 
 All the details are in the docs: [Page Views](/docs/how-to-track-page-views.html) and [Counting Page Views](/docs/counting-page-views.html).
+
+---
+
+## Coming From Fathom? Bring Your History
+
+Switching tools usually means starting from zero. Not anymore: SimpleStats can now **import a Fathom Analytics export as it is**. Create a pageviews export in Fathom, upload the CSV on the Data Imports page under **Switch from another Tool**, and your history shows up next to your new data.
+
+Visitors, page views per page, entry pages, referrers and UTM parameters match your Fathom dashboard per day (or per hour with hourly grouping). The settings for the export are in the docs: [Importing a Fathom Analytics Export](/docs/how-to-import-existing-data.html#importing-a-fathom-analytics-export).
+
+Not on Fathom? You can also import visitors and page views from your own CSV files.
 
 ---
 
