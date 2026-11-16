@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import SectionBorder from "@/Components/SectionBorder.vue";
 import ActionTable from "@/Components/ActionTable.vue";
 import CreateDataImportForm from "@/Pages/DataImports/Partials/CreateDataImportForm.vue";
+import CreateToolImportForm from "@/Pages/DataImports/Partials/CreateToolImportForm.vue";
 import DataImportListRow from "@/Pages/DataImports/Partials/ShowDataImportRow.vue";
 import {onMounted, onUnmounted, watch} from "vue";
 import {router} from '@inertiajs/vue3'
@@ -13,6 +14,7 @@ const props = defineProps({
     projects: Array,
     dataImports: Object,
     importTypes: Array,
+    toolImportTypes: Array,
     mimeTypes: Array,
     permissions: Object,
 });
@@ -63,6 +65,15 @@ watch(() => props.dataImports.data, (newVal, oldVal) => {
                     :dataImports="dataImports"
                     :importTypes="importTypes"
                     :mimeTypes="mimeTypes"
+                    :permissions="permissions"
+                />
+
+                <SectionBorder />
+
+                <CreateToolImportForm
+                    :projects="projects"
+                    :dataImports="dataImports"
+                    :toolImportTypes="toolImportTypes"
                     :permissions="permissions"
                 />
 

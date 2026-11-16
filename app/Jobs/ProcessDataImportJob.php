@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Contracts\StatsImporter;
 use App\Exceptions\ImportCanceledException;
 use App\Helpers\AppHelper;
-use App\Imports\BaseStatsImport;
 use App\Mail\DataImportCanceled;
 use App\Mail\DataImportCompleted;
 use App\Mail\DataImportError;
@@ -91,25 +91,24 @@ class ProcessDataImportJob extends TrackableJob implements ShouldQueue
         }
     }
 
-    private function processPostImport(BaseStatsImport $importer): void
+    private function processPostImport(StatsImporter $importer): void
     {
         $importer->updateProgress();
 
         $this->trackedJob->finished_at = now();
     }
 
-    private function invalidateStatsAggregations(BaseStatsImport $importer): void
+    private function invalidateStatsAggregations(StatsImporter $importer): void
     {
         $modelClass = $importer->getModelClass();
 
-        $modelClass::unguard();
-        // we fake a stats model, cause we need it as the parameter here...
-        $stat = new $modelClass([
+        // unguarded() instead of unguard()/reguard(): reguard() would undo the app-wide
+        // Model::unguard() for every later job of this worker process.
+        $stat = $modelClass::unguarded(fn (): object => new $modelClass([
             'team_id' => $this->dataImport->team_id,
             'project_id' => $this->dataImport->project_id,
             'time' => $importer->getLowestImportedDate(),
-        ]);
-        $modelClass::reguard();
+        ]));
 
         resolve(StatsAggregationsService::class)->invalidateByStatsUpdate($stat);
     }

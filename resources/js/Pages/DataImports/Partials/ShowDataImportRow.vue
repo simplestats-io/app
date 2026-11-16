@@ -135,7 +135,7 @@ const getTrackedJobStatusOptions = (trackedJob) => {
         <PrimaryButton v-if="! dataImport.tracked_job?.finished_at" v-tooltip="'Cancel'" @click="confirmDataImportAction('cancel')">
             <XMarkIcon class="size-4" />
         </PrimaryButton>
-        <DangerButton v-else-if="! dataImport.rolled_back_at && dataImport.rows_imported > 0" v-tooltip="'Rollback'" @click="confirmDataImportAction('rollback')">
+        <DangerButton v-else-if="! dataImport.rolled_back_at && dataImport.rows_imported > 0 && dataImport.type !== 'page_views'" v-tooltip="'Rollback'" @click="confirmDataImportAction('rollback')">
             <ArrowUturnLeftIcon class="size-4" />
         </DangerButton>
         <span v-else>

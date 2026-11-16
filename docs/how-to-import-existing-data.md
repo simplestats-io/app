@@ -257,3 +257,91 @@ The first row of your import file must be a **heading row** (_a row in which eac
 ::: danger
 Remember that **Gross** and **Net** must be stated in cents!
 :::
+
+## Importing Visitor Data
+
+If you used another analytics tool before, you can bring your historical visitors over as well. Each row of the import file is one visitor.
+
+### Allowed Visitor Fields
+
+| Key                  | Type                | Description                                                                                                                          |
+|----------------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| **time**             | _string_ `required` | The time of the visit.<br/>Format: `Y-m-d H:i:s`, before or equal `now`                                                              |
+| **visitor_hash**     | _string_ `nullable` | A unique id of the visitor. Required if you want to [import page views](#importing-page-view-data) for this visitor afterwards. |
+
+::: details Optional fields
+
+| Key                  | Type                 | Description                                                                                                          |
+|----------------------|----------------------|----------------------------------------------------------------------------------------------------------------------|
+| **ip**               | _string_ `nullable`  | The `ip` of the visitor. _(does not get stored)_                                                                     |
+| **user_agent**       | _string_ `nullable`  | The `user_agent` of the visitor. _(does not get stored)_                                                             |
+| **track_referer**    | _string_ `nullable`  | The tracking `referer` of the visitor.                                                                               |
+| **track_source**     | _string_ `nullable`  | The tracking `source` of the visitor.                                                                                |
+| **track_medium**     | _string_ `nullable`  | The tracking `medium` of the visitor.                                                                                |
+| **track_campaign**   | _string_ `nullable`  | The tracking `campaign` of the visitor.                                                                              |
+| **track_term**       | _string_ `nullable`  | The tracking `term` of the visitor.                                                                                  |
+| **track_content**    | _string_ `nullable`  | The tracking `content` of the visitor.                                                                               |
+| **location_country** | _string_ `nullable`  | The location `country` of the visitor. (If the `ip` is set, we take the country that refers to it.)                  |
+| **location_region**  | _string_ `nullable`  | The location `region` of the visitor. (If the `ip` is set, we take the region that refers to it.)                    |
+| **location_city**    | _string_ `nullable`  | The location `city` of the visitor. (If the `ip` is set, we take the city that refers to it.)                        |
+| **device_type**      | _string_ `nullable`  | The device `type` of the visitor. (If the `user_agent` is set, we take the device type that refers to it.)           |
+| **device_platform**  | _string_ `nullable`  | The device `platform` (OS) of the visitor. (If the `user_agent` is set, we take the device platform that refers to it.) |
+| **device_browser**   | _string_ `nullable`  | The device `browser` of the visitor. (If the `user_agent` is set, we take the device browser that refers to it.)     |
+| **page_entry**       | _string_ `nullable`  | The page the visitor entered your app on, e.g. `/pricing`.                                                          |
+:::
+
+A visitor whose `visitor_hash` is already known (tracked live or imported before) is skipped, so a re-import never changes existing data.
+
+::: info
+Imported visitors count as events against your plan, just like tracked ones.
+:::
+
+## Importing Page View Data
+
+Page views belong to a visitor. Therefore, import your [visitors](#importing-visitor-data) **first**, then the page views. Each row is one page of one visitor.
+
+### Allowed Page View Fields
+
+| Key              | Type                 | Description                                                                                  |
+|------------------|----------------------|----------------------------------------------------------------------------------------------|
+| **visitor_hash** | _string_ `required`  | The `visitor_hash` of an already imported or tracked visitor.                                |
+| **page**         | _string_ `required`  | The path of the viewed page, e.g. `/pricing`. Query strings and fragments are removed.       |
+| **views**        | _integer_ `nullable` | How often the visitor viewed this page. Defaults to `1`.                                     |
+| **time**         | _string_ `nullable`  | The time of the last view. Defaults to the time of the visitor.<br/>Format: `Y-m-d H:i:s` |
+
+Rows of unknown visitors are skipped. Page views do not count as events against your plan.
+
+::: warning
+A page view import cannot be rolled back on its own. Rolling back the corresponding **visitor** import removes its page views as well.
+:::
+
+## Importing a Fathom Analytics Export
+
+Coming from [Fathom Analytics](https://usefathom.com)? You can upload a Fathom export as it is, no need to reshape it. In the **Switch from another Tool** section of the Data Imports page, select your project on the **Fathom Analytics** card, choose the CSV file and start the import.
+
+### Creating the Export in Fathom
+
+In Fathom, create a new export with the following settings:
+
+| Setting           | Value                                                                                                     |
+|-------------------|-----------------------------------------------------------------------------------------------------------|
+| **Data Type**     | Pageviews                                                                                                 |
+| **Timezone**      | The timezone of your _SimpleStats_ team                                                                   |
+| **Date Grouping** | Daily or Hourly                                                                                           |
+| **Dimensions**    | Page, Referrer, UTM Parameters<br/>_(optional: AI Source, Country, Region, City, Browser, Device Type, Operating System)_ |
+| **Metrics**       | Pageviews, Entries, Page Visitors                                                                         |
+
+### How the Data Is Imported
+
+Fathom only exports totals (e.g. "on October 15, 12 visitors came from laravel-news.com and entered on `/blog`"), not individual visitors. We therefore rebuild one visitor per entry, with its referrer, UTM parameters and entry page, and distribute the page views among these visitors.
+
+As a result, the following numbers match your Fathom dashboard per day (or per hour with hourly grouping):
+
+- visitors
+- page views and viewers per page
+- entry pages
+- referrers and UTM parameters
+
+The time of day within a day, and with it the **bounce rate**, is an approximation.
+
+The import creates visitors and page views, so it counts like a [visitor import](#importing-visitor-data) against your plan. Rolling back a Fathom import removes all of its visitors and page views.

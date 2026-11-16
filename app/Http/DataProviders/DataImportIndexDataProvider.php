@@ -25,6 +25,7 @@ class DataImportIndexDataProvider extends AbstractDataProvider
             'dataImports' => $this->loadImports(),
             'projects' => $this->loadProjects(),
             'importTypes' => $this->buildImportTypes(),
+            'toolImportTypes' => DataImportType::toolOptions(),
             'mimeTypes' => $this->buildMimeTypes(),
             'filters' => $this->request->all(),
             'permissions' => $this->buildPermissions(),
@@ -67,9 +68,7 @@ class DataImportIndexDataProvider extends AbstractDataProvider
 
     private function buildImportTypes(): Collection
     {
-        return collect(DataImportType::values())
-            ->map(fn ($item): array => ['id' => $item, 'name' => ucfirst($item)])
-            ->prepend(['id' => null, 'name' => 'Please Select']);
+        return collect([['id' => null, 'name' => 'Please Select'], ...DataImportType::toOptions()]);
     }
 
     private function buildMimeTypes(): Collection

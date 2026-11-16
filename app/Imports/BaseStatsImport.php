@@ -3,7 +3,9 @@
 namespace App\Imports;
 
 use App\Concerns\HasCounterByStatsUser;
+use App\Concerns\HasStatsTracking;
 use App\Concerns\HasStatsUserAssurance;
+use App\Contracts\StatsImporter;
 use App\Exceptions\ImportCanceledException;
 use App\Models\DataImport;
 use App\Services\SubscriptionService;
@@ -19,7 +21,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-abstract class BaseStatsImport implements ToModel, WithBatchInserts, WithChunkReading, WithHeadingRow, WithValidation
+abstract class BaseStatsImport implements StatsImporter, ToModel, WithBatchInserts, WithChunkReading, WithHeadingRow, WithValidation
 {
     const BATCH_CHUNK_SIZE = 1000;
 
@@ -46,7 +48,7 @@ abstract class BaseStatsImport implements ToModel, WithBatchInserts, WithChunkRe
         $this->lowestImportedDate = now()->toImmutable();
     }
 
-    public function getLowestImportedDate()
+    public function getLowestImportedDate(): CarbonInterface
     {
         return $this->lowestImportedDate;
     }
@@ -111,6 +113,10 @@ abstract class BaseStatsImport implements ToModel, WithBatchInserts, WithChunkRe
             // as batch in/upsert does not use eloquent, we have to add these things manually
             if (in_array(HasCounterByStatsUser::class, $modelConcerns)) {
                 $model->counter = $model->getCounter();
+            }
+
+            if (in_array(HasStatsTracking::class, $modelConcerns)) {
+                $model->resolveTrackingLookups();
             }
 
             if (in_array(HasStatsUserAssurance::class, $modelConcerns)) {

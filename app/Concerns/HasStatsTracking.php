@@ -55,6 +55,27 @@ trait HasStatsTracking
         });
     }
 
+    /**
+     * Batch inserts (data imports) skip the model events, so they have to resolve the
+     * track_* / location_* / device_* / page_entry values into lookup ids themselves.
+     * An empty value still yields its (null) id column: a batch insert needs the same
+     * columns on every row.
+     */
+    public function resolveTrackingLookups(): static
+    {
+        $presentTypes = StatsService::getStatsTypesFlat()
+            ->filter(fn (string $type): bool => array_key_exists($type, $this->attributes))
+            ->all();
+
+        self::handleStatsTypes($this);
+
+        foreach ($presentTypes as $type) {
+            $this->attributes["stats_{$type}_id"] ??= null;
+        }
+
+        return $this;
+    }
+
     private static function handleStatsTypes(BaseStat $statsModel): void
     {
         // Eloquent boots trait hooks in reflection method order, which is not stable

@@ -105,6 +105,14 @@ const currentImportNotFinishedYet = computed(() => {
                 <InputError :message="createDataImportForm.errors.type" class="mt-2" />
             </div>
 
+            <div v-if="createDataImportForm.type === 'page_views'" class="col-span-6 sm:col-span-4">
+                <InfoBox>
+                    Page views are attached to visitors that already exist, matched by <strong>visitor_hash</strong>.
+                    Import your visitors first. Rows of unknown visitors are skipped.
+                    Columns: <code>visitor_hash</code>, <code>page</code>, <code>views</code> (optional, default 1), <code>time</code> (optional).
+                </InfoBox>
+            </div>
+
             <div v-if="createDataImportForm.type" class="col-span-6 sm:col-span-4">
                 <InputLabel for="file" :value="`Import File (${mimeTypes.join(', ')})`" />
 

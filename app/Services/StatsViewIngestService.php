@@ -39,12 +39,19 @@ class StatsViewIngestService
     }
 
     /**
+     * Data imports pass $retryUnmatched = false: their visitors are written before the views,
+     * so an unknown hash will never show up later and is dropped right away.
+     *
      * @param  list<ViewItem>  $items
      */
-    public function ingest(Project $project, string $batchId, array $items, ?string $mode = null): void
+    public function ingest(Project $project, string $batchId, array $items, ?string $mode = null, bool $retryUnmatched = true): void
     {
         $visitors = $this->resolveVisitors($project, $items);
         [$matched, $unmatched] = $this->partitionByVisitor($items, $visitors);
+
+        if (! $retryUnmatched) {
+            $unmatched = [];
+        }
         $pageIds = $this->resolvePageIds($project, $matched);
 
         // null marks a batch that was already stored.
