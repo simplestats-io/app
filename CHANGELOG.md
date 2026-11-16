@@ -2,6 +2,28 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.2.0 - 2026-11-16
+
+### Added
+
+- **Page Views.** SimpleStats now shows how many pages your visitors open:
+  
+  - a **Views** column in every dashboard breakdown
+  - a **Top Pages** tab next to Entry Pages
+  - the new KPIs **Page Views**, **Views per Visitor** and **Bounce Rate**
+  
+  The numbers appear automatically once a project sends page views with [laravel-client v6](https://github.com/simplestats-io/laravel-client). They are also available in the Query API and the MCP tools, and they do not count against the monthly event quota. See [Page Views](https://simplestats.io/docs/how-to-track-page-views.html) and [Counting Page Views](https://simplestats.io/docs/counting-page-views.html).
+  
+- New ingest endpoint `POST /api/v1/stats-views` for page views. It has its own rate limit.
+  
+
+### Upgrade notes
+
+- The new tables are created by migrations, which the Docker image runs on start. No new environment variables are needed.
+- Page views are sent by apps running laravel-client v6 through their queue (not on the `sync` queue). A long-running worker (`queue:work` or Horizon) sends them once a minute.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.1.0...v7.2.0
+
 ## v7.1.0 - 2026-11-15
 
 ### Fixed
