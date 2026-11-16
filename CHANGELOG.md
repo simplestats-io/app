@@ -2,6 +2,29 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.0 - 2026-11-16
+
+### Added
+
+- **Visitor import:** import historical visitors with referrer, UTM parameters, entry page, location and device.
+- **Page view import:** attach page views to imported or tracked visitors via their `visitor_hash`.
+- **Fathom Analytics import:** upload a Fathom pageview export as it is on the new "Switch from another Tool" card on the Data Imports page. Visitors, page views, entry pages and sources match Fathom per day. See [How to import existing data](https://simplestats.io/docs/how-to-import-existing-data.html#importing-a-fathom-analytics-export).
+
+### Fixed
+
+- The user import failed when the file contained the documented tracking columns (`track_*`, `page_entry`, `location_*`, `device_*`).
+- A finished data import could make later queue jobs of the same worker drop attributes on save.
+
+### Upgrade notes
+
+- Contains a migration (`stats_visitors.data_import_id`, index built concurrently). It runs automatically on container start.
+
+### What's Changed
+
+* Bump laravel/framework from 12.70.1 to 12.71.0 by @dependabot[bot] in https://github.com/simplestats-io/app/pull/404
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.2.1...v7.3.0
+
 ## v7.2.1 - 2026-11-16
 
 ### Fixed
