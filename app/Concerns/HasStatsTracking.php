@@ -3,7 +3,7 @@
 namespace App\Concerns;
 
 use App\Helpers\AppHelper;
-use App\Helpers\FileHelper;
+use App\Helpers\PagePathHelper;
 use App\Models\BaseStat;
 use App\Models\Project;
 use App\Services\LocationService;
@@ -301,22 +301,7 @@ trait HasStatsTracking
     protected function pageEntry(): Attribute
     {
         return Attribute::make(
-            set: function (?string $value) {
-                if (is_null($value)) {
-                    return null;
-                }
-
-                // if the page is only "/" we keep it else remove last "/" from page entry for consistency
-                if ($value !== '/' && Str::endsWith($value, '/')) {
-                    $value = Str::beforeLast($value, '/');
-                }
-
-                if (FileHelper::hasNonExecutableWebFileExtension($value)) {
-                    return null;
-                }
-
-                return $value;
-            },
+            set: fn (?string $value): ?string => PagePathHelper::normalize($value),
         );
     }
 }

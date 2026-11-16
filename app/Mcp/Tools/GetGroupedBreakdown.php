@@ -20,7 +20,7 @@ class GetGroupedBreakdown extends Tool
 {
     use ResolvesStatsFilters;
 
-    private const array SORTS = ['net', 'visitors', 'reg', 'cr', 'dau', 'arpu'];
+    private const array SORTS = ['net', 'visitors', 'reg', 'cr', 'dau', 'arpu', 'views', 'vpv', 'bounce_rate'];
 
     private const array MONEY_KEYS = ['net', 'gross', 'arpu', 'arpv', 'arps', 'arpdau', 'mrr'];
 
@@ -30,7 +30,7 @@ class GetGroupedBreakdown extends Tool
     {
         try {
             $request->validate([
-                'dimension' => ['required', Rule::in(StatsService::getStatsTypesFlat()->all())],
+                'dimension' => ['required', Rule::in($this->dimensions())],
                 'sort' => ['nullable', Rule::in(self::SORTS)],
                 'limit' => ['nullable', 'integer', 'min:1', 'max:25'],
                 ...$this->rangeRules(),
@@ -43,7 +43,8 @@ class GetGroupedBreakdown extends Tool
                 $filters,
                 $dimension,
                 (int) ($request->get('limit') ?? 10),
-                $request->get('sort') ?? 'net',
+                $request->get('sort') ?? ($dimension === StatsService::TOP_PAGES_TYPE ? 'views' : 'net'),
+                withViews: true,
             ), self::MONEY_KEYS);
 
             return Response::structured([
@@ -52,7 +53,7 @@ class GetGroupedBreakdown extends Tool
                 'rows' => $rows,
                 'note' => $rows === []
                     ? 'No data for this range/filter.'
-                    : 'Monetary values are in the scope currency, per-range. A name of "Direct / Unknown" means no referrer was recorded. If the requested sort is not available for this project, results fall back to sorting by net revenue.',
+                    : 'Monetary values are in the scope currency, per-range. A name of "Direct / Unknown" means no referrer was recorded. If the requested sort is not available for this project, results fall back to sorting by net revenue. views are all pages viewed by the visitors of a row (for page_entry: by visitors who entered there, not views of that page); views of a single page are in the top_pages dimension.',
             ]);
         } catch (ValidationException $e) {
             return Response::error('Invalid arguments: '.collect($e->errors())->flatten()->implode(' '));
@@ -64,18 +65,26 @@ class GetGroupedBreakdown extends Tool
     }
 
     /**
+     * @return list<string>
+     */
+    private function dimensions(): array
+    {
+        return [...StatsService::getStatsTypesFlat()->all(), StatsService::TOP_PAGES_TYPE];
+    }
+
+    /**
      * @return array<string, JsonSchema>
      */
     public function schema(JsonSchema $schema): array
     {
         return [
             'dimension' => $schema->string()
-                ->enum(StatsService::getStatsTypesFlat()->all())
+                ->enum($this->dimensions())
                 ->required()
                 ->description('The dimension to group by. Use list-stats-capabilities to see all dimensions with titles.'),
             'sort' => $schema->string()
                 ->enum(self::SORTS)
-                ->description('Metric to sort by: net (net revenue, default), visitors, reg (registrations), cr (conversion rate), dau (active users), arpu.'),
+                ->description('Metric to sort by: net (net revenue, default), visitors, reg (registrations), cr (conversion rate), dau (active users), arpu, views, vpv (views per visitor), bounce_rate. top_pages sorts by views or visitors.'),
             'limit' => $schema->integer()
                 ->description('Number of top entries to return (1-25, default 10).'),
             ...$this->rangeSchema($schema),

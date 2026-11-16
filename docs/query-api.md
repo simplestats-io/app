@@ -123,6 +123,8 @@ Results are returned in **reverse** chronological order (most recent first).
 }
 ```
 
+Projects that receive [page views](how-to-track-page-views.md) get five more fields per row: `views` (all pages viewed by the visitors of the row), `viewers` (visitors with at least one tracked view), `bounces`, `vpv` (views per viewer) and `bounce_rate` (in %). With `stats_type=top_pages` every row is a page with its `views` and `visitors`.
+
 **Response with comparison**
 
 When the `comparison` parameter is set to `period` or `year`, the response includes an additional `data_previous` array with the same structure:
@@ -209,7 +211,7 @@ Returns analytics data grouped by a specific group (e.g., sources, countries, br
 | Key            | Type                 | Description                                                                 |
 |----------------|----------------------|-----------------------------------------------------------------------------|
 | **stats_type**  | _string_ `required`  | The group to aggregate by. See [Available Stats Types](#available-stats-types) below. |
-| **stats_sort**  | _string_ `optional`  | Sort results by: `name`, `visitors`, `reg`, `cr`, `dau`, `net`, `total`. Default: `visitors`. |
+| **stats_sort**  | _string_ `optional`  | Sort results by: `name`, `visitors`, `reg`, `cr`, `dau`, `net`, `total`, and with page views `views`, `vpv`, `bounce_rate`. Default: `visitors` (`views` for `top_pages`). |
 | **limit**      | _integer_ `optional` | Maximum number of results (1-100). Default: 10.                             |
 | **preset**     | _string_ `optional`  | A predefined date range. See [Available Presets](#available-presets) below.  |
 | **range_type**  | _string_ `optional`  | The granularity: `hours`, `days`, `weeks`, `months`, `years`.               |
@@ -319,7 +321,7 @@ Use these values for the `stats_type` parameter in the [Grouped Stats](#grouped-
 | Category | Values |
 |----------|--------|
 | Tracking | `track_referer` (Referrers), `track_source` (Sources), `track_medium` (Mediums), `track_campaign` (Campaigns), `track_term` (Terms), `track_content` (Content) |
-| Pages | `page_entry` (Entry pages) |
+| Pages | `page_entry` (Entry pages), `top_pages` (Top pages, only in Grouped Stats, needs [page views](how-to-track-page-views.md)) |
 | Location | `location_country` (Countries), `location_region` (Regions), `location_city` (Cities) |
 | Device | `device_platform` (Platforms), `device_browser` (Browsers), `device_type` (Device sizes) |
 | Events | `custom_event_name` (Custom events) |

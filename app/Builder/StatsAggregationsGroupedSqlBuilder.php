@@ -18,6 +18,7 @@ class StatsAggregationsGroupedSqlBuilder extends BaseSqlBuilder
         protected bool $withNau = false,
         /** @var array{int, int, int}|array{} day offsets per checkpoint, empty = retention columns off */
         protected array $retentionCheckpoints = [],
+        protected bool $withViews = false,
     ) {}
 
     public function build(): string
@@ -127,6 +128,19 @@ class StatsAggregationsGroupedSqlBuilder extends BaseSqlBuilder
      */
     protected function getLT_VISITORS(): string
     {
+        if ($this->withViews) {
+            return "lt_visitors AS (
+                SELECT COALESCE(stats.$this->statsDBType, $this->typeIdFallback) as type_id, COUNT(*) as count,
+                    COALESCE(SUM(vv.views), 0) AS views,
+                    COUNT(vv.views) AS viewers,
+                    COUNT(*) FILTER (WHERE vv.views = 1) AS bounces
+                FROM stats_visitors stats
+                ".StatsAggregationsSqlBuilder::viewsJoin()."
+                WHERE :projectCondition AND stats.time >= ':startDateStart' AND stats.time <= ':endDateEnd' :trackingCondition :eventConditionVisitor :propertyConditionVisitor :cohortConditionVisitor
+                GROUP BY type_id
+            )";
+        }
+
         return "lt_visitors AS (
             SELECT COALESCE(stats.$this->statsDBType, $this->typeIdFallback) as type_id, COUNT(*) as count
             FROM stats_visitors stats
@@ -262,6 +276,17 @@ class StatsAggregationsGroupedSqlBuilder extends BaseSqlBuilder
             COALESCE(lt_visitors.count, 0) AS visitors,
             COALESCE(lt_net.count, 0) AS net,
             ROUND(COALESCE((lt_net.count / NULLIF(lt_visitors.count, 0))::numeric, 0), 4) AS arpv';
+
+        if ($this->withViews) {
+            // Ratios use viewers, not visitors: visitors without any reported view (before
+            // the client sent views, or no qualifying page) must not dilute them.
+            $sql .= ',
+                COALESCE(lt_visitors.views, 0) AS views,
+                COALESCE(lt_visitors.viewers, 0) AS viewers,
+                COALESCE(lt_visitors.bounces, 0) AS bounces,
+                ROUND(COALESCE(lt_visitors.views * 1.0 / NULLIF(lt_visitors.viewers, 0), 0), 2) AS vpv,
+                ROUND(COALESCE(lt_visitors.bounces * 100.0 / NULLIF(lt_visitors.viewers, 0), 0), 2) AS bounce_rate';
+        }
 
         if ($this->withMrr) {
             $sql .= ',

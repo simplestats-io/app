@@ -1,6 +1,6 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
-import {Link} from "@inertiajs/vue3";
+import {Link, usePage} from "@inertiajs/vue3";
 import axios from 'axios';
 import StatsGroupTable from "./StatsGroupTable.vue";
 import SegmentedToggle from "@/Components/SegmentedToggle.vue";
@@ -73,8 +73,15 @@ const hasVisitorData = computed(() => data.value.some((item) => Number(item.visi
 const showVisitors = computed(() => currentProjectHasUsages(['visitors']) && hasVisitorData.value);
 const showCr = computed(() => showVisitors.value && currentProjectHasUsages(['users', 'visitors']));
 
+const pageViewsVisible = !! usePage().props.pageViews?.visible;
+const showViews = computed(() => pageViewsVisible && showVisitors.value);
+
 const columns = computed(() => [
-    {key: 'visitors', label: 'Visitors', labelSmall: 'Visits', format: 'number', width: '13%', visible: showVisitors.value},
+    {key: 'visitors', label: 'Visitors', labelSmall: 'Vis.', format: 'number', width: '13%', visible: showVisitors.value},
+    {key: 'views', label: 'Views', format: 'optionalNumber', width: '11%', visible: showViews.value, tooltip: {
+        title: 'Page Views',
+        text: 'Pages viewed by the visitors with this value.',
+    }},
     {key: 'reg', label: 'Regs', format: 'number', width: '13%', visible: currentProjectHasUsages(['users'])},
     {key: 'cr', label: 'Conv.', labelSmall: 'CR', format: 'percent', width: '13%', visible: showCr.value},
     {key: 'net', label: 'Revenue', labelSmall: 'Rev.', format: 'currency', width: '15%', visible: currentProjectHasUsages(['payments'])},

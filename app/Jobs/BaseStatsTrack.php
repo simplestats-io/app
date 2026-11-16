@@ -12,6 +12,8 @@ abstract class BaseStatsTrack implements ShouldQueue
 {
     use Queueable;
 
+    protected ?Project $project = null;
+
     /**
      * Create a new job instance.
      */
@@ -44,7 +46,9 @@ abstract class BaseStatsTrack implements ShouldQueue
 
     public function handle(): void
     {
-        auth()->setUser(Project::withoutGlobalScope('team')->findOrFail(Context::get('project_id')));
+        $this->project = Project::withoutGlobalScope('team')->findOrFail(Context::get('project_id'));
+
+        auth()->setUser($this->project);
     }
 
     protected function resolveVisitorHash(): void

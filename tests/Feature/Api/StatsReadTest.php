@@ -3,7 +3,9 @@
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\StatsViewIngestService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     $this->seed();
@@ -229,4 +231,21 @@ test('the api rate limit still resolves the plan of a soft deleted owner', funct
 
     expect($team->fresh()->owner)->toBeNull();
     expect($team->fresh()->billingOwner->id)->toBe($owner->id);
+});
+
+test('stats grouped serves top pages and view columns once the project has page views', function (): void {
+    DB::table('stats_visitors')->insert([
+        'team_id' => $this->project->team_id, 'project_id' => $this->project->id, 'visitor_hash' => 'api-viewer',
+        'stats_track_source_id' => null, 'time' => now()->format('Y-m-d H:i:s'), 'time_utc' => now()->format('Y-m-d H:i:s'),
+    ]);
+    resolve(StatsViewIngestService::class)->ingest($this->project, (string) Str::uuid(), [
+        ['visitor_hash' => 'api-viewer', 'page' => '/pricing', 'views' => 3, 'last_viewed_at' => now()->getTimestamp()],
+    ]);
+
+    $topPages = $this->getJson('/api/v1/stats/grouped?stats_type=top_pages&preset=last_7_days', apiHeaders($this->token));
+    $sources = $this->getJson('/api/v1/stats/grouped?stats_type=track_referer&preset=last_7_days&limit=100', apiHeaders($this->token));
+
+    $topPages->assertOk()->assertJsonPath('data.0.name', 'pricing/')->assertJsonPath('data.0.views', 3);
+    $sources->assertOk();
+    expect(collect($sources->json('data'))->sum('views'))->toBeGreaterThanOrEqual(3);
 });

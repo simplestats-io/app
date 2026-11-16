@@ -276,11 +276,25 @@ class StatsAggregationsSqlBuilder extends BaseSqlBuilder
     protected function getPD_VISITORS(): string
     {
         return 'pd_visitors_cte AS (
-            SELECT '.$this->getDateFormat('stats.time', ':dateFormat')." AS date, COUNT(*) AS count
+            SELECT '.$this->getDateFormat('stats.time', ':dateFormat').' AS date, COUNT(*) AS count,
+                COALESCE(SUM(vv.views), 0) AS views,
+                COUNT(vv.views) AS viewers,
+                COUNT(*) FILTER (WHERE vv.views = 1) AS bounces
             FROM stats_visitors stats
+            '.self::viewsJoin()."
             WHERE :projectCondition AND stats.time >= ':startDateStart' AND stats.time <= ':endDateEnd' :trackingCondition :eventConditionVisitor :propertyConditionVisitor :cohortConditionVisitor
             GROUP BY date
         )";
+    }
+
+    /**
+     * The join is 1:1 per visitor, so COUNT(*) stays the visitor count and every filter on
+     * the stats alias narrows the views too.
+     */
+    public static function viewsJoin(): string
+    {
+        return "LEFT JOIN stats_visitor_views vv ON vv.stats_visitor_id = stats.id
+                AND :viewsProjectCondition AND vv.time >= ':startDateStart' AND vv.time <= ':endDateEnd'";
     }
 
     protected function getPD_GROSS(): string
@@ -399,6 +413,9 @@ class StatsAggregationsSqlBuilder extends BaseSqlBuilder
 
         $sql .= '
             COALESCE(pd_visitors_cte.count, 0) AS pd_visitor,
+            COALESCE(pd_visitors_cte.views, 0) AS pd_view,
+            COALESCE(pd_visitors_cte.viewers, 0) AS pd_viewer,
+            COALESCE(pd_visitors_cte.bounces, 0) AS pd_bounce,
             COALESCE(pd_gross_cte.count, 0) AS pd_gross,
             COALESCE(pd_net_cte.count, 0) AS pd_net,
             COALESCE(lt_visitor_cte.count, 0) AS lt_visitor,

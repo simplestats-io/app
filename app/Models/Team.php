@@ -87,6 +87,11 @@ class Team extends JetstreamTeam
         return $this->events_count_overall > 0;
     }
 
+    public function hasRecentPageViews(): bool
+    {
+        return $this->projects()->withRecentPageViews()->exists();
+    }
+
     public function tracksUsage(int $bit): bool
     {
         return $this->projects()

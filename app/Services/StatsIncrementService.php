@@ -10,6 +10,7 @@ use App\Models\StatsLogin;
 use App\Models\StatsPayment;
 use App\Models\StatsUser;
 use App\Models\StatsVisitor;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,7 @@ class StatsIncrementService
         'pd_reg', 'lt_reg',
         'pd_tau', 'pd_nau', 'lt_tau', 'pd_dau', 'pd_dapu', 'pd_daapu',
         'pd_gross', 'pd_net', 'lt_net',
+        'pd_view', 'pd_viewer', 'pd_bounce',
     ];
 
     public function __construct(
@@ -59,6 +61,62 @@ class StatsIncrementService
             }
 
             $this->applyToOpenBucket($stat, $case, $bucketStart, $contributions);
+        }
+    }
+
+    /**
+     * Views are additive and belong to exactly one bucket (the visitor's arrival), so unlike
+     * the other stats they are incremented in closed buckets too, instead of invalidating
+     * everything from the bucket onwards. A bucket that is not cached stays untouched, its
+     * next lazy fill computes it from the raw tables.
+     *
+     * @param  list<array{attrs: array<string, mixed>, time: string, increments: array<string, int>}>  $contributions
+     */
+    public function handleViews(int $teamId, int $projectId, array $contributions): void
+    {
+        if (! config('app.stats_aggregation_enabled') || $contributions === []) {
+            return;
+        }
+
+        foreach (StatsRangeType::cases() as $case) {
+            $byBucket = [];
+
+            foreach ($contributions as $contribution) {
+                $bucketStart = $case->rangeStart(CarbonImmutable::parse($contribution['time']));
+                $byBucket[$bucketStart->format('Y-m-d H:i:s')][] = $contribution;
+            }
+
+            foreach ($byBucket as $bucketStart => $bucketContributions) {
+                $rows = $this->bucketRows($teamId, $projectId, $case, CarbonImmutable::parse($bucketStart));
+                $this->applyToRows($rows, $bucketContributions);
+            }
+        }
+    }
+
+    /**
+     * Fallback when the increments of a batch got lost (job died after its commit):
+     * dropping the cached buckets of its visitors lets the next lazy fill recount them.
+     *
+     * @param  list<string>  $times
+     */
+    public function invalidateViewBuckets(int $teamId, int $projectId, array $times): void
+    {
+        if (! config('app.stats_aggregation_enabled')) {
+            return;
+        }
+
+        foreach (StatsRangeType::cases() as $case) {
+            $bucketStarts = collect($times)
+                ->map(fn (string $time): string => $case->rangeStart(CarbonImmutable::parse($time))->format('Y-m-d H:i:s'))
+                ->unique();
+
+            foreach ($bucketStarts as $bucketStart) {
+                $ids = $this->bucketRows($teamId, $projectId, $case, CarbonImmutable::parse($bucketStart))->pluck('id');
+
+                if ($ids->isNotEmpty()) {
+                    StatsAggregation::whereIn('id', $ids)->delete();
+                }
+            }
         }
     }
 
@@ -174,8 +232,15 @@ class StatsIncrementService
      */
     private function applyToOpenBucket(BaseStat $stat, StatsRangeType $case, CarbonInterface $bucketStart, array $contributions): void
     {
-        $rows = $this->openBucketRows($stat, $case, $bucketStart);
+        $this->applyToRows($this->bucketRows($stat->team_id, $stat->project_id, $case, $bucketStart), $contributions);
+    }
 
+    /**
+     * @param  Collection<int, StatsAggregation>  $rows
+     * @param  array<int, array{attrs: array<string, mixed>, increments: array<string, int|float>}>  $contributions
+     */
+    private function applyToRows(Collection $rows, array $contributions): void
+    {
         $invalidateIds = [];
         $increments = [];
 
@@ -213,17 +278,14 @@ class StatsIncrementService
     /**
      * @return Collection<int, StatsAggregation>
      */
-    private function openBucketRows(BaseStat $stat, StatsRangeType $case, CarbonInterface $bucketStart): Collection
+    private function bucketRows(int $teamId, int $projectId, StatsRangeType $case, CarbonInterface $bucketStart): Collection
     {
         return $this->withinBucket(StatsAggregation::query(), $case, $bucketStart)
             ->where('type', $case->value)
             ->where('kind', 'period')
-            ->where(function (\Illuminate\Contracts\Database\Query\Builder $query) use ($stat): void {
-                $query->where(function (\Illuminate\Contracts\Database\Query\Builder $query) use ($stat): void {
-                    $query->where('team_id', $stat->team_id)->whereNull('project_id');
-                })->orWhere(function (\Illuminate\Contracts\Database\Query\Builder $query) use ($stat): void {
-                    $query->where('team_id', $stat->team_id)->where('project_id', $stat->project_id);
-                });
+            ->where('team_id', $teamId)
+            ->where(function (Builder $query) use ($projectId): void {
+                $query->whereNull('project_id')->orWhere('project_id', $projectId);
             })
             ->get(['id', 'filter']);
     }

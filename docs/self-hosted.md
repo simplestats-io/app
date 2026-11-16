@@ -164,7 +164,7 @@ On a platform that replaces the local disk on every deploy, an archive written t
 
 ## Database growth
 
-Stats rows are small (a few hundred bytes including indexes). For typical use cases PostgreSQL handles tens of millions of rows on these tables without trouble on commodity hardware.
+Stats rows are small (a few hundred bytes including indexes). For typical use cases PostgreSQL handles tens of millions of rows on these tables without trouble on commodity hardware. [Page views](how-to-track-page-views.md) add about 150 bytes per visitor and day, plus a row per visitor and viewed page. The scheduler prunes their short-lived bookkeeping tables and refreshes the previous day's cached page view numbers every night, so keep it running.
 
 ## Integration in non-classic Laravel setups
 

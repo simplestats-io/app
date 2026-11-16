@@ -139,7 +139,12 @@ class StatsDetailsService
         bool $withTimeToConvert = false,
         bool $withRetention = false,
         bool $withNau = false,
+        bool $withViews = false,
     ): array {
+        if ($statsType === StatsService::TOP_PAGES_TYPE) {
+            return $this->statsAggregationsService->getTopPagesData($filters, $sort ?? 'views', $limit)->values()->all();
+        }
+
         if ($statsType === 'property') {
             return $this->statsAggregationsService->getAggregatedPropertyData(
                 $filters,
@@ -147,6 +152,7 @@ class StatsDetailsService
                 $sort ?? 'reg',
                 $limit,
                 $lifetime,
+                $withViews,
             )->values()->toArray();
         }
 
@@ -159,6 +165,7 @@ class StatsDetailsService
             $withTimeToConvert,
             $withRetention,
             $withNau,
+            $withViews,
         )->values()->toArray();
     }
 
@@ -179,10 +186,24 @@ class StatsDetailsService
             $stat['pd_net'] = round($stat['pd_net'], 2);
             $stat['lt_net'] = round($stat['lt_net'], 2);
 
+            // Ratios over viewers, not visitors: visitors without a reported view must not dilute them.
+            if (isset($stat['pd_view'])) {
+                $stat['pd_vpv'] = round($this->statsService->safeDivision($stat['pd_view'], $stat['pd_viewer']), 2);
+                $stat['pd_bounce_rate'] = round($this->statsService->safeDivision($stat['pd_bounce'], $stat['pd_viewer']) * 100, 2);
+            }
+
             $stat['pd_fee'] = $stat['pd_gross'] - $stat['pd_net'];
             $stat['lt_arpv'] = round($this->statsService->safeDivision($stat['lt_net'], $stat['lt_visitor']), 2);
             unset($stat['pd_tau'], $stat['pd_pu']);
         } unset($stat);
+    }
+
+    /**
+     * @return array{visible: bool, since: ?string}
+     */
+    public function getPageViewsState(StatsFilterDto $filters): array
+    {
+        return $this->statsAggregationsService->pageViewsState($filters);
     }
 
     public function getRangeTypes(): Collection

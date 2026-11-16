@@ -70,6 +70,7 @@ class StatsGroupsDataProvider extends AbstractDataProvider
             // and a request only carries one metric value.
             in_array($this->request->input('metric'), ['retention', 'nau'], true),
             $this->request->input('metric') === 'nau',
+            withViews: true,
         );
     }
 }

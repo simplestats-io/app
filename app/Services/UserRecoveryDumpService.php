@@ -37,6 +37,7 @@ class UserRecoveryDumpService
         'stats_location_countries',
         'stats_location_regions',
         'stats_page_entries',
+        'stats_pages',
         'stats_track_campaigns',
         'stats_track_contents',
         'stats_track_media',
@@ -117,6 +118,8 @@ class UserRecoveryDumpService
         $sections[] = $this->section('stats_custom_property_values', $byTeam('stats_custom_property_values'));
 
         $sections[] = $this->section('stats_visitors', $byTeam('stats_visitors'));
+        $sections[] = $this->section('stats_visitor_views', $byTeam('stats_visitor_views'));
+        $sections[] = $this->section('stats_visitor_pages', $byTeam('stats_visitor_pages'));
         $sections[] = $this->section('stats_users', $byTeam('stats_users'));
         $sections[] = $this->section('stats_logins', $byTeam('stats_logins'));
         $sections[] = $this->section('stats_payments', $byTeam('stats_payments'));

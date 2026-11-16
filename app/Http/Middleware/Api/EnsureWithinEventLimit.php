@@ -9,6 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureWithinEventLimit
 {
+    /** Seconds the page view buffer of the client stops sending after this response. */
+    public const int PAUSE_SECONDS = 3600;
+
     public function __construct(
         protected SubscriptionService $subscriptionService,
     ) {}
@@ -29,7 +32,7 @@ class EnsureWithinEventLimit
         $project = $request->user();
 
         if ($project && $this->subscriptionService->hasReachedMonthlyEventLimit($project->team)) {
-            return response()->json(['message' => 'Monthly event limit reached.']);
+            return response()->json(['message' => 'Monthly event limit reached.', 'pause' => self::PAUSE_SECONDS]);
         }
 
         return $next($request);

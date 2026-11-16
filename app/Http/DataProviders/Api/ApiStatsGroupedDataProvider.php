@@ -46,12 +46,19 @@ class ApiStatsGroupedDataProvider extends AbstractApiStatsDataProvider
      */
     private function groupedData(StatsFilterDto $filters, array $hiddenKeys): array
     {
-        $data = $this->statsAggregationsService->getAggregatedGroupedData(
-            $filters,
-            $this->request->stats_type,
-            $this->request->stats_sort ?? 'visitors',
-            $this->request->limit ?? 10,
-        )->values()->toArray();
+        $data = $this->request->stats_type === StatsService::TOP_PAGES_TYPE
+            ? $this->statsAggregationsService->getTopPagesData(
+                $filters,
+                $this->request->stats_sort ?? 'views',
+                $this->request->limit ?? 10,
+            )->values()->all()
+            : $this->statsAggregationsService->getAggregatedGroupedData(
+                $filters,
+                $this->request->stats_type,
+                $this->request->stats_sort ?? 'visitors',
+                $this->request->limit ?? 10,
+                withViews: true,
+            )->values()->toArray();
 
         if ($hiddenKeys === []) {
             return $data;

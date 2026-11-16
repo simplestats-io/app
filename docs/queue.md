@@ -21,6 +21,8 @@ Here you can define to which queue the tracking **API calls** should be **dispat
 
 ```
 
+Since v6 every [page view](how-to-track-page-views.md) is a small job as well. A running queue worker collects them and sends them in one request per minute.
+
 ## Job Monitoring
 
 It's important to know if your queue is **running** and if the API calls are getting dispatched **successfully**. For that, if you want something light-weight, we highly recommend spaties [laravel-failed-job-monitor](https://github.com/spatie/laravel-failed-job-monitor) package, which can notify you via mail or Slack when a queued job fails. If you want something more **robust**, you may use [Horizon](https://laravel.com/docs/12.x/horizon), Laravel's incredible powerful native queue monitoring service!

@@ -144,6 +144,7 @@ The app must handle **hundreds of thousands of requests** and store massive amou
 2. **Users**: Registered users (linked to customer's User model)
 3. **Logins**: User authentication events
 4. **Payments**: Financial transactions with gross/net amounts in cents
+5. **Page Views**: Pages opened by tracked visitors, counted per visitor-day and per page (see "Page Views" below)
 
 ### Flexible Tracking Configuration
 
@@ -221,6 +222,7 @@ Rate limits are defined per plan in `config/spark.php` under `ApiRateLimit`:
 | POST | `/stats-user` | Track new registration |
 | POST | `/stats-login` | Track login event |
 | POST | `/stats-payment` | Track payment (amounts in cents) |
+| POST | `/stats-views` | Track a batch of page views (own rate limiter, not counted as events) |
 
 ### Important API Rules
 
@@ -279,7 +281,7 @@ Several pieces of logic are **deliberately duplicated** across three independent
 - **(B) laravel-client** — `packages/simplestats-io/laravel-client/`, runs inside customer apps, must stay DB-agnostic, lightweight, and Laravel-version-spanning.
 - **(C) php-client** — `packages/simplestats-io/php-client/`, framework-agnostic plain PHP (no Laravel).
 
-**Why no shared package (decision, 2026-07):** once you subtract the parts that legitimately diverge (B needs the inbound `Request` for Sec-Fetch/prefetch/`except`; A needs `LocationService` for datacenter-IP/VPN filtering; the `DeviceDetectorCache` store differs; "own domain" resolves from DB in A vs `config('app.url')` in B vs an argument in C; B must run on Laravel 8-13 and any DB), the truly shareable surface is small. A shared dependency pulled into the customer-facing B would force a coordinated B release + customer `composer update` for every shared-code change, against B's lightweight/minimal-deps constraint. The cost outweighs the churn. **If this shared surface keeps growing or a 4th consumer appears, do NOT create a new package** — promote the pure-PHP primitives into the existing framework-agnostic **php-client (C)** and have A and B depend on it.
+**Why no shared package (decision, 2026-07):** once you subtract the parts that legitimately diverge (B needs the inbound `Request` for Sec-Fetch/prefetch/`except`; A needs `LocationService` for datacenter-IP/VPN filtering; the `DeviceDetectorCache` store differs; "own domain" resolves from DB in A vs `config('app.url')` in B vs an argument in C; B must run on Laravel 11-13 and any DB), the truly shareable surface is small. A shared dependency pulled into the customer-facing B would force a coordinated B release + customer `composer update` for every shared-code change, against B's lightweight/minimal-deps constraint. The cost outweighs the churn. **If this shared surface keeps growing or a 4th consumer appears, do NOT create a new package** — promote the pure-PHP primitives into the existing framework-agnostic **php-client (C)** and have A and B depend on it.
 
 Because it is kept in sync by hand, **treat every item below as a contract: change one side, change all listed sides in the same PR.**
 
@@ -293,11 +295,26 @@ Because it is kept in sync by hand, **treat every item below as a contract: chan
 | **IP resolution / CIDR** | – (receives `ip` in payload) | `CheckTracking::resolveIp/normalizeIp/isPublicIp/ipInCidrRange` | `TrackingData::resolveIp/isPublicIp` | B is a superset of C (header priority `CF-Connecting-IP → True-Client-IP → X-Forwarded-For → X-Real-IP`, first public IP). The `FILTER_FLAG_NO_PRIV_RANGE \| FILTER_FLAG_NO_RES_RANGE` idiom also recurs in A. |
 | **`SubscriptionInterval`** | `app/Enums/SubscriptionInterval.php` | `src/Enums/SubscriptionInterval.php` | – | Backing **string values** (`month`/`year`) must match; A validates `Rule::enum(...)` against what B sends. |
 | **Payload key contract** | `HasStatsTrackingValidation` + `Stats*Validator` | `SimplestatsClient::trackVisitor/trackUser/…` | client payloads | Field names (`visitor_hash`, `track_source`, `page_entry`, …) are an unversioned wire contract across the API boundary. |
+| **Page path normalization** | `App\Helpers\PagePathHelper::normalize()` (+ `FileHelper` extension list, `Str::limit(…, 252)`) | `src/Services/PagePath.php` | – | Drop query + fragment, strip trailing slash except `/`, **keep case**, skip non-page file extensions. Entry pages and Top Pages must read the same path, so both sides normalize identically. |
+| **Page view batch** (`POST /stats-views`) | `StatsViewRequest` + `StatsViewItemsSanitizer` | `src/Services/PageViewBuffer.php` + `src/Jobs/SendPageViews.php` | – | `{batch_id, views: [{h, t, n, p}], meta.mode}`. **`t` is a second time format: Unix seconds (UTC, minute bucket)**, not `Y-m-d H:i:s P`. `batch_id` is generated once when the batch is sealed and reused on every retry; A keeps the markers 72 h, so B's retry ladder must stay below that (about 22 h today). Response `pause` (seconds) makes B stop sending. |
 | **tracking_codes config** | `config/simplestats-client.php` (app's own dogfood copy) | `config/simplestats-client.php` (package default) | – | See also "Keep Client Config in Sync (Three Places)". |
 
 **Known current drifts (fix opportunistically, don't let them grow):**
 - **Host extraction:** B's `extractHost()` does **not** lowercase the host, while A/C do. Mixed-case referers can compare differently.
 - **tracking_codes `source`:** the app copy still lists `['utm_source', 'ref', 'referer', 'referrer']`; the package (correct current design) is `['utm_source', 'ref']` (URL `?referer=` params are intentionally no longer tracked). The app dogfood copy is stale.
+
+## Page Views
+
+Since laravel-client v6 the client reports every qualified page view (including the visitor's first one, the visitor event is no view) as one small queue job; a long-running worker buffers them in RAM and sends one batch per minute. Page views are **on by default** in the client (always off on `sync`/`deferred`/`background` queues; the only option is `page_views.enabled`, everything else is opinionated and hard-coded) and **do not count as events** against the plan quota.
+
+Backend design (keep these properties when touching it):
+
+- **Storage:** `stats_visitor_views` (one row per visitor-day: total `views`, `last_viewed_at`) and `stats_visitor_pages` (visitor x page) plus the team-scoped lookup `stats_pages`. Both carry copies of `team_id`/`project_id`/`time` from `stats_visitors` (written via `INSERT ... SELECT`, never from PHP) so queries can range-scan and hash join them. No click order, no per-click timestamps.
+- **Ingest** (`StatsViewIngestService`): query builder only, never Eloquent (a `StatsVisitor` update would fire the observer and wipe the cache). The batch marker (`stats_view_batches`) and the upserts share one transaction, so a retry is either fully counted or not at all. Hashes not yet known go to `stats_views_pending` and are retried after 2, 15 and 90 minutes (`ResolvePendingStatsViews`), then dropped. Hard cap 500 views per visitor-day.
+- **Cache:** `pd_view`, `pd_viewer`, `pd_bounce` are additive and belong to exactly one bucket (the visitor's arrival), so `StatsIncrementService::handleViews()` increments them in closed buckets too instead of invalidating. It runs **after** the commit (no long-held row locks). A retry that finds the marker without `cache_applied_at` drops the visitors' buckets instead. A cached row without `pd_view` counts as a miss in `getAggregatedData()` (lazy refill, no flush on deploy). `app:refresh-page-view-aggregations` drops yesterday's buckets nightly to heal the lazy-fill/increment race.
+- **Visibility:** no usage bit. `Project::hasRecentPageViews()` / `Team::hasRecentPageViews()` (views in the last 30 days via `page_views_seen_at`) gate the views join in the grouped builders, the dashboard prop `pageViews` and the MCP keys. `page_views_since` tells "not tracked yet" from 0.
+- **Top Pages** (`StatsTopPagesSqlBuilder`, `StatsService::TOP_PAGES_TYPE`) is deliberately **not** in `StatsService::$statsTypes` (that list feeds API, MCP, reports and ingest lookups); it is whitelisted explicitly where offered (dashboard, Query API grouped, MCP breakdown).
+- Ratios (`vpv`, `bounce_rate`) always divide by viewers, never by visitors.
 
 ## KPIs Provided
 
@@ -315,6 +332,7 @@ The dashboard displays these key performance indicators:
 | DAU/WAU/MAU | Active users (daily/weekly/monthly) |
 | DAPU/WAPU/MAPU | Active paying users |
 | REG2PU | Registration to paying user conversion |
+| VIEWS / VPV / BOUNCE | Page views, views per visitor, bounce rate (only for projects with page views) |
 
 ## Multi-Tenancy
 
@@ -572,7 +590,7 @@ The name and logo are trademarks (`resources/markdown/trademark.md`), modelled o
 
 ### When Working on the Client Package
 
-- Maintain backwards compatibility with Laravel 8-12
+- Maintain backwards compatibility with Laravel 11-13 (the package's `composer.json` constraint)
 - Keep package lightweight (minimal dependencies)
 - Never block customer requests - use defer/queues
 - Graceful degradation when API is unreachable

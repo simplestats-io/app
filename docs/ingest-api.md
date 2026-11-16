@@ -286,6 +286,55 @@ _Core parameters:_
 }
 ```
 
+### Create Page Views
+
+Page views are sent in batches. The [Laravel client](how-to-track-page-views.md) does this for you, use this endpoint only for your own integration. Page views do not count against the monthly event limit and have a rate limit bucket of their own, so they never slow down the other endpoints.
+
+**HTTP Request**
+
+`POST /api/v1/stats-views`
+
+**Parameters**
+
+| Key             | Type                 | Description                                                                                                                                                    |
+|-----------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **batch_id**    | _uuid_ `required`    | Generated once per batch and sent again unchanged on every retry. A batch that was already stored is not counted twice.                                         |
+| **views**       | _array_ `required`   | 1 to 1,000 entries. Invalid entries are skipped one by one, the valid ones are stored.                                                                         |
+| **views.\*.h** | _string_ `required`  | The visitor hash, exactly as sent with [Create Visitor](#create-visitor). Views of a hash the API never received are dropped after a retry window of about two hours. |
+| **views.\*.t** | _integer_ `required` | The minute of the view as Unix timestamp in seconds (UTC). Older than 48 hours or in the future is clamped.                                                    |
+| **views.\*.n** | _integer_ `required` | The number of views of this page in this minute (1 to 1,000).                                                                                                  |
+| **views.\*.p** | _string_ `required`  | The page path, starting with `/`. Query string and fragment are dropped, a trailing slash is removed, case is kept.                                            |
+| **meta.mode**   | _string_ `optional`  | `worker` (bundled) or `direct` (one view per request), for diagnostics.                                                                                        |
+
+Every view is counted, including the first one of a visitor: the visitor event itself is no page view. A visitor counts at most 500 views per day.
+
+**Payload**
+
+```json
+{
+    "batch_id": "9d6f1c1e-7c40-4f0a-b1a2-3e5d8a6b7c90",
+    "views": [
+        {"h": "a3f1c09e5b7d42e1a3f1c09e5b7d42e1", "t": 1794687300, "n": 2, "p": "/pricing"},
+        {"h": "0b9e77aa12cd4f5560b9e77aa12cd4f5", "t": 1794687360, "n": 1, "p": "/"}
+    ],
+    "meta": {"mode": "worker"}
+}
+```
+
+**Response**
+
+```json
+{
+    "message": "Stats Views Request accepted.",
+    "batch_id": "9d6f1c1e-7c40-4f0a-b1a2-3e5d8a6b7c90",
+    "accepted": 2,
+    "rejected": 0,
+    "duplicate": false
+}
+```
+
+Once the monthly event limit is reached, the response is `{"message": "Monthly event limit reached.", "pause": 3600}`: stop sending views for `pause` seconds.
+
 ### Create Custom Property
 
 **HTTP Request**

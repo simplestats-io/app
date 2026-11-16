@@ -11,8 +11,8 @@ Prefer chatting inside the app? The same assistant powers the **Ask AI** panel o
 | Tool | Purpose |
 |------|---------|
 | `list-stats-capabilities` | Lists your projects, breakdown dimensions, date presets, and a KPI legend |
-| `get-kpi-stats` | KPI time series (visitors, registrations, conversion, revenue, active users) with totals |
-| `get-grouped-breakdown` | Breakdowns by dimension (referrer, source, campaign, country, device, ...) |
+| `get-kpi-stats` | KPI time series (visitors, registrations, conversion, revenue, active users, page views) with totals |
+| `get-grouped-breakdown` | Breakdowns by dimension (referrer, source, campaign, country, device, top pages, ...) |
 | `get-recurring-revenue-stats` | MRR/ARR snapshots, movements, churn, NRR/GRR, subscription economics |
 | `get-retention-cohorts` | Registration retention cohorts |
 | `get-campaign-performance` | Per-campaign profitability: spend, revenue, net profit, ROAS, CAC, LTV:CAC, payback |

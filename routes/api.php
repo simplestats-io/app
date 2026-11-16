@@ -6,8 +6,10 @@ use App\Http\Controllers\Api\StatsLoginController;
 use App\Http\Controllers\Api\StatsPaymentController;
 use App\Http\Controllers\Api\StatsReadController;
 use App\Http\Controllers\Api\StatsUserController;
+use App\Http\Controllers\Api\StatsViewController;
 use App\Http\Controllers\Api\StatsVisitorController;
 use App\Http\Middleware\Api\EnsureWithinEventLimit;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function (): void {
@@ -18,6 +20,12 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function (): void {
         Route::apiResource('stats-payment', StatsPaymentController::class)->only(['store']);
         Route::apiResource('stats-custom-event', StatsCustomEventController::class)->only(['store']);
         Route::apiResource('stats-custom-properties', StatsCustomPropertyController::class)->only(['store']);
+
+        // Own rate limit bucket: without a bundling queue worker the client sends one
+        // request per view, which must never crowd out payments or registrations.
+        Route::apiResource('stats-views', StatsViewController::class)->only(['store'])
+            ->withoutMiddleware(ThrottleRequests::class.':api')
+            ->middleware(ThrottleRequests::class.':page-views');
     });
 
     Route::get('stats', [StatsReadController::class, 'index']);

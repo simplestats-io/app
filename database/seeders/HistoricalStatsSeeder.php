@@ -10,12 +10,15 @@ use App\Models\StatsPayment;
 use App\Models\StatsUser;
 use App\Models\StatsVisitor;
 use Carbon\CarbonInterface;
+use Database\Seeders\Concerns\SeedsPageViews;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class HistoricalStatsSeeder extends Seeder
 {
+    use SeedsPageViews;
+
     const DEFAULT_CURRENCY = 'EUR';
 
     /** Tiers ordered cheapest to most expensive so price moves map onto plan switches. */
@@ -122,6 +125,8 @@ class HistoricalStatsSeeder extends Seeder
             });
 
             collect($loginRows)->chunk(1000)->each(fn ($chunk) => StatsLogin::insert($chunk->all()));
+
+            $this->seedPageViews($project);
         }));
     }
 

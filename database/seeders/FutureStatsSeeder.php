@@ -9,12 +9,15 @@ use App\Models\StatsLogin;
 use App\Models\StatsPayment;
 use App\Models\StatsUser;
 use App\Models\StatsVisitor;
+use Database\Seeders\Concerns\SeedsPageViews;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class FutureStatsSeeder extends Seeder
 {
+    use SeedsPageViews;
+
     const DEFAULT_CURRENCY = 'EUR';
 
     /**
@@ -30,6 +33,7 @@ class FutureStatsSeeder extends Seeder
         foreach ($projects as $project) {
             DB::transaction(function () use ($project): void {
                 $this->seedProjectFutureData($project);
+                $this->seedPageViews($project);
             });
         }
     }

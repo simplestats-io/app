@@ -57,6 +57,7 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
             'usageBits' => Project::getUsages()->mapWithKeys(fn ($item, $key): array => [$key => $item['bit']]),
             'flagBits' => Project::getFlags()->mapWithKeys(fn ($item, $key): array => [$key => $item['bit']]),
             'comparisonTypes' => StatsService::getComparisonTypes(),
+            'pageViews' => $this->statsDetailsService->getPageViewsState($filters),
         ];
     }
 

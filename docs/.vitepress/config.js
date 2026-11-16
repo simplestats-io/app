@@ -48,6 +48,7 @@ export default defineConfig({
                 collapsed: false,
                 items: [
                     {text: 'Visitors', link: '/how-to-track-a-new-visitor'},
+                    {text: 'Page Views', link: '/how-to-track-page-views'},
                     {text: 'Users', link: '/how-to-track-a-new-user'},
                     {text: 'Logins', link: '/how-to-track-a-new-login'},
                     {text: 'Payments', link: '/how-to-track-a-new-payment'},
@@ -99,6 +100,7 @@ export default defineConfig({
                     {text: 'KPIs Reference', link: '/kpis'},
                     {text: 'Plans and Limits', link: '/plans-and-limits'},
                     {text: 'Counting Visitors', link: '/counting-visitors'},
+                    {text: 'Counting Page Views', link: '/counting-page-views'},
                     {text: 'Troubleshooting', link: '/troubleshooting'},
                     {text: 'Contribution', link: '/contribution'},
                 ]

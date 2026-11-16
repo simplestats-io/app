@@ -25,6 +25,7 @@ class ListStatsCapabilities extends Tool
                 'dimensions' => StatsService::getStatsTypesFlatMap(['model', 'icon'])
                     ->map(fn (array $type): array => ['dimension' => $type['type'], 'title' => $type['title']])
                     ->values()
+                    ->push(['dimension' => StatsService::TOP_PAGES_TYPE, 'title' => 'Top Pages (only when the project tracks_page_views)'])
                     ->all(),
                 'presets' => collect(StatsRangePreset::cases())
                     ->reject(fn (StatsRangePreset $preset): bool => $preset === StatsRangePreset::CUSTOM)
@@ -33,6 +34,9 @@ class ListStatsCapabilities extends Tool
                     ->all(),
                 'kpis' => [
                     'pd_visitor' => 'Unique visitors in the bucket',
+                    'pd_view' => 'Page views of the visitors who arrived in the bucket (only when the project tracks_page_views)',
+                    'pd_vpv' => 'Page views per visitor with at least one tracked view',
+                    'pd_bounce_rate' => 'Share in % of visitors with tracked views who viewed exactly one page that day',
                     'pd_reg' => 'New registrations in the bucket',
                     'pd_cr' => 'Visitor-to-registration conversion rate in % for the bucket',
                     'pd_net' => 'Net revenue in the bucket',
@@ -68,13 +72,14 @@ class ListStatsCapabilities extends Tool
 
         $projects = $tokenProject instanceof Project
             ? collect([$tokenProject])
-            : Project::query()->get(['id', 'name', 'usage']);
+            : Project::query()->get(['id', 'name', 'usage', 'page_views_seen_at']);
 
         $rows = $projects->map(fn (Project $project): array => [
             'id' => $project->id,
             'name' => $project->name,
             'tracks_registrations' => $project->hasUsages([Project::USAGE_USERS]),
             'tracks_subscriptions' => $project->hasUsages([Project::USAGE_SUBSCRIPTION]),
+            'tracks_page_views' => $project->hasRecentPageViews(),
         ])->all();
 
         return $tokenProject instanceof Project

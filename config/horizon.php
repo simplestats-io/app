@@ -1,9 +1,11 @@
 <?php
 
+use App\Jobs\ResolvePendingStatsViews;
 use App\Jobs\TrackStatsCustomEvent;
 use App\Jobs\TrackStatsCustomProperties;
 use App\Jobs\TrackStatsPayment;
 use App\Jobs\TrackStatsUser;
+use App\Jobs\TrackStatsViews;
 use App\Jobs\TrackStatsVisitor;
 use Illuminate\Support\Str;
 
@@ -131,6 +133,8 @@ return [
         TrackStatsPayment::class,
         TrackStatsCustomEvent::class,
         TrackStatsCustomProperties::class,
+        TrackStatsViews::class,
+        ResolvePendingStatsViews::class,
     ],
 
     /*

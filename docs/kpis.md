@@ -42,6 +42,16 @@ Which KPIs apply to your project depends on what you track. A content site that 
 | **TAU**      | Total Actives                      | Number of users who logged in at least twice over lifetime.                                                                                          |
 | **REG2TAU**  | Reg. to Active                     | Percentage of registered users who become active.                                                                                                    |
 
+## Page Views
+
+Available once a project sends page views, see [Page Views](how-to-track-page-views.md). How they are counted is explained in [Counting Page Views](counting-page-views.md).
+
+| Key        | Short              | Description                                                                                                                                  |
+|------------|--------------------|---------------------------------------------------------------------------------------|
+| **VIEWS**  | Page Views         | Pages your visitors opened in the selected period.                                    |
+| **VPV**    | Views per Visitor  | Average number of pages a visitor opened per day.                                     |
+| **BOUNCE** | Bounce Rate        | Share of visitors who opened only one page that day. Lower is better.                  |
+
 ## Recurring Revenue
 
 If your project tracks **subscriptions**, SimpleStats turns your recurring payments into the standard subscription-SaaS metrics. These are point-in-time figures: revenue snapshots are taken as of the end of the selected period, while churn and efficiency look at what changed across it.

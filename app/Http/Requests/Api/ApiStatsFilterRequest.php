@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\StatsRangePreset;
 use App\Http\Requests\StatsFilterRequest;
+use App\Services\StatsService;
 use Illuminate\Validation\Rule;
 
 class ApiStatsFilterRequest extends StatsFilterRequest
@@ -18,6 +19,11 @@ class ApiStatsFilterRequest extends StatsFilterRequest
     {
         return [
             ...$this->sharedFilterRules(),
+            'stats_type' => [
+                'sometimes',
+                'string',
+                Rule::in([...StatsService::getStatsTypesFlat()->toArray(), StatsService::TOP_PAGES_TYPE]),
+            ],
             'preset' => [
                 'sometimes',
                 'string',

@@ -93,6 +93,22 @@ export function getKpiDefinitions(rangeType) {
             short: 'Unique Visitors',
             description: 'Number of unique visitors at this '+periodName+'.',
         },
+        pd_view: {
+            small: 'Views',
+            short: 'Page Views',
+            description: 'Number of pages your visitors viewed at this '+periodName+'.',
+        },
+        pd_vpv: {
+            small: 'Views/Visitor',
+            short: 'Views per Visitor',
+            description: 'Average number of pages a visitor viewed at this '+periodName+'.',
+        },
+        pd_bounce_rate: {
+            small: 'Bounce',
+            short: 'Bounce Rate',
+            description: 'Share of visitors who viewed only one page at this '+periodName+'. Lower is better.',
+            lowerIsBetter: true,
+        },
         pd_reg: {
             small: 'Regs',
             short: 'Registrations',

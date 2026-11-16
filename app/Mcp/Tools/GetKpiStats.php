@@ -20,7 +20,9 @@ class GetKpiStats extends Tool
 {
     use ResolvesStatsFilters;
 
-    private const array TOTAL_KEYS = ['pd_visitor', 'pd_reg', 'pd_net', 'pd_gross', 'pd_fee'];
+    private const array TOTAL_KEYS = ['pd_visitor', 'pd_reg', 'pd_net', 'pd_gross', 'pd_fee', 'pd_view', 'pd_viewer', 'pd_bounce'];
+
+    private const array PAGE_VIEW_KEYS = ['pd_view', 'pd_viewer', 'pd_bounce', 'pd_vpv', 'pd_bounce_rate'];
 
     private const array MONEY_KEYS = ['pd_net', 'pd_gross', 'pd_fee', 'pd_arpdau', 'lt_net', 'lt_arpu', 'lt_arppu', 'lt_arpv'];
 
@@ -32,7 +34,10 @@ class GetKpiStats extends Tool
             $request->validate($this->rangeRules());
 
             $filters = $this->resolveFilters($request);
-            $rows = $this->centsToCurrency($this->statsDetailsService->getStats($filters), self::MONEY_KEYS);
+            $rows = $this->withoutUntrackedPageViews(
+                $this->centsToCurrency($this->statsDetailsService->getStats($filters), self::MONEY_KEYS),
+                $filters,
+            );
 
             return Response::structured(array_filter([
                 'scope' => $this->describeScope($filters),
@@ -67,9 +72,10 @@ class GetKpiStats extends Tool
     private function perProjectTotals(Request $request, StatsFilterDto $filters): ?array
     {
         return $this->perProjectBreakdown($filters, function (int $projectId) use ($request): array {
-            $rows = $this->centsToCurrency(
-                $this->statsDetailsService->getStats($this->resolveFilters($request, $projectId)),
-                self::MONEY_KEYS,
+            $projectFilters = $this->resolveFilters($request, $projectId);
+            $rows = $this->withoutUntrackedPageViews(
+                $this->centsToCurrency($this->statsDetailsService->getStats($projectFilters), self::MONEY_KEYS),
+                $projectFilters,
             );
 
             return ['totals' => $this->totals($rows)];
@@ -91,7 +97,28 @@ class GetKpiStats extends Tool
             }
         }
 
+        // Range ratios from the summed counters, averaging bucket ratios would weight a quiet day like a busy one.
+        if (! empty($totals['pd_viewer'])) {
+            $totals['pd_vpv'] = round($totals['pd_view'] / $totals['pd_viewer'], 2);
+            $totals['pd_bounce_rate'] = round($totals['pd_bounce'] * 100 / $totals['pd_viewer'], 2);
+        }
+
         return $totals;
+    }
+
+    /**
+     * Without page view tracking the counters read 0, which an assistant would report as "no views".
+     *
+     * @param  array<string, array<string, mixed>>  $rows
+     * @return array<string, array<string, mixed>>
+     */
+    private function withoutUntrackedPageViews(array $rows, StatsFilterDto $filters): array
+    {
+        if ($this->statsDetailsService->getPageViewsState($filters)['visible']) {
+            return $rows;
+        }
+
+        return array_map(fn (array $row): array => array_diff_key($row, array_flip(self::PAGE_VIEW_KEYS)), $rows);
     }
 
     /**

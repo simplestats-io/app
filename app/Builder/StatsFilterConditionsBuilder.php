@@ -47,6 +47,9 @@ class StatsFilterConditionsBuilder
 
         $conditions['teamCondition'] = $teamCondition;
         $conditions['projectCondition'] = $teamCondition.$projectCondition;
+        // stats_visitor_views carries copies of team_id/project_id/time, repeating the scope on
+        // them lets the planner range-scan that table instead of probing it once per visitor.
+        $conditions['viewsProjectCondition'] = str_replace('stats.', 'vv.', $conditions['projectCondition']);
 
         $trackingCondition = '';
 

@@ -7,6 +7,7 @@ use App\Builder\StatsAggregationsGroupedPropertiesSqlBuilder;
 use App\Builder\StatsAggregationsGroupedSqlBuilder;
 use App\Builder\StatsAggregationsSqlBuilder;
 use App\Builder\StatsFilterConditionsBuilder;
+use App\Builder\StatsTopPagesSqlBuilder;
 use App\Concerns\RunsFilteredStatsQueries;
 use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangeType;
@@ -70,7 +71,7 @@ class StatsAggregationsService
     /**
      * TODO the $limit should actually affect the query, but I want to filter by payments, regs, maus
      */
-    public function getAggregatedGroupedData(StatsFilterDto $filters, string $statsType, string $statsSort = 'net', int $limit = 9, bool $withMrr = false, bool $withTimeToConvert = false, bool $withRetention = false, bool $withNau = false): Collection
+    public function getAggregatedGroupedData(StatsFilterDto $filters, string $statsType, string $statsSort = 'net', int $limit = 9, bool $withMrr = false, bool $withTimeToConvert = false, bool $withRetention = false, bool $withNau = false, bool $withViews = false): Collection
     {
         $statsTypeSnake = str($statsType)->snake()->toString();
 
@@ -104,16 +105,18 @@ class StatsAggregationsService
             && $trackablePerson === TrackablePerson::USER
             && $this->groupedScopeTracksUsage($project, [Project::USAGE_USERS]);
 
+        $withViews = $withViews && $this->groupedScopeHasPageViews($project);
+
         if ($statsType === 'custom_event_name') {
             $sql = (new StatsAggregationsGroupedEventsSqlBuilder(
-                $statsSort, $limit)
+                $statsSort, $limit, $withViews)
             )->build();
         } else {
-            $statsSort = $this->resolveGroupedSort($statsSort, $trackablePerson, $withMrr, $withTimeToConvert, $withRetention, $withNau);
+            $statsSort = $this->resolveGroupedSort($statsSort, $trackablePerson, $withMrr, $withTimeToConvert, $withRetention, $withNau, $withViews);
 
             $sql = (new StatsAggregationsGroupedSqlBuilder(
                 $statsTable, $statsDBType, $statsSort, $typeIdFallback, $trackablePerson, $limit, $withMrr, $withTimeToConvert, $withNau,
-                $withRetention ? $filters->rangeType->retentionCheckpointDays($filters->rangeAmount) : [])
+                $withRetention ? $filters->rangeType->retentionCheckpointDays($filters->rangeAmount) : [], $withViews)
             )->build();
         }
 
@@ -143,16 +146,35 @@ class StatsAggregationsService
         $sql = strtr($sql, $this->formatFilter($filterConditions));
         // echo nl2br($sql);die;
 
-        $dataArray = $this->castNumericValues($this->getDataArray($sql));
+        return collect($this->fixRtlPageNames($this->castNumericValues($this->getDataArray($sql))));
+    }
 
-        // hack to fix rtl stats grouped page names
-        foreach ($dataArray as &$item) {
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function getTopPagesData(StatsFilterDto $filters, string $statsSort = 'views', int $limit = 9): Collection
+    {
+        $sql = (new StatsTopPagesSqlBuilder($statsSort, $limit))->build();
+        $sql = strtr($sql, $this->formatFilter($this->getFilterConditions($filters)));
+
+        return collect($this->fixRtlPageNames($this->getDataArray($sql)));
+    }
+
+    /**
+     * Hack to fix rtl stats grouped page names.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function fixRtlPageNames(array $rows): array
+    {
+        foreach ($rows as &$item) {
             if (Str::startsWith($item['name'], '/')) {
                 $item['name'] = Str::replaceFirst('/', '', $item['name']).'/';
             }
         }
 
-        return collect($dataArray);
+        return $rows;
     }
 
     /**
@@ -165,7 +187,7 @@ class StatsAggregationsService
      * project's name id, the "All projects" view includes every same-named id
      * of the team and merges the buckets by value string.
      */
-    public function getAggregatedPropertyData(StatsFilterDto $filters, int $propertyNameId, string $statsSort = 'reg', int $limit = 9, bool $lifetime = false): Collection
+    public function getAggregatedPropertyData(StatsFilterDto $filters, int $propertyNameId, string $statsSort = 'reg', int $limit = 9, bool $lifetime = false, bool $withViews = false): Collection
     {
         $referenceName = StatsCustomPropertyName::find($propertyNameId);
 
@@ -179,8 +201,10 @@ class StatsAggregationsService
             return collect();
         }
 
+        $withViews = $withViews && $this->groupedScopeHasPageViews(Project::find($filters->projectId));
+
         $sql = (new StatsAggregationsGroupedPropertiesSqlBuilder(
-            $statsSort, $limit, $lifetime
+            $statsSort, $limit, $lifetime, $withViews
         ))->build();
 
         $filterConditions = $this->getFilterConditions($filters);
@@ -210,7 +234,7 @@ class StatsAggregationsService
                 }
             }
 
-            foreach (['cr', 'arpv', 'arpu', 'arpdau', 'reg2dau', 'arps', 'time_to_convert', 'ret_c1', 'ret_c2', 'ret_c3'] as $ratio) {
+            foreach (['cr', 'arpv', 'arpu', 'arpdau', 'reg2dau', 'arps', 'time_to_convert', 'ret_c1', 'ret_c2', 'ret_c3', 'vpv', 'bounce_rate'] as $ratio) {
                 if (isset($item[$ratio])) {
                     $item[$ratio] = (float) $item[$ratio];
                 }
@@ -243,7 +267,11 @@ class StatsAggregationsService
 
             $this->refreshSelectedAt($aggregatedDataKeyedById->keys());
 
-            $aggregatedData = $this->formatAggregatedData($aggregatedDataKeyedById);
+            // Rows cached before page views existed lack the view keys; treating them as
+            // missing refills them lazily instead of flushing the whole cache on deploy.
+            $aggregatedData = $this->formatAggregatedData(
+                $aggregatedDataKeyedById->filter(fn (array $data): bool => array_key_exists('pd_view', $data))
+            );
         }
 
         if ($aggregatedData->isEmpty()) {
@@ -628,6 +656,41 @@ class StatsAggregationsService
     }
 
     /**
+     * Page views have no usage bit: a scope shows them once it received views recently,
+     * so projects without the client feature never pay for the extra join.
+     */
+    private function groupedScopeHasPageViews(?Project $project): bool
+    {
+        if ($project !== null) {
+            return $project->hasRecentPageViews();
+        }
+
+        return Team::find(AppHelper::getTeamId())?->hasRecentPageViews() ?? false;
+    }
+
+    /**
+     * since is the first tracked view (team-local), so the dashboard can tell views that
+     * were not tracked yet apart from a real 0.
+     *
+     * @return array{visible: bool, since: ?string}
+     */
+    public function pageViewsState(StatsFilterDto $filters): array
+    {
+        $project = $filters->projectId ? Project::find($filters->projectId) : null;
+
+        if ($project !== null) {
+            return ['visible' => $project->hasRecentPageViews(), 'since' => $project->page_views_since];
+        }
+
+        $visible = $this->groupedScopeHasPageViews(null);
+
+        return [
+            'visible' => $visible,
+            'since' => $visible ? Project::where('team_id', AppHelper::getTeamId())->min('page_views_since') : null,
+        ];
+    }
+
+    /**
      * Whether the grouped scope tracks all of the given usage bits. A concrete project is
      * checked directly; the "All projects" scope (null project) falls back to team-level
      * tracking, where each bit may be satisfied by a different project (OR-merged usage).
@@ -661,7 +724,7 @@ class StatsAggregationsService
      * (MRR, time-to-convert), so a sort the current query does not produce (e.g. a stale
      * "mrr" sort carried over without the MRR opt-in) falls back to an always-present column.
      */
-    private function resolveGroupedSort(string $statsSort, TrackablePerson $trackablePerson, bool $withMrr, bool $withTimeToConvert, bool $withRetention, bool $withNau): string
+    private function resolveGroupedSort(string $statsSort, TrackablePerson $trackablePerson, bool $withMrr, bool $withTimeToConvert, bool $withRetention, bool $withNau, bool $withViews = false): string
     {
         $allowed = ['name', 'net', 'visitors', 'arpv'];
 
@@ -683,6 +746,10 @@ class StatsAggregationsService
 
         if ($withNau) {
             $allowed[] = 'nau';
+        }
+
+        if ($withViews) {
+            $allowed = array_merge($allowed, ['views', 'vpv', 'bounce_rate']);
         }
 
         return in_array($statsSort, $allowed, true) ? $statsSort : 'net';

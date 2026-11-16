@@ -32,20 +32,9 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('api', function (Request $request) {
-            $limit = self::API_RATE_LIMIT_DEFAULT;
-            $key = $request->ip();
+        RateLimiter::for('api', fn (Request $request): Limit => $this->planRateLimit($request, 'project:'));
 
-            $project = $request->user();
-
-            if ($project instanceof Project) {
-                $plan = $project->team?->billingOwner?->sparkPlan();
-                $limit = $plan?->options['ApiRateLimit'] ?? self::API_RATE_LIMIT_DEFAULT;
-                $key = 'project:'.$project->id;
-            }
-
-            return Limit::perMinute($limit)->by($key);
-        });
+        RateLimiter::for('page-views', fn (Request $request): Limit => $this->planRateLimit($request, 'page-views:'));
 
         RateLimiter::for('mcp', function (Request $request) {
             $project = $request->user();
@@ -78,5 +67,21 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
+    }
+
+    private function planRateLimit(Request $request, string $keyPrefix): Limit
+    {
+        $limit = self::API_RATE_LIMIT_DEFAULT;
+        $key = $request->ip();
+
+        $project = $request->user();
+
+        if ($project instanceof Project) {
+            $plan = $project->team?->billingOwner?->sparkPlan();
+            $limit = $plan?->options['ApiRateLimit'] ?? self::API_RATE_LIMIT_DEFAULT;
+            $key = $keyPrefix.$project->id;
+        }
+
+        return Limit::perMinute($limit)->by($key);
     }
 }

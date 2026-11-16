@@ -6,6 +6,7 @@ use App\Mcp\Tools\GetKpiStats;
 use App\Mcp\Tools\ListStatsCapabilities;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\StatsViewIngestService;
 use Database\Seeders\TestUserSeeder;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
@@ -199,4 +200,61 @@ it('scopes stats to the acting user\'s team', function (): void {
         ->assertStructuredContent(function ($json): void {
             $json->where('totals.pd_visitor', fn ($count): bool => (float) $count === 0.0)->etc();
         });
+});
+
+function aiToolIngestViews(Project $project, string $time, array $viewsPerPage): void
+{
+    DB::table('stats_visitors')->insert([
+        'team_id' => $project->team_id, 'project_id' => $project->id, 'visitor_hash' => 'viewer',
+        'time' => $time, 'time_utc' => $time,
+    ]);
+
+    $items = collect($viewsPerPage)->map(fn (int $views, string $page): array => [
+        'visitor_hash' => 'viewer', 'page' => $page, 'views' => $views, 'last_viewed_at' => now()->getTimestamp(),
+    ])->values()->all();
+
+    resolve(StatsViewIngestService::class)->ingest($project, (string) Str::uuid(), $items);
+}
+
+it('reports page view totals and ratios only for projects that track page views', function (): void {
+    $time = now()->subDay()->format('Y-m-d').' 12:00:00';
+    aiToolInsertVisitors($this->team->id, $this->project->id, $time, 2);
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(GetKpiStats::class, ['preset' => 'last_7_days', 'project_id' => $this->project->id])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->missing('totals.pd_view')->etc());
+
+    aiToolIngestViews($this->project, $time, ['/' => 2, '/docs' => 1]);
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(GetKpiStats::class, ['preset' => 'last_7_days', 'project_id' => $this->project->id])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json
+            ->where('totals.pd_view', fn ($views): bool => (float) $views === 3.0)
+            ->where('totals.pd_vpv', fn ($vpv): bool => (float) $vpv === 3.0)
+            ->where('totals.pd_bounce_rate', fn ($rate): bool => (float) $rate === 0.0)
+            ->etc());
+});
+
+it('lists top pages as a breakdown dimension and flags projects with page views', function (): void {
+    aiToolIngestViews($this->project, now()->subDay()->format('Y-m-d').' 12:00:00', ['/pricing' => 4, '/' => 1]);
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(ListStatsCapabilities::class)
+        ->assertOk()
+        ->assertSee('top_pages')
+        ->assertSee('"tracks_page_views":true');
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(GetGroupedBreakdown::class, [
+            'dimension' => 'top_pages',
+            'preset' => 'last_7_days',
+            'project_id' => $this->project->id,
+        ])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json
+            ->where('rows.0.name', 'pricing/')
+            ->where('rows.0.views', 4)
+            ->etc());
 });

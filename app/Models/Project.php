@@ -16,6 +16,8 @@ use App\ValueObjects\UserNotificationTypeObject;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +47,12 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
     const USAGE_SUBSCRIPTION = 8;
 
     const FLAG_PAID_ONLY = 1;
+
+    /**
+     * Page views have no usage bit. They show while the project keeps receiving them,
+     * so switching the client feature off hides the columns after this window.
+     */
+    public const int PAGE_VIEWS_VISIBLE_DAYS = 30;
 
     protected $hidden = [
         'id',
@@ -90,6 +98,25 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
     public function userAlertNotifications(): MorphMany
     {
         return $this->userNotifications()->where('type', UserNotificationType::PROJECT_ALERT->value)->has('user');
+    }
+
+    public function hasRecentPageViews(): bool
+    {
+        return $this->page_views_seen_at !== null && $this->page_views_seen_at >= $this->pageViewsVisibleSince();
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     */
+    #[Scope]
+    protected function withRecentPageViews(Builder $query): void
+    {
+        $query->where('page_views_seen_at', '>=', $this->pageViewsVisibleSince());
+    }
+
+    private function pageViewsVisibleSince(): string
+    {
+        return now()->subDays(self::PAGE_VIEWS_VISIBLE_DAYS)->toDateString();
     }
 
     public function hasUsages(array $bits): bool

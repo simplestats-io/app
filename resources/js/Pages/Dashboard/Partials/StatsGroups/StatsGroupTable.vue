@@ -18,7 +18,7 @@ const props = defineProps({
     loading: Boolean,
     data: Array,
     dataPrevious: Array,
-    // [{key, label, labelSmall?, format: 'number'|'percent'|'currency', width, visible?}]
+    // [{key, label, labelSmall?, format: 'number'|'optionalNumber'|'percent'|'currency'|'days', width, visible?}]
     columns: Array,
     sort: String,
     // key of the column to visually emphasise (the metric detail view's active KPI)
@@ -54,6 +54,10 @@ const headerTooltip = (column) => column.tooltip
 
 const formatters = {
     number: (value) => formatNumber(Number(value)),
+    // page views: a row whose visitors reported no view is unknown, not 0
+    optionalNumber: (value, column) => value
+        ? formatNumber(Number(value), column.decimals !== undefined ? {maximumFractionDigits: column.decimals} : undefined)
+        : '-',
     // null = not observable yet (censored retention checkpoints), never 0%
     percent: (value, column) => {
         if (value === null || value === undefined) {

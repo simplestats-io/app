@@ -47,6 +47,12 @@ class StatsService
     // not briefly dropped from MRR. Referenced by MrrAggregationService::computeMrrAtDate().
     const MRR_ACTIVE_GRACE_DAYS = 3;
 
+    /**
+     * The page views "Top Pages" tab. Deliberately not part of $statsTypes, which also
+     * feeds the Query API, MCP, report and ingest lookups.
+     */
+    public const string TOP_PAGES_TYPE = 'top_pages';
+
     protected static array $statsModels = [
         StatsVisitor::class,
         StatsUser::class,

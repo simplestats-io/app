@@ -85,12 +85,12 @@ class StatsFilterRequest extends FormRequest
     {
         return [
             ...$this->sharedFilterRules(),
-            // grouping by a custom property ("property" + property_name_id)
-            // exists only on the dashboard, the public API keeps the static types
+            // grouping by a custom property ("property" + property_name_id) and the
+            // Top Pages tab exist only on the dashboard, the public API keeps the static types
             'stats_type' => [
                 'sometimes',
                 'string',
-                Rule::in([...StatsService::getStatsTypesFlat()->toArray(), 'property']),
+                Rule::in([...StatsService::getStatsTypesFlat()->toArray(), 'property', StatsService::TOP_PAGES_TYPE]),
             ],
             'project_id' => [
                 'sometimes',
@@ -257,7 +257,7 @@ class StatsFilterRequest extends FormRequest
             'stats_sort' => [
                 'sometimes',
                 'string',
-                Rule::in(['name', 'net', 'reg', 'visitors', 'cr', 'dau', 'total', 'triggered', 'arpv', 'arpu', 'arpdau', 'reg2dau', 'mrr', 'subscribers', 'arps', 'time_to_convert', 'nau', 'ret_c1', 'ret_c2', 'ret_c3']),
+                Rule::in(['name', 'net', 'reg', 'visitors', 'cr', 'dau', 'total', 'triggered', 'arpv', 'arpu', 'arpdau', 'reg2dau', 'mrr', 'subscribers', 'arps', 'time_to_convert', 'nau', 'ret_c1', 'ret_c2', 'ret_c3', 'views', 'vpv', 'bounce_rate']),
             ],
             'limit' => [
                 'sometimes',

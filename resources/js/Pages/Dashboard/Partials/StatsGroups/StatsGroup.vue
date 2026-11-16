@@ -1,10 +1,11 @@
 <script setup>
-import {onMounted, ref} from 'vue';
-import {Link} from "@inertiajs/vue3";
+import {computed, onMounted, ref} from 'vue';
+import {Link, usePage} from "@inertiajs/vue3";
 import {XAU, retentionCheckpointLabels} from "@/Helpers/StringHelpers.js";
 import axios from 'axios';
 import StatsIcon from "@/Components/StatsIcon.vue";
 import StatsGroupTable from "./StatsGroupTable.vue";
+import {infoTooltipContent} from "@/Helpers/TooltipHelpers.js";
 import {useUsage} from "@/Composables/useUsage.js";
 
 const props = defineProps({
@@ -30,13 +31,22 @@ const {currentProjectHasUsages} = useUsage(props.currentProject, props.usageBits
 
 const filters = Object.assign({}, props.filters);
 
-if (props.statsGroupSelected) {
-    filters.stats_type = props.statsGroupSelected;
-} else {
-    filters.stats_type = props.statsGroup[0].type;
-}
-
+const pageViewsVisible = !! usePage().props.pageViews?.visible;
 const isEventGroup = props.statsGroupType === 'event';
+const isPageGroup = props.statsGroupType === 'page';
+const TOP_PAGES = 'top_pages';
+
+// Top Pages is an extra tab of the Pages card, not a stats type of its own.
+const tabs = isPageGroup && pageViewsVisible
+    ? [...props.statsGroup, {type: TOP_PAGES, title: 'Top Pages'}]
+    : props.statsGroup;
+
+filters.stats_type = tabs.some((tab) => tab.type === props.statsGroupSelected)
+    ? props.statsGroupSelected
+    : tabs[0].type;
+
+const statsType = ref(filters.stats_type);
+const isTopPages = computed(() => statsType.value === TOP_PAGES);
 
 const xauLabel = XAU(filters.range_type);
 const retentionLabels = retentionCheckpointLabels(filters.range_type, filters.range_amount);
@@ -44,7 +54,17 @@ const retentionLabels = retentionCheckpointLabels(filters.range_type, filters.ra
 // Every breakdown column a curated set can request, with its label/format and the
 // tracking bits that gate it.
 const columnRegistry = {
-    visitors: {key: 'visitors', label: 'Visitors', labelSmall: 'Visits', format: 'number', bits: ['visitors']},
+    visitors: {key: 'visitors', label: 'Visitors', labelSmall: 'Vis.', format: 'number', bits: ['visitors']},
+    views:    {key: 'views', label: 'Views', format: 'optionalNumber', bits: ['visitors'], requiresPageViews: true},
+    // sortWith: rank by volume, so a page with one visitor and 40 views does not lead.
+    vpv:      {key: 'vpv', label: 'Views/Visitor', labelSmall: 'VPV', format: 'optionalNumber', decimals: 1, bits: ['visitors'], requiresPageViews: true, sortWith: 'visitors', tooltip: {
+        title: 'Views per Visitor',
+        text: 'Average number of pages a visitor in this row viewed.',
+    }},
+    bounce_rate: {key: 'bounce_rate', label: 'Bounce Rate', labelSmall: 'Bounce', format: 'percent', decimals: 0, bits: ['visitors'], requiresPageViews: true, sortWith: 'visitors', tooltip: {
+        title: 'Bounce Rate',
+        text: 'Share of visitors in this row who viewed only one page.',
+    }},
     reg:      {key: 'reg', label: 'Regs', format: 'number', bits: ['users']},
     cr:       {key: 'cr', label: 'Conv.', labelSmall: 'CR', format: 'percent', bits: ['users', 'visitors']},
     dau:      {key: 'dau', label: xauLabel, format: 'number', bits: ['users']},
@@ -70,20 +90,47 @@ const columnRegistry = {
     arps:     {key: 'arps', label: 'ARPS', format: 'currency', bits: ['subscription']},
 };
 
+const viewsTooltip = {
+    title: 'Page Views',
+    text: {
+        page: 'Pages viewed by visitors who started on this page. How often a page itself was viewed is shown in Top Pages.',
+        event: 'Pages viewed by the visitors who triggered this event.',
+    }[props.statsGroupType] ?? 'Number of pages the visitors in this row viewed.',
+};
+
+const showViews = pageViewsVisible && currentProjectHasUsages(['visitors']);
+
 const defaultColumns = isEventGroup
     ? [
         {key: 'visitors', label: 'Visitors', format: 'number', width: '15%'},
         {key: 'triggered', label: 'Triggered', format: 'number', width: '15%'},
         {key: 'cr', label: 'Conv. Rate', labelSmall: 'CR', format: 'percent', width: '18%'},
+        {key: 'views', label: 'Views', format: 'optionalNumber', width: '12%', visible: showViews, tooltip: viewsTooltip},
         {key: 'net', label: 'Revenue', labelSmall: 'Rev.', format: 'currency', width: '18%', visible: currentProjectHasUsages(['payments'])},
     ]
     : [
-        {key: 'visitors', label: 'Visitors', labelSmall: 'Visits', format: 'number', width: '12%', visible: currentProjectHasUsages(['visitors'])},
-        {key: 'reg', label: 'Regs', format: 'number', width: '10%', visible: currentProjectHasUsages(['users'])},
-        {key: 'cr', label: 'Conv.', labelSmall: 'CR', format: 'percent', width: '12%', visible: currentProjectHasUsages(['users', 'visitors'])},
+        {key: 'visitors', label: 'Visitors', labelSmall: 'Vis.', format: 'number', width: '12%', visible: currentProjectHasUsages(['visitors'])},
+        {key: 'views', label: 'Views', format: 'optionalNumber', width: '10%', visible: showViews, tooltip: viewsTooltip},
+        {key: 'reg', label: 'Regs', format: 'number', width: showViews ? '9%' : '10%', visible: currentProjectHasUsages(['users'])},
+        {key: 'cr', label: 'Conv.', labelSmall: 'CR', format: 'percent', width: showViews ? '11%' : '12%', visible: currentProjectHasUsages(['users', 'visitors'])},
         {key: 'dau', label: xauLabel, format: 'number', width: '10%', visible: currentProjectHasUsages(['users'])},
         {key: 'net', label: 'Revenue', labelSmall: 'Rev.', format: 'currency', width: '12%', visible: currentProjectHasUsages(['payments'])},
     ];
+
+const topPagesColumns = [
+    {key: 'views', label: 'Views', format: 'number', width: '18%', tooltip: {title: 'Page Views', text: 'How often this page was viewed.'}},
+    {key: 'visitors', label: 'Visitors', labelSmall: 'Vis.', format: 'number', width: '18%', tooltip: {title: 'Visitors', text: 'Number of visitors who viewed this page.'}},
+];
+
+// Only needed once both page tabs exist: they answer different questions.
+const tabTooltips = pageViewsVisible ? {
+    page_entry: {title: 'Entry Pages', text: 'The page visitors arrived on, with the registrations and revenue they brought.'},
+    [TOP_PAGES]: {title: 'Top Pages', text: 'How often each page was viewed, no matter where visitors arrived.'},
+} : {};
+
+const tabTooltip = (tab) => tabTooltips[tab.type]
+    ? {content: infoTooltipContent(tabTooltips[tab.type]), html: true}
+    : null;
 
 // Build the active KPI's curated column set, intersected with the project's tracking
 // bits. If the highlighted primary doesn't survive that filter, fall back to defaults.
@@ -95,7 +142,8 @@ const buildCuratedColumns = () => {
     const cols = props.breakdownColumns
         .map((key) => columnRegistry[key])
         .filter(Boolean)
-        .filter((col) => ! col.bits || currentProjectHasUsages(col.bits));
+        .filter((col) => ! col.bits || currentProjectHasUsages(col.bits))
+        .filter((col) => ! col.requiresPageViews || pageViewsVisible);
 
     if (! cols.some((col) => col.key === props.breakdownPrimary)) {
         return null;
@@ -107,8 +155,19 @@ const buildCuratedColumns = () => {
 };
 
 const curatedColumns = buildCuratedColumns();
-const columns = curatedColumns ?? defaultColumns;
-const highlightColumn = curatedColumns ? props.breakdownPrimary : undefined;
+const columns = computed(() => isTopPages.value ? topPagesColumns : (curatedColumns ?? defaultColumns));
+const highlightColumn = computed(() => (curatedColumns && ! isTopPages.value) ? props.breakdownPrimary : undefined);
+const nameWidth = computed(() => {
+    if (isTopPages.value) {
+        return '64%';
+    }
+
+    if (isEventGroup) {
+        return '34%';
+    }
+
+    return showViews ? '36%' : '44%';
+});
 
 // Rate columns opt out of sorting by themselves (sortWith, see registry): they rank by a
 // volume column while staying the highlighted primary.
@@ -121,6 +180,12 @@ if (! filters.stats_sort) {
     filters.stats_sort = isEventGroup
         ? 'triggered'
         : (curatedColumns ? defaultCuratedSort : 'visitors');
+}
+
+const groupSort = filters.stats_sort;
+
+if (isTopPages.value) {
+    filters.stats_sort = 'views';
 }
 
 // The MRR columns are a point-in-time snapshot the backend only computes on request,
@@ -181,9 +246,20 @@ const group2Name = {
     event: 'Custom Events',
 };
 
-const changeGroup = (statsType, statsGroupType) => {
-    filters.stats_type = statsType;
+const changeGroup = (type, statsGroupType) => {
+    const wasTopPages = isTopPages.value;
+
+    filters.stats_type = type;
     filters.group_type = statsGroupType;
+    statsType.value = type;
+
+    // The two Pages tabs share no sort columns besides visitors.
+    if (isTopPages.value) {
+        filters.stats_sort = 'views';
+    } else if (wasTopPages) {
+        filters.stats_sort = groupSort;
+    }
+
     loading.value = true;
     fetchData();
 };
@@ -200,7 +276,7 @@ const loadMore = () => {
 };
 
 const calculatePercentage = (current) => {
-    const defaultSort = isEventGroup ? 'triggered' : 'visitors';
+    const defaultSort = isEventGroup ? 'triggered' : (isTopPages.value ? 'views' : 'visitors');
     const sort = (filters.stats_sort === 'name' || (isEventGroup && filters.stats_sort === 'visitors')) ? defaultSort : filters.stats_sort ;
 
     const highest = data.value.reduce((max, item) => item[sort] > max[sort] ? item : max, data.value[0])[sort];
@@ -215,7 +291,7 @@ const calculatePercentage = (current) => {
 };
 
 const statsTypeIcon =  (statsGroup, item) => {
-    return statsGroup.filter((item) => item.type === filters.stats_type)[0].icon;
+    return statsGroup.filter((item) => item.type === filters.stats_type)[0]?.icon;
 }
 
 onMounted(fetchData);
@@ -231,7 +307,7 @@ onMounted(fetchData);
         :sort="filters.stats_sort"
         :highlight-column="highlightColumn"
         name-label="Name"
-        :name-width="isEventGroup ? '34%' : '44%'"
+        :name-width="nameWidth"
         :percentage="calculatePercentage"
         :empty-text="isEventGroup ? 'No custom events in the selected period.' : undefined"
         :can-load-more="data.length >= 5 && ! filters.limit"
@@ -240,14 +316,17 @@ onMounted(fetchData);
     >
         <template #tabs>
             <div class="flex">
-                <button v-for="stat in statsGroup" class="flex pb-2 px-2 font-medium text-gray-500 dark:text-dark-300 hover:text-indigo-500 border-b" :class="{'text-indigo-600 border-b-indigo-600': filters.stats_type === stat.type}" @click="changeGroup(stat.type, statsGroupType)">
+                <button v-for="stat in tabs" class="flex pb-2 px-2 font-medium text-gray-500 dark:text-dark-300 hover:text-indigo-500 border-b" :class="{'text-indigo-600 border-b-indigo-600': statsType === stat.type}" v-tooltip="tabTooltip(stat)" @click="changeGroup(stat.type, statsGroupType)">
                     {{ stat.title }}
                 </button>
             </div>
         </template>
         <template #name-cell="{item}">
             <!-- direction: rtl; is that on small screens the page uris got truncated from left so that you can see the end of the uri with prio -->
-            <Link class="group truncate" :style="(statsGroupType === 'page') ? 'direction: rtl;' : '' " :class="{'text-indigo-600 dark:text-indigo-400 underline': filters[filters.stats_type] === item.type_id}" preserve-scroll :href="route(baseRoute, {...routeParams, ...filters, [filters.stats_type]: item.type_id ?? -1})">
+            <span v-if="isTopPages" class="truncate" style="direction: rtl;">
+                <span class="ml-2" v-tooltip="{ content: item.name, delay: 2000 }">{{ item.name }}</span>
+            </span>
+            <Link v-else class="group truncate" :style="(statsGroupType === 'page') ? 'direction: rtl;' : '' " :class="{'text-indigo-600 dark:text-indigo-400 underline': filters[filters.stats_type] === item.type_id}" preserve-scroll :href="route(baseRoute, {...routeParams, ...filters, [filters.stats_type]: item.type_id ?? -1})">
                 <StatsIcon v-if="statsGroupType !== 'page' && statsGroupType !== 'event'" :statsName="item.name" :statsType="filters.stats_type" :statsIconType="statsTypeIcon(statsGroup, item)" />
                 <span class="group-hover:underline ml-2" v-tooltip="{ content: topReferers[item.name] ?? item.name, delay: 2000 }">{{ topReferers[item.name] ?? item.name }}</span>
             </Link>

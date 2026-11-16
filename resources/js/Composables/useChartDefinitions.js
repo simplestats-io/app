@@ -7,7 +7,7 @@ import {useFlags} from "@/Composables/useFlags.js";
 // A registration cohort is a set of registered users and has no visitor leg, so
 // visitor-derived KPIs (unique visitors, conversion rate, revenue per visitor)
 // are not applicable and are dropped from the funnel while a cohort is active.
-const COHORT_NA_KPIS = ['pd_visitor', 'pd_cr', 'lt_arpv'];
+const COHORT_NA_KPIS = ['pd_visitor', 'pd_cr', 'lt_arpv', 'pd_view', 'pd_vpv', 'pd_bounce_rate'];
 
 // KPIs sourced from the MRR snapshot series. The per-plan breakdown (Metric detail
 // view) only applies to these; everything else uses the dimension StatsGroups.
@@ -22,6 +22,9 @@ const BREAKDOWN_SETS = {
     pd_reg:      {columns: ['visitors', 'reg', 'cr'],      primary: 'reg'},
     pd_cr:       {columns: ['visitors', 'reg', 'cr'],      primary: 'cr'},
     lt_arpv:     {columns: ['visitors', 'net', 'arpv'],    primary: 'arpv'},
+    pd_view:     {columns: ['visitors', 'views', 'vpv'],   primary: 'views'},
+    pd_vpv:      {columns: ['visitors', 'views', 'vpv'],   primary: 'vpv'},
+    pd_bounce_rate: {columns: ['visitors', 'views', 'bounce_rate'], primary: 'bounce_rate'},
     lt_arpu:     {columns: ['reg', 'net', 'arpu'],         primary: 'arpu'},
     pd_arpdau:   {columns: ['dau', 'net', 'arpdau'],       primary: 'arpdau'},
     pd_dau:      {columns: ['reg', 'dau', 'ret_c2'],       primary: 'dau'},
@@ -43,7 +46,8 @@ const BREAKDOWN_SETS = {
 // Activity becomes XAU/Paying/Reg-to-Pay with payments and XAU/NAU/Reg-to-Active
 // without. The full catalog stays reachable via the metric detail view's left menu.
 const OVERVIEW_DEFS = [
-    {name: 'Acquisition', keys: ['pd_visitor', 'pd_reg', 'pd_cr']},
+    // Page views fill the Acquisition row of projects without registrations.
+    {name: 'Acquisition', keys: ['pd_visitor', 'pd_reg', 'pd_cr', 'pd_view', 'pd_bounce_rate']},
     {name: 'Revenue', keys: ['mrr', 'pd_net', 'lt_arpu', 'lt_arpv']},
     {name: 'Activity', keys: ['pd_dau', 'lt_pu', 'lt_reg2pu', 'pd_nau', 'lt_reg2dau']},
 ];
@@ -432,6 +436,9 @@ export function useChartDefinitions(ctx) {
 
     const showsRegistrations = currentProjectHasUsages(['users']);
 
+    // No usage bit: page view KPIs show once the scope received views recently.
+    const pageViewsVisible = !! page.props.pageViews?.visible;
+
     // Net revenue's companions depend on what the project tracks: registration-aware
     // (Regs/ARPU) when users are tracked, visitor-aware (Visits/ARPV) for guest-checkout
     // projects that track payments without registrations.
@@ -457,6 +464,7 @@ export function useChartDefinitions(ctx) {
         && (! kpi.requiresSubscription || subscriptionShown)
         && ! (kpi.hideWhenSubscription && subscriptionShown)
         && ! (kpi.hideWhenPaidOnly && paidOnly)
+        && ! (kpi.requiresPageViews && ! pageViewsVisible)
         && ! (cohortActive && COHORT_NA_KPIS.includes(kpi.key));
 
     const chartDefs = [
@@ -467,6 +475,9 @@ export function useChartDefinitions(ctx) {
                 {key: 'pd_visitor', formatter: 'number', bits: ['visitors'], indicatorCallback: () => statsSum.pd_visitor},
                 {key: 'pd_reg', formatter: 'number', bits: ['users'], indicatorCallback: () => statsSum.pd_reg},
                 {key: 'pd_cr', formatter: 'percent', bits: ['users', 'visitors'], indicatorCallback: () => safeDevision(statsSum.pd_reg, statsSum.pd_visitor) * 100},
+                {key: 'pd_view', formatter: 'number', bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => statsSum.pd_view},
+                {key: 'pd_vpv', formatter: 'number', decimals: 1, bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => safeDevision(statsSum.pd_view, statsSum.pd_viewer)},
+                {key: 'pd_bounce_rate', formatter: 'percent', bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => safeDevision(statsSum.pd_bounce, statsSum.pd_viewer) * 100},
             ],
         },
         {

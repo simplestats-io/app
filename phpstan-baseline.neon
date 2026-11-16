@@ -2617,7 +2617,7 @@ parameters:
 			path: app/Services/StatsIncrementService.php
 
 		-
-			message: '#^Method App\\Services\\StatsIncrementService\:\:openBucketRows\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StatsAggregation\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			message: '#^Method App\\Services\\StatsIncrementService\:\:bucketRows\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\StatsAggregation\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Services/StatsIncrementService.php
@@ -2853,7 +2853,7 @@ parameters:
 		-
 			message: '#^Parameter \#2 \$rows of method App\\Services\\UserRecoveryDumpService\:\:section\(\) expects Illuminate\\Support\\Collection\<int, object\>, Illuminate\\Support\\Collection\<int, stdClass\> given\.$#'
 			identifier: argument.type
-			count: 23
+			count: 25
 			path: app/Services/UserRecoveryDumpService.php
 
 		-
