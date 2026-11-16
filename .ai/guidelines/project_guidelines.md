@@ -577,6 +577,18 @@ The name and logo are trademarks (`resources/markdown/trademark.md`), modelled o
 - Do NOT ask if commits should be created - the user will commit when ready
 - Only commit when explicitly requested by the user
 
+### Independent Review After Every Feature
+
+Once a feature or fix is done (tests green, before handing it over for the commit), an independent review runs on all uncommitted changes. Applies in Claude Code; other tools do the steps they can. Skip step 1 if the `laravel-simplifier` agent is not available.
+
+1. Let the `laravel-simplifier` agent simplify the changed PHP code, only the files in the diff.
+2. Start a separate sub-agent with fresh context (Agent tool) that runs `/code-review` on the diff. It does not know the conversation so far and therefore reviews without bias. Give it the diff and the goal of the change, not your own conclusions.
+3. For changes to auth, permissions/project access, billing (Spark/Paddle), the public API/ingest or data imports, additionally run `/security-review` in the same sub-agent.
+4. Fix real findings, then run `composer check` and the affected tests again. Name findings that stay on purpose with a short reason.
+5. Summarize the result in one or two sentences, then hand over for the commit.
+
+The `laravel-best-practices` skill is the yardstick for these steps, not a separate pass.
+
 ### Local Browser Login
 
 - On the local login page (`https://simplestats.test/login`) email and password are prefilled with the seeded test user. Just click "Sign in", do not type into the fields (that appends to the prefilled values).
