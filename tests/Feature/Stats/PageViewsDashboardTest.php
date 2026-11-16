@@ -98,6 +98,22 @@ it('hides page views on the dashboard of a project that never received any', fun
         ->assertInertia(fn ($page) => $page->where('pageViews.visible', false)->where('pageViews.since', null));
 });
 
+it('reports page views as unknown for buckets that ended before the first tracked view', function (): void {
+    dashboardViewVisitor($this->project, 'a');
+    dashboardIngest($this->project, ['a' => ['/' => 2]]);
+    $this->project->update(['page_views_since' => '2026-03-29 18:00:00']);
+
+    $stats = collect(resolve(StatsDetailsService::class)->getStats(new StatsFilterDto(
+        projectId: $this->project->id, rangeAmount: 3, rangeType: StatsRangeType::DAY,
+        rangeStart: CarbonImmutable::parse('2026-03-30'), comparison: '0',
+    )))->keyBy(fn (array $bucket): string => trim($bucket['date_clear']));
+
+    expect($stats['2026-03-28']['pd_view'])->toBeNull()
+        ->and($stats['2026-03-28']['pd_bounce_rate'])->toBeNull()
+        ->and($stats['2026-03-29']['pd_view'])->toBe(0)
+        ->and($stats['2026-03-30']['pd_view'])->toBe(2);
+});
+
 it('derives views per visitor and bounce rate per bucket from the cached counters', function (): void {
     dashboardViewVisitor($this->project, 'a');
     dashboardViewVisitor($this->project, 'b');

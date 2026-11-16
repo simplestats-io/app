@@ -68,6 +68,10 @@ const computeDelta = (serie, hasCurrent) => {
         previous = serie.dataPrev.length ? serie.dataPrev[serie.dataPrev.length - 2] : d[d.length - 3];
     }
 
+    if (latest === null || previous === null || latest === undefined || previous === undefined) {
+        return 0;
+    }
+
     // Divide by |previous| so the sign always reflects the direction of movement,
     // even when the baseline is negative (e.g. net churn below zero).
     let increase = (((latest - previous) / Math.abs(previous)) * 100);
@@ -197,7 +201,8 @@ export function useChartDefinitions(ctx) {
     let statsSumLength = {};
     statsArray.forEach(item => {
         Object.keys(item).forEach(key => {
-            if (key === 'date' || key === 'date_clear') {
+            // null = not measured (e.g. before the first page view), so an all-null KPI shows "-" instead of 0.
+            if (key === 'date' || key === 'date_clear' || item[key] === null) {
                 return;
             }
 

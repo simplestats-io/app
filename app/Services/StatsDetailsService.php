@@ -5,10 +5,13 @@ namespace App\Services;
 use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangeType;
 use App\Models\Project;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 class StatsDetailsService
 {
+    private const array PAGE_VIEW_KEYS = ['pd_view', 'pd_viewer', 'pd_bounce', 'pd_vpv', 'pd_bounce_rate'];
+
     public function __construct(
         private readonly StatsService $statsService,
         private readonly StatsAggregationsService $statsAggregationsService,
@@ -22,6 +25,7 @@ class StatsDetailsService
     {
         $stats = $this->getRaw($filters);
         $this->applyStatsDetails($stats);
+        $this->blankUntrackedPageViews($stats, $filters);
 
         return $stats;
     }
@@ -195,6 +199,37 @@ class StatsDetailsService
             $stat['pd_fee'] = $stat['pd_gross'] - $stat['pd_net'];
             $stat['lt_arpv'] = round($this->statsService->safeDivision($stat['lt_net'], $stat['lt_visitor']), 2);
             unset($stat['pd_tau'], $stat['pd_pu']);
+        } unset($stat);
+    }
+
+    /**
+     * Buckets that ended before the first tracked view were never measured, so they report
+     * null instead of a 0 that would read as "nobody opened a page".
+     *
+     * @param  array<int|string, array<string, mixed>>  $stats
+     */
+    private function blankUntrackedPageViews(array &$stats, StatsFilterDto $filters): void
+    {
+        $since = $this->getPageViewsState($filters)['since'];
+
+        if ($since === null) {
+            return;
+        }
+
+        $since = CarbonImmutable::parse($since);
+
+        foreach ($stats as &$stat) {
+            if (! array_key_exists('pd_view', $stat)) {
+                continue;
+            }
+
+            $bucketEnd = CarbonImmutable::parse(trim((string) $stat['date_clear']))->add(1, $filters->rangeType->value);
+
+            if ($bucketEnd <= $since) {
+                foreach (self::PAGE_VIEW_KEYS as $key) {
+                    $stat[$key] = null;
+                }
+            }
         } unset($stat);
     }
 

@@ -46,7 +46,7 @@ The AI Assistant includes a fair-use limit of 100 chat messages per team per day
 
 ## What is an Event?
 
-An event is any tracked action sent to the SimpleStats API. This includes:
+An event is any tracked action sent to the SimpleStats API, except page views. This includes:
 
 - **Visitor tracking** - Each unique visitor counts as one event
 - **User registration** - Each new user registration counts as one event
@@ -54,6 +54,8 @@ An event is any tracked action sent to the SimpleStats API. This includes:
 - **Payment tracking** - Each tracked payment counts as one event
 - **Custom events** - Each tracked custom action (e.g. a button click or plan upgrade) counts as one event
 - **Custom properties** - Each tracked property update counts as one event
+
+[Page views](how-to-track-page-views.md) are not events and never count against the limit.
 
 ## API Rate Limits
 

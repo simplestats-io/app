@@ -290,6 +290,8 @@ Each entry in the `data` array contains these fields:
 | `lt_arpv`        | Lifetime average revenue per visitor (in cents)     |
 | `lt_pu`          | Lifetime total paying users                         |
 
+Projects that receive [page views](how-to-track-page-views.md) also get `pd_view` (page views), `pd_viewer` (visitors with at least one tracked view), `pd_bounce`, `pd_vpv` (views per viewer) and `pd_bounce_rate` (in %). They are `null` for periods that ended before the project's first tracked page view, because those periods were never measured.
+
 ::: info
 All revenue values are in **cents** (e.g., 15000 = $150.00). The currency depends on your team's default currency setting.
 :::
