@@ -240,5 +240,7 @@
     "our blog": "our blog",
     "View all posts": "View all posts",
 
-    "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email."
+    "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.",
+    "Jump to :section": "Jump to :section",
+    ":appName homepage": ":appName homepage"
 }

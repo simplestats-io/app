@@ -42,8 +42,24 @@ function onKeydown(event) {
 
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
+// The section is full width minus px-4, capped by max-w-screen-xl.
+const SCREENSHOT_SIZES = '(min-width: 1312px) 1280px, calc(100vw - 2rem)';
+
 function screenshotPath(key, theme) {
-    return `images/screenshots/screenshot_${key}_${theme}.webp`;
+    return `/images/screenshots/screenshot_${key}_${theme}.webp`;
+}
+
+function screenshotSrcset(key, theme) {
+    const base = `/images/screenshots/screenshot_${key}_${theme}`;
+
+    return `${base}_768w.webp 768w, ${base}_1280w.webp 1280w, ${base}.webp 2560w`;
+}
+
+// The theme is only known in the browser (dark_mode.js), so SSR cannot pick the right
+// variant. Light gets the priority; the dark one stays lazy, which keeps it from being
+// fetched while it is display:none in light mode.
+function isLcpImage(screen, theme) {
+    return screen.key === 'dashboard' && theme.name === 'light';
 }
 
 onMounted(() => {
@@ -57,7 +73,9 @@ onMounted(() => {
         screens
             .filter((screen) => screen.key !== activeScreen.value)
             .forEach((screen) => {
-                new Image().src = screenshotPath(screen.key, theme);
+                const image = new Image();
+                image.sizes = SCREENSHOT_SIZES;
+                image.srcset = screenshotSrcset(screen.key, theme);
             });
     };
 
@@ -74,7 +92,6 @@ onMounted(() => {
         <div class="w-full max-w-screen-xl">
             <div class="relative">
                 <template v-for="screen in screens" :key="screen.key">
-                    <!-- 2x retina webp shown at half size, browsers downscale for 1x displays -->
                     <img
                         v-for="theme in themes"
                         v-show="screen.key === activeScreen"
@@ -83,9 +100,12 @@ onMounted(() => {
                         width="1280"
                         height="832"
                         :src="screenshotPath(screen.key, theme.name)"
+                        :srcset="screenshotSrcset(screen.key, theme.name)"
+                        :sizes="SCREENSHOT_SIZES"
                         :alt="screen.alt"
-                        loading="lazy"
-                        fetchpriority="low"
+                        :loading="isLcpImage(screen, theme) ? 'eager' : 'lazy'"
+                        :fetchpriority="isLcpImage(screen, theme) ? 'high' : 'low'"
+                        decoding="async"
                     >
                 </template>
                 <button
@@ -183,17 +203,23 @@ onMounted(() => {
 
 <style scoped>
 .animationElement {
-  animation: fadeInUp 0.8s ease forwards;
+  animation: slideInUp 0.8s ease forwards;
 }
 
-@keyframes fadeInUp {
+/* Transform only: an element that starts at opacity 0 is not an LCP candidate until it
+   becomes visible, which pushed the hero text (mobile) and screenshot (desktop) LCP back. */
+@keyframes slideInUp {
   from {
-    opacity: 0;
-    transform: translateY(2rem);
+    transform: translateY(1rem);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animationElement {
+    animation: none;
   }
 }
 </style>

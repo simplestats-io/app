@@ -122,8 +122,8 @@ const f = {
                             </div>
                             <div class="h-16 w-px bg-gray-950/10 dark:bg-white/10"></div>
                             <div>
-                                <div class="text-5xl lg:text-6xl font-extrabold text-gray-300 dark:text-dark-600 line-through decoration-2">70%</div>
-                                <div class="mt-1 text-sm font-medium text-gray-500 dark:text-dark-500">{{ $t('client-side') }}</div>
+                                <div class="text-5xl lg:text-6xl font-extrabold text-gray-500 dark:text-dark-400 line-through decoration-2">70%</div>
+                                <div class="mt-1 text-sm font-medium text-gray-600 dark:text-dark-400">{{ $t('client-side') }}</div>
                             </div>
                         </div>
                         <p class="text-base lg:text-lg leading-relaxed text-gray-600 dark:text-dark-400 max-w-2xl">
@@ -138,10 +138,10 @@ const f = {
                         <component :is="f.privacy.icon" class="size-6" />
                     </div>
                     <h3 class="text-2xl font-bold tracking-tight">{{ f.privacy.title() }}</h3>
-                    <div class="text-sm font-semibold uppercase tracking-widest text-indigo-200">{{ $t('GDPR compliant') }}</div>
+                    <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('GDPR compliant') }}</div>
                     <p class="text-base leading-relaxed text-indigo-100">{{ f.privacy.descr() }}</p>
                     <div class="mt-auto border-t border-white/15 pt-4">
-                        <div class="text-sm font-semibold uppercase tracking-widest text-indigo-200">{{ $t('Open source') }}</div>
+                        <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('Open source') }}</div>
                         <p class="mt-2 text-sm leading-relaxed text-indigo-100">{{ $t('The code is public, so you can verify exactly what we collect.') }}</p>
                         <a href="https://github.com/simplestats-io/app" target="_blank" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-indigo-200">
                             <GithubIcon class="size-4" />
@@ -212,7 +212,7 @@ const f = {
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold tracking-tight">{{ f.askAi.title() }}</h3>
-                                <div class="text-sm font-semibold uppercase tracking-widest text-indigo-200">{{ $t('Chat & MCP') }}</div>
+                                <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('Chat & MCP') }}</div>
                             </div>
                         </div>
                         <p class="text-base leading-relaxed text-indigo-100 max-w-3xl">{{ f.askAi.descr() }}</p>

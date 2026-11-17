@@ -53,7 +53,7 @@ const linkCategories = [
             <div class="container py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
                 <div class="xl:grid xl:grid-cols-[1fr_2fr] xl:gap-8">
                     <div class="my-8 xl:my-0">
-                        <Link href="/">
+                        <Link href="/" :aria-label="$t(':appName homepage', { appName })">
                             <ApplicationLogo />
                         </Link>
                         <div class="mt-4 text-base leading-6">

@@ -25,6 +25,8 @@ import {testimonials} from "@/Data/testimonials.js";
                             class="size-10 rounded-full object-cover shrink-0"
                             :src="t.avatar"
                             :alt="t.name"
+                            width="40"
+                            height="40"
                             loading="lazy"
                         />
                         <div class="min-w-0">
@@ -32,7 +34,7 @@ import {testimonials} from "@/Data/testimonials.js";
                                 <a v-if="t.social_link" :href="t.social_link" target="_blank" rel="noopener" class="hover:text-indigo-600 dark:hover:text-indigo-400">{{ t.name }}</a>
                                 <span v-else>{{ t.name }}</span>
                             </div>
-                            <div class="text-xs text-gray-500 dark:text-dark-400 truncate">
+                            <div class="mt-1.5 text-xs text-gray-500 dark:text-dark-400 truncate">
                                 {{ t.title }}{{ t.company ? ', ' : '' }}<a v-if="t.company_link" class="hover:text-indigo-600 dark:hover:text-indigo-400" :href="t.company_link" target="_blank" rel="noopener">{{ t.company }}</a><span v-else>{{ t.company }}</span>
                             </div>
                         </div>

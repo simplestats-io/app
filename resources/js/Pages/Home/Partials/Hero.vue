@@ -151,6 +151,9 @@ function trackGetStartedClick() {
                     <img
                         :src="t.avatar"
                         :alt="t.name"
+                        width="40"
+                        height="40"
+                        decoding="async"
                         class="block size-10 rounded-full object-cover ring-2 ring-white dark:ring-dark-900 transition-all hover:scale-110"
                     />
                 </a>
@@ -162,17 +165,23 @@ function trackGetStartedClick() {
 
 <style scoped>
 .animationElement {
-  animation: fadeInUp 0.8s ease forwards;
+  animation: slideInUp 0.8s ease forwards;
 }
 
-@keyframes fadeInUp {
+/* Transform only: an element that starts at opacity 0 is not an LCP candidate until it
+   becomes visible, which pushed the hero text (mobile) and screenshot (desktop) LCP back. */
+@keyframes slideInUp {
   from {
-    opacity: 0;
-    transform: translateY(2rem);
+    transform: translateY(1rem);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animationElement {
+    animation: none;
   }
 }
 </style>

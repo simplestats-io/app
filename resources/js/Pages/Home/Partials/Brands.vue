@@ -3,14 +3,14 @@ const brands = [
     {
         'name': 'Product Hunt',
         'url': 'https://www.producthunt.com/posts/simplestats?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-simplestats',
-        'img': '/images/brands/producthunt.png',
+        'img': '/images/brands/producthunt.webp',
         'alt': 'SimpleStats - The missing statistics tool for Laravel applications | Product Hunt',
         'class': 'border-[#ff6154]',
     },
     {
         'name': 'Laravel News',
         'url': 'https://laravel-news.com/partner/simplestats',
-        'img': '/images/brands/laravel-news.png',
+        'img': '/images/brands/laravel-news.webp',
         'alt': 'SimpleStats - The missing analytics tool for Laravel applications | Laravel News',
         'class': 'border-[#ff2c20]',
     },
@@ -33,7 +33,7 @@ const brands = [
             <div class="flex flex-wrap items-center justify-center">
                 <div v-for="brand in brands" class="p-3">
                     <a :href="brand.url" rel="noreferrer" target="_blank">
-                        <img class="rounded-lg border hover:shadow-md" :class="brand.class" :src="brand.img" :alt="brand.alt" width="250" height="54" />
+                        <img class="rounded-lg border hover:shadow-md" :class="brand.class" :src="brand.img" :alt="brand.alt" width="250" height="54" loading="lazy" decoding="async" />
                     </a>
                 </div>
             </div>

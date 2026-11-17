@@ -212,5 +212,7 @@
     "Latest from": "Ultime notizie da",
     "our blog": "il nostro blog",
     "View all posts": "Visualizza tutti i post",
-    "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "Questo account è stato disattivato perché non è stato utilizzato per molto tempo. I dati possono ancora essere ripristinati, contatta :email."
+    "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "Questo account è stato disattivato perché non è stato utilizzato per molto tempo. I dati possono ancora essere ripristinati, contatta :email.",
+    "Jump to :section": "Vai a :section",
+    ":appName homepage": "Home page di :appName"
 }

@@ -29,7 +29,7 @@ defineProps({
 
     <Header />
 
-    <div class="min-h-screen relative">
+    <main class="min-h-screen relative">
         <Hero />
 
         <Presentation />
@@ -51,5 +51,5 @@ defineProps({
         <BlogPosts :posts="latestPosts" />
 
         <Bottom />
-    </div>
+    </main>
 </template>

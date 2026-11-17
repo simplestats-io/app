@@ -5,26 +5,40 @@ import {useLocale} from "@/Composables/useLocale.js";
 import {onMounted, onUnmounted, ref} from 'vue';
 
 const { localizedPath } = useLocale();
+const appName = import.meta.env.VITE_APP_NAME;
 
 const hasScrolled = ref(false);
+let scrollFrame = null;
 
 const handleScroll = () => {
-    hasScrolled.value = window.scrollY > 50;
+    if (scrollFrame !== null) {
+        return;
+    }
+
+    scrollFrame = requestAnimationFrame(() => {
+        scrollFrame = null;
+        hasScrolled.value = window.scrollY > 50;
+    });
 };
 
 onMounted(() => {
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 });
 
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
+
+    if (scrollFrame !== null) {
+        cancelAnimationFrame(scrollFrame);
+    }
 });
 </script>
 
 <template>
     <div class="animationElement z-10 sticky top-0" :class="{ 'bg-white/90 dark:bg-dark-900/90 backdrop-blur-sm border-b border-gray-200/90 dark:border-dark-700/90 shadow-sm dark:shadow-dark-800/50': hasScrolled }">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-            <a :href="localizedPath('/')" class="inline-flex items-center">
+            <a :href="localizedPath('/')" class="inline-flex items-center" :aria-label="$t(':appName homepage', { appName })">
                 <ApplicationLogo />
             </a>
 

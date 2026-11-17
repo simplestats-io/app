@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#f9fafb">
 
+        {{-- Inline and in the head so the dark class is set before the body is parsed: no extra request, no restyle of the rendered page, no flash. --}}
+        <script>{!! file_get_contents(public_path('js/dark_mode.js')) !!}</script>
+
         @if (! app()->isProduction())
             <meta name="robots" content="noindex, nofollow">
         @endif
@@ -89,7 +92,5 @@
         @endImpersonating
 
         @inertia
-
-        <script src="/js/dark_mode.js?v={{ substr(md5_file(public_path('js/dark_mode.js')), 0, 8) }}"></script>
     </body>
 </html>
