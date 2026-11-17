@@ -57,7 +57,7 @@ const columnRegistry = {
     visitors: {key: 'visitors', label: 'Visitors', labelSmall: 'Vis.', format: 'number', bits: ['visitors']},
     views:    {key: 'views', label: 'Views', format: 'optionalNumber', bits: ['visitors'], requiresPageViews: true},
     // sortWith: rank by volume, so a page with one visitor and 40 views does not lead.
-    vpv:      {key: 'vpv', label: 'Views/Visitor', labelSmall: 'VPV', format: 'optionalNumber', decimals: 1, bits: ['visitors'], requiresPageViews: true, sortWith: 'visitors', tooltip: {
+    vpv:      {key: 'vpv', label: 'VPV', format: 'optionalNumber', decimals: 1, bits: ['visitors'], requiresPageViews: true, sortWith: 'visitors', tooltip: {
         title: 'Views per Visitor',
         text: 'Average number of pages a visitor in this row viewed.',
     }},

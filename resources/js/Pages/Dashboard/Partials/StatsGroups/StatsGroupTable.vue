@@ -42,6 +42,12 @@ const showFooter = computed(() => props.canLoadMore || !! slots['footer-left'] |
 
 const visibleColumns = computed(() => props.columns.filter((column) => column.visible !== false));
 
+// With only a few value columns the full labels fit much earlier, so the abbreviation
+// breakpoint follows the column count instead of a fixed card width.
+const fewColumns = computed(() => visibleColumns.value.length <= 3);
+const smallLabelClass = computed(() => fewColumns.value ? 'inline-block @lg:hidden' : 'inline-block @2xl:hidden');
+const fullLabelClass = computed(() => fewColumns.value ? 'hidden @lg:inline-block' : 'hidden @2xl:inline-block');
+
 // Bold the active metric's column only on the metric detail view (highlightColumn);
 // the overview breakdown stays calm and just marks the sort in the header.
 const emphasizedColumn = computed(() => props.highlightColumn);
@@ -107,8 +113,8 @@ const gradientColor = (isDarkMode.value) ? '46, 89, 113' : '220, 236, 254';
                                 :style="`width: ${column.width};`" :class="column.key === 'name' ? 'py-1.5' : 'p-1.5 text-right'"
                             >
                                 <button class="whitespace-nowrap" :class="[sort === column.key ? 'text-indigo-600' : '', column.key === emphasizedColumn ? 'font-semibold' : '']" v-tooltip="headerTooltip(column)" @click="emit('sort', column.key)">
-                                    <span v-if="column.labelSmall" class="inline-block @2xl:hidden">{{ column.labelSmall }}</span>
-                                    <span :class="column.labelSmall ? 'hidden @2xl:inline-block' : ''">{{ column.label }}</span>
+                                    <span v-if="column.labelSmall" :class="smallLabelClass">{{ column.labelSmall }}</span>
+                                    <span :class="column.labelSmall ? fullLabelClass : ''">{{ column.label }}</span>
                                     <ChevronDownIcon v-if="sort === column.key" class="size-4 hidden @md:inline-block" />
                                 </button>
                             </td>
