@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.2 - 2026-11-17
+
+### Fixed
+
+- Stats groups with only a few value columns now show the full column labels (e.g. "Visitors" instead of "Vis.") whenever there is enough space. Views per Visitor is labelled "VPV" with an explanatory tooltip.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.1...v7.3.2
+
 ## v7.3.1 - 2026-11-16
 
 ### Fixed
