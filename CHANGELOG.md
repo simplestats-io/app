@@ -2,6 +2,33 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.3 - 2026-11-18
+
+### Security
+
+- Updated dependencies with security advisories (Laravel 12.72.0, Symfony components, phpseclib 3.0.58).
+
+### Upgrade notes
+
+- The `local` backup disk now keeps only the newest backup, the rotation only applies to other disks such as `s3`. If you back up to `local` only and want older backups, add an off-server disk via `BACKUP_DISKS=local,s3`.
+
+### Added
+
+- The health checks now report a failure when the newest backup on a backup disk is older than 26 hours, so a backup that silently stopped running is noticed.
+- Owners who never finished the onboarding setup get a reminder mail.
+
+### Fixed
+
+- Backup cleanup runs after the backup, and the storage limit for the rotation is raised to 50,000 MB.
+- Landing page performance and accessibility improvements.
+- Removed an outdated custom events toggle from the docs.
+
+### What's Changed
+
+* Bump the npm-minor-and-patch group with 4 updates by @dependabot[bot] in https://github.com/simplestats-io/app/pull/405
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.2...v7.3.3
+
 ## v7.3.2 - 2026-11-17
 
 ### Fixed
