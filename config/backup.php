@@ -1,5 +1,6 @@
 <?php
 
+use App\Backup\BackupCleanupStrategy;
 use Spatie\Backup\Notifications\Notifiable;
 use Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification;
 use Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification;
@@ -7,7 +8,6 @@ use Spatie\Backup\Notifications\Notifications\CleanupHasFailedNotification;
 use Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification;
 use Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification;
 use Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification;
-use Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy;
 use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
 use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes;
 use Spatie\DbDumper\Compressors\GzipCompressor;
@@ -272,7 +272,7 @@ return [
             'disks' => array_map(trim(...), explode(',', env('BACKUP_DISKS', 'local'))),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
-                MaximumStorageInMegabytes::class => 5000,
+                MaximumStorageInMegabytes::class => 50000,
             ],
         ],
 
@@ -297,8 +297,11 @@ return [
          *
          * No matter how you configure it the default strategy will never
          * delete the newest backup.
+         *
+         * BackupCleanupStrategy keeps only the newest backup on the "local" disk
+         * and applies the default strategy below to every other disk.
          */
-        'strategy' => DefaultStrategy::class,
+        'strategy' => BackupCleanupStrategy::class,
 
         'default_strategy' => [
 
@@ -337,7 +340,7 @@ return [
              * After cleaning up the backups remove the oldest backup until
              * this amount of megabytes has been reached.
              */
-            'delete_oldest_backups_when_using_more_megabytes_than' => 5000,
+            'delete_oldest_backups_when_using_more_megabytes_than' => 50000,
         ],
 
         /**

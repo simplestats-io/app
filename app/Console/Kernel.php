@@ -43,8 +43,9 @@ class Kernel extends ConsoleKernel
 
             // DAILY
             if (config('backup.enabled')) {
-                $schedule->command('backup:clean')->daily()->at('01:00');
+                // clean after the run, so only the newest backup stays on the server
                 $schedule->command('backup:run')->daily()->at('01:30');
+                $schedule->command('backup:clean')->daily()->at('04:00');
             }
 
             $schedule->command('app:recalc-stats-starting-at')->daily()->at('01:45');
