@@ -2,6 +2,15 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.5 - 2026-11-18
+
+### Fixed
+
+- Backups: removed the fixed size limits from the backup cleanup and monitor. The rotation already limits the number of backups, and a full disk shows up in the disk space health check.
+- Sentry: errors thrown by Microsoft's link scanner (Outlook Safe Links) are no longer reported.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.4...v7.3.5
+
 ## v7.3.4 - 2026-11-18
 
 ### Changed
