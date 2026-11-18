@@ -213,7 +213,7 @@ return [
             UnhealthyBackupWasFoundNotification::class => ['mail'],
             CleanupHasFailedNotification::class => ['mail'],
             BackupWasSuccessfulNotification::class => [],
-            HealthyBackupWasFoundNotification::class => ['mail'],
+            HealthyBackupWasFoundNotification::class => [],
             CleanupWasSuccessfulNotification::class => [],
         ],
 

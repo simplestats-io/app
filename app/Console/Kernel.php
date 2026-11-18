@@ -46,6 +46,8 @@ class Kernel extends ConsoleKernel
                 // clean after the run, so only the newest backup stays on the server
                 $schedule->command('backup:run')->daily()->at('01:30');
                 $schedule->command('backup:clean')->daily()->at('04:00');
+                // backup:run only mails when it fails, not when it never runs at all
+                $schedule->command('backup:monitor')->daily()->at('06:00');
             }
 
             $schedule->command('app:recalc-stats-starting-at')->daily()->at('01:45');

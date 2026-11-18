@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Backup\BackupsHealthCheck;
 use App\Http\Middleware\ShareInertiaData;
 use App\Models\PersonalAccessToken;
 use App\Models\StatsUser;
@@ -96,23 +95,6 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->queueRunsOnHorizon()) {
             array_unshift($checks, HorizonCheck::new());
-        }
-
-        // backup:run only mails when it fails, not when it never runs at all
-        if (config('backup.enabled')) {
-            foreach (array_filter(config('backup.backup.destination.disks')) as $disk) {
-                // Runs every minute on purpose: a less frequent check stores "skipped" in
-                // between and hides a failure on /health. Reading the date from the file
-                // name and sizing only two files keeps that to one S3 LIST + two HEADs.
-                // 26 instead of 24 hours: a slow nightly run must not alert before it finishes.
-                $checks[] = BackupsHealthCheck::new()
-                    ->name("Backups ({$disk})")
-                    ->onDisk($disk)
-                    ->locatedAt(config('backup.backup.name'))
-                    ->parseModifiedFormat('Y-m-d-H-i-s')
-                    ->onlyCheckSizeOnFirstAndLast()
-                    ->youngestBackShouldHaveBeenMadeBefore(now()->subHours(26));
-            }
         }
 
         Health::checks($checks);

@@ -24,7 +24,8 @@ function scheduledCommandsMatching(bool $backupsEnabled, string $needle): array
 
 test('the scheduler runs the daily backup when backups are enabled', function (): void {
     expect(scheduledCommandsMatching(true, 'backup:run'))->toHaveCount(1)
-        ->and(scheduledCommandsMatching(true, 'backup:clean'))->toHaveCount(1);
+        ->and(scheduledCommandsMatching(true, 'backup:clean'))->toHaveCount(1)
+        ->and(scheduledCommandsMatching(true, 'backup:monitor'))->toHaveCount(1);
 });
 
 test('the scheduler skips backups when they are disabled', function (): void {
