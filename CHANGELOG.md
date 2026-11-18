@@ -2,6 +2,15 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.3.4 - 2026-11-18
+
+### Changed
+
+- Backups are now monitored with `backup:monitor`, scheduled daily at 06:00 when backups are enabled. It mails the admin address (`ADMIN_MAIL`) when the newest backup on a backup disk is older than one day. The daily "healthy backup" mail is turned off, so only problems are reported.
+- This replaces the backup health checks added in v7.3.3, so they no longer appear on the health page.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.3...v7.3.4
+
 ## v7.3.3 - 2026-11-18
 
 ### Security
