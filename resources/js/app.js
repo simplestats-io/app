@@ -136,6 +136,8 @@ createInertiaApp({
                             'BufferLoader: XHR error for undefined',
                             /\$_Tawk/i,
                             'i18next is not a function',
+                            // Microsoft's link scanner (Outlook Safe Links) rejects with this in its headless browser.
+                            /Object Not Found Matching Id:\d+, MethodName:\w+, ParamCount:\d+/,
                         ],
                         denyUrls: [/tawk\.to/i, /twk-chunk/i],
                     });
