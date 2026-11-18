@@ -8,7 +8,7 @@ Custom event tracking requires **version 3.3+** of the _SimpleStats_ [client pac
 
 ## Enabling Custom Events
 
-Make sure the **Custom Events** tracking bit is enabled for your project. You can toggle this in the project settings inside the app.
+There is nothing to enable: custom events are always available for every project. The **Events** group shows up on the dashboard as soon as your project has tracked its first custom event.
 
 ## Tracking an Event
 
