@@ -9,7 +9,6 @@ use Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification;
 use Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification;
 use Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification;
 use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
-use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes;
 use Spatie\DbDumper\Compressors\GzipCompressor;
 
 return [
@@ -272,7 +271,6 @@ return [
             'disks' => array_map(trim(...), explode(',', env('BACKUP_DISKS', 'local'))),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
-                MaximumStorageInMegabytes::class => 50000,
             ],
         ],
 
@@ -339,8 +337,9 @@ return [
             /*
              * After cleaning up the backups remove the oldest backup until
              * this amount of megabytes has been reached.
+             * Set null for unlimited size.
              */
-            'delete_oldest_backups_when_using_more_megabytes_than' => 50000,
+            'delete_oldest_backups_when_using_more_megabytes_than' => null,
         ],
 
         /**
