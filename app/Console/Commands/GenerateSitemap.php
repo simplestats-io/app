@@ -91,6 +91,12 @@ class GenerateSitemap extends Command
                 ->setPriority(0.8)
         );
 
+        $sitemap->add(
+            Url::create($baseUrl.'/changelog')
+                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+                ->setPriority(0.5)
+        );
+
         foreach (MdBlog::latest() as $post) {
             $sitemap->add(
                 Url::create($baseUrl.'/blog/'.$post->slug)

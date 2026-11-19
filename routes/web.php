@@ -5,6 +5,7 @@ use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiConversationController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\CustomStatsRangePresetController;
 use App\Http\Controllers\DataImportController;
@@ -81,6 +82,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/imprint', [ImprintController::class, 'show'])->name('imprint');
 Route::get('/dpa', [DpaController::class, 'show'])->name('dpa');
 Route::get('/trademark', [TrademarkController::class, 'show'])->name('trademark');
+Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 // Blog (not localized)
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');

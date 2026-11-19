@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\DpaController;
 use App\Http\Controllers\HomeController;
@@ -21,6 +22,7 @@ class CheckAppType
         DpaController::class,
         TrademarkController::class,
         BlogController::class,
+        ChangelogController::class,
     ];
 
     /**
