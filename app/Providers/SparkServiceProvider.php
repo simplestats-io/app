@@ -22,6 +22,11 @@ class SparkServiceProvider extends ServiceProvider
 
         Cashier::useTransactionModel(Transaction::class);
 
+        // Paddle retries a failed renewal for up to 30 days and cancels the subscription
+        // afterwards. Without this, the customer drops to the free plan on the first failed
+        // attempt and loses every event above the free limit while the retries still run.
+        Cashier::keepPastDueSubscriptionsActive();
+
         Spark::billable(User::class)->resolve(fn (Request $request) => $request->user());
 
         Spark::billable(User::class)->authorize(fn (User $billable, Request $request): bool => $request->user() &&

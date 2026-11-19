@@ -58,6 +58,7 @@ class Kernel extends ConsoleKernel
             // Self-hosted runs without plans, and its operators decide on their own when an account goes away.
             if (config('app.app_type') === 'saas') {
                 $schedule->command('app:check-subscription-plan-alarm')->daily()->at('3:30');
+                $schedule->command('app:check-past-due-subscriptions')->daily()->at('09:00');
                 $schedule->command('app:check-inactive-users')->daily()->at('03:45');
                 $schedule->command('app:purge-pending-deleted-users')->daily()->at('03:50');
                 $schedule->command('app:send-installation-reminders')->hourly();

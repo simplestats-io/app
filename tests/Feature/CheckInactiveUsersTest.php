@@ -58,6 +58,24 @@ it('does not mark users with active subscriptions', function (): void {
     Notification::assertNotSentTo($user, UserDeletedNotification::class);
 });
 
+it('does not mark users whose subscription is past due', function (): void {
+    Notification::fake();
+
+    $user = User::factory()->withPersonalTeam()->create([
+        'inactive_since' => now()->subDays(11),
+    ]);
+    $user->subscriptions()->create([
+        'type' => 'default',
+        'paddle_id' => 'sub_past_due',
+        'status' => 'past_due',
+    ]);
+
+    $this->artisan('app:check-inactive-users');
+
+    expect($user->fresh()->deleted_at)->toBeNull();
+    Notification::assertNotSentTo($user, UserDeletedNotification::class);
+});
+
 it('sends 10 day warning to users inactive for 50+ days', function (): void {
     Notification::fake();
 

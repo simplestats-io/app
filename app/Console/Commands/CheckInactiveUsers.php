@@ -69,7 +69,7 @@ class CheckInactiveUsers extends Command
     {
         return User::query()
             ->whereDoesntHave('subscriptions', function (\Illuminate\Contracts\Database\Query\Builder $query): void {
-                $query->where('status', 'active');
+                $query->whereIn('status', ['active', 'past_due']);
             })
             ->whereDoesntHave('ownedTeams.users', function (\Illuminate\Contracts\Database\Query\Builder $query): void {
                 $query->where('users.last_login_at', '>', now()->subDays(self::INACTIVE_AFTER_DAYS));
