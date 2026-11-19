@@ -1,3 +1,7 @@
+---
+description: "Track new user registrations in Laravel with SimpleStats and link every signup to the campaign and source that brought it."
+---
+
 # How to track a new user
 
 Now that you've installed the _SimpleStats_ **client package**, you can finally start tracking your users! Don't worry, it's super simple.

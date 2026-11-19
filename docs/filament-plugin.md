@@ -1,3 +1,7 @@
+---
+description: "Add a full SimpleStats analytics dashboard to your Filament admin panel: visitors, revenue and conversions without leaving Filament."
+---
+
 # Filament Plugin
 
 The SimpleStats Filament plugin adds a full analytics dashboard directly inside your Filament admin panel. Instead of switching between your app and the SimpleStats dashboard, you get visitor trends, revenue charts, conversion rates, and traffic sources right where you already work.

@@ -31,6 +31,7 @@ createServer((page) => {
     return createInertiaApp({
         page,
         render,
+        title: (title) => (title ? `${import.meta.env.VITE_APP_NAME} - ${title}` : ''),
         resolve: (name) => {
             if (name.startsWith("Home") || name.startsWith("Auth")) {
                 return resolvePageComponent(

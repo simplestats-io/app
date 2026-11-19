@@ -1,3 +1,7 @@
+---
+description: "Install the SimpleStats Laravel client via Composer, add your API token and get server-side analytics with revenue attribution in minutes."
+---
+
 # Installation
 
 A few minutes from now, you will have a dashboard like this for your own app:

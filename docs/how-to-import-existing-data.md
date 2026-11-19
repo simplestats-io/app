@@ -1,3 +1,7 @@
+---
+description: "Import your historical users and payments into SimpleStats from CSV or Excel files, so your analytics start with your full history."
+---
+
 # How to import existing data
 
 Integrating _SimpleStats_ into your existing application doesn't mean leaving behind your historical data. Recognizing the value of your application's past insights, we've developed the **Data Import** feature. This functionality enables a smooth transition by allowing you to seamlessly **import** your **existing data** into _SimpleStats_, ensuring that you retain access to all historical metrics and insights. 

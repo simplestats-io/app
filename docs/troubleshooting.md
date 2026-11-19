@@ -1,3 +1,7 @@
+---
+description: "Fix common SimpleStats setup issues: wrong API token, cached config, OPCache, queue workers and missing contracts."
+---
+
 # Troubleshooting
 
 If _SimpleStats_ isn't working for your app despite a correct setup, here's how to resolve common issues:

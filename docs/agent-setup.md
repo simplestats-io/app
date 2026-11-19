@@ -1,3 +1,7 @@
+---
+description: "Instructions for AI agents to connect the SimpleStats MCP server, so you can ask about visitors, revenue and campaigns in plain language."
+---
+
 # Agent Setup
 
 These are the official instructions from _SimpleStats_ for AI agents to connect the SimpleStats MCP server. Once connected, the user can ask questions about their analytics (visitors, registrations, revenue, MRR, campaigns, ...) in plain language. For humans, the same setup is documented in [MCP Server](mcp-server.md).

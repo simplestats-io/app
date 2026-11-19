@@ -17,9 +17,6 @@ class GenerateSitemap extends Command
     /** @var string[] */
     private array $publicPaths = [
         '/',
-        '/login',
-        '/register',
-        '/forgot-password',
         '/imprint',
     ];
 
@@ -110,7 +107,7 @@ class GenerateSitemap extends Command
             $sitemap->add(
                 Url::create($baseUrl.$path)
                     ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-                    ->setPriority($path === '/docs' ? 0.8 : 0.6)
+                    ->setPriority($path === '/docs/' ? 0.8 : 0.6)
             );
         }
 
@@ -130,7 +127,7 @@ class GenerateSitemap extends Command
             ->filter(fn ($file): bool => $file->getExtension() === 'md')
             ->map(fn ($file) => $file->getFilenameWithoutExtension())
             ->reject(fn (string $name): bool => in_array($name, $this->excludedDocs, true))
-            ->map(fn (string $name): string => $name === 'index' ? '/docs' : '/docs/'.$name)
+            ->map(fn (string $name): string => $name === 'index' ? '/docs/' : '/docs/'.$name.'.html')
             ->sort()
             ->values()
             ->all();

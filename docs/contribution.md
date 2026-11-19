@@ -1,3 +1,7 @@
+---
+description: "SimpleStats is open source. Learn where the app, the Laravel and PHP clients and the integrations live, and how to contribute."
+---
+
 # Contribution
 
 _SimpleStats_ is open source, and contributions of any size are welcome.

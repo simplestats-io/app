@@ -1,3 +1,7 @@
+---
+description: "Read your SimpleStats analytics programmatically with the Query API: time series stats and grouped breakdowns over HTTP."
+---
+
 # Query API
 
 The Query API allows you to retrieve your analytics data programmatically, including time-series stats and grouped breakdowns.

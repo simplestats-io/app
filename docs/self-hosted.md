@@ -1,3 +1,7 @@
+---
+description: "Self-host SimpleStats, the open source analytics for Laravel (AGPL-3.0): requirements, Docker setup, queue workers and updates."
+---
+
 # Overview (Self-hosted)
 
 _**SimpleStats**_ is open source. The code is available on [GitHub](https://github.com/simplestats-io/app) under the [AGPL-3.0 license](https://github.com/simplestats-io/app/blob/main/LICENSE), and technical teams can run it on their own infrastructure.
@@ -168,7 +172,7 @@ Stats rows are small (a few hundred bytes including indexes). For typical use ca
 
 ## Integration in non-classic Laravel setups
 
-If you run a headless SPA in front of your Laravel API, or use stateless auth (JWT, Bearer tokens, Sanctum personal access tokens), the frontend needs to forward UTMs to the API explicitly. See [Headless & SPA Backends](/headless-stateless-spa).
+If you run a headless SPA in front of your Laravel API, or use stateless auth (JWT, Bearer tokens, Sanctum personal access tokens), the frontend needs to forward UTMs to the API explicitly. See [Headless & SPA Backends](./headless-stateless-spa.md).
 
 ## License
 

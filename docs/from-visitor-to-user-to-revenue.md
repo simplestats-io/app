@@ -1,3 +1,7 @@
+---
+description: "How SimpleStats connects anonymous visitors to registrations and payments, and attributes revenue back to the original UTM source."
+---
+
 # From Visitor to User to Payment
 
 One of the core strengths of SimpleStats is **full-funnel attribution**: connecting anonymous visitors to registered users and their payments, all the way back to the original marketing source.

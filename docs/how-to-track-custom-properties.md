@@ -1,3 +1,7 @@
+---
+description: "Attach custom properties like company, plan or A/B test variant to users and visitors, and group your Laravel analytics by them."
+---
+
 # How to track custom properties
 
 Custom properties let you attach your own attributes to users and visitors so you can **group your analytics** by them. A property can be any dimension that matters to your business, for example:

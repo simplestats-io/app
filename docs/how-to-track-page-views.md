@@ -1,3 +1,7 @@
+---
+description: "Track page views in Laravel with SimpleStats: top pages, views per visitor and bounce rate per channel, without extra event quota."
+---
+
 # Page Views
 
 Since version 6 of the [Laravel client](installation.md), _SimpleStats_ counts the pages your visitors open. You see how many pages the visitors of each channel, campaign, country or entry page view, your bounce rate and your top pages. There is nothing to add to your code.

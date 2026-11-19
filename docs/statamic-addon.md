@@ -1,3 +1,7 @@
+---
+description: "Add a full SimpleStats analytics dashboard to your Statamic Control Panel: visitors, revenue and conversions without leaving Statamic."
+---
+
 # Statamic Addon
 
 The SimpleStats Statamic addon adds a full analytics dashboard directly inside your Statamic Control Panel. Instead of switching between your site and the SimpleStats dashboard, you get visitor trends, revenue charts, conversion rates, and traffic sources right where you already work.
@@ -31,7 +35,7 @@ SIMPLESTATS_API_TOKEN=your-api-token-here
 That's it. A new **SimpleStats** entry appears under the **Tools** section of the Control Panel navigation. Open it to see your dashboard.
 
 ::: warning Using full measure static caching?
-The addon only displays your stats, the tracking itself is done by the [Laravel client](/installation). With Statamic's `full` measure static caching, pages are served without booting Laravel, so visits go untracked. See [Static Caching & CDNs](/static-caching) for the fix.
+The addon only displays your stats, the tracking itself is done by the [Laravel client](./installation.md). With Statamic's `full` measure static caching, pages are served without booting Laravel, so visits go untracked. See [Static Caching & CDNs](./static-caching.md) for the fix.
 :::
 
 ## Configuration

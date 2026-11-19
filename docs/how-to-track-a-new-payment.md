@@ -1,3 +1,7 @@
+---
+description: "Track payments in Laravel with SimpleStats, including Cashier, Paddle and Lemon Squeezy, and attribute revenue to your marketing channels."
+---
+
 # How to track a new payment
 
 As the payment model is named very individually, we did not set any default for it. You should give it the name of the model which holds your payments/transactions data.

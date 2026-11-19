@@ -1,4 +1,5 @@
 ---
+description: "How SimpleStats counts unique visitors server-side, and why the numbers differ from Google Analytics, Plausible or Fathom."
 aside: false
 ---
 

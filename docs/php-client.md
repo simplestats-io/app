@@ -1,3 +1,7 @@
+---
+description: "Server-side analytics for any PHP 8.2+ app with the SimpleStats PHP client. Works with Symfony, Slim, WordPress or plain PHP."
+---
+
 # PHP Client
 
 The SimpleStats PHP client lets you add server-side analytics to any PHP 8.2+ application. No framework required. If you're using Symfony, Slim, WordPress, or plain PHP, this is the package for you.

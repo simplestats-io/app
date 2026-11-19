@@ -1,4 +1,5 @@
 ---
+description: "Overview of all SimpleStats plans, features, event quotas, API rate limits and technical limits."
 aside: false
 ---
 

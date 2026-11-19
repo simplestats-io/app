@@ -1,3 +1,7 @@
+---
+description: "Keep counting visitors with SimpleStats when pages are served from Statamic static caching, nginx, Varnish or Cloudflare caches."
+---
+
 # Static Caching & CDNs
 
 Server-side tracking needs your application to actually run. If your pages are served from a cache that bypasses PHP entirely, the `CheckTracking` middleware never runs and those visits are never counted.
@@ -111,4 +115,4 @@ A few Statamic specifics worth knowing:
 
 ## Headless and SPA setups
 
-If your frontend is a separate application rather than a cached version of your Laravel app, the beacon is not what you want. See [Headless, SPA & Stateless](/headless-stateless-spa) instead, it covers the same context forwarding with headers and the `cache` tracking storage.
+If your frontend is a separate application rather than a cached version of your Laravel app, the beacon is not what you want. See [Headless, SPA & Stateless](./headless-stateless-spa.md) instead, it covers the same context forwarding with headers and the `cache` tracking storage.

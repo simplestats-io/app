@@ -32,6 +32,7 @@ use App\Http\Controllers\TrademarkController;
 use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserSettingsController;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\NewPasswordController;
@@ -88,6 +89,12 @@ Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 Route::permanentRedirect('/docs/api-documentation.html', '/docs/ingest-api.html');
+// The raw docs markdown used to link other pages as "/slug", so search engines still crawl these root URLs.
+foreach (File::glob(base_path('docs/*.md')) as $doc) {
+    if (! in_array(File::name($doc), ['index', 'markdown-examples'], true)) {
+        Route::permanentRedirect('/'.File::name($doc), '/docs/'.File::name($doc).'.html');
+    }
+}
 Route::get('/docs/{path?}', DocsController::class)->where('path', '.*');
 Route::resource('timezones', TimezoneController::class)->only(['index']);
 

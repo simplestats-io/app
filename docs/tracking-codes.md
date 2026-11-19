@@ -1,3 +1,7 @@
+---
+description: "Configure which UTM parameters and tracking codes SimpleStats records for source, medium, campaign, term and content."
+---
+
 # Tracking Codes
 
 In your [published](installation.html#configuration) _SimpleStats_ config file, you can set your tracking codes.

@@ -1,3 +1,7 @@
+---
+description: "SimpleStats is server-side analytics for Laravel that follows the whole funnel from first visit to registration to revenue, per channel."
+---
+
 # Introduction
 
 _**SimpleStats**_ is server-side analytics for **Laravel**, built to follow the whole funnel: from the first **visit**, through **registration**, to every **payment**. It ties each step back to the [UTM](https://en.wikipedia.org/wiki/UTM_parameters) source or referrer that caused it, so you see not just traffic but which **channels** actually drive **revenue**.
@@ -16,7 +20,7 @@ Are you a visual learner? Here you can learn how to set up SimpleStats in just a
 ## How does it work?
 
 ### API Communication
-Basically all we do is provide a [composer package](/installation), which allows you to simply define and set your [User](/how-to-track-a-new-user) and [Payment](how-to-track-a-new-payment) model and [Login](/how-to-track-a-new-login) event in the package config file. Then we listen if a new user or payment gets created or a login event occurs, and we send an [API call](/queue) to our service.
+Basically all we do is provide a [composer package](./installation.md), which allows you to simply define and set your [User](./how-to-track-a-new-user.md) and [Payment](./how-to-track-a-new-payment.md) model and [Login](./how-to-track-a-new-login.md) event in the package config file. Then we listen if a new user or payment gets created or a login event occurs, and we send an [API call](./queue.md) to our service.
 
 ### Data Visualisation
 
@@ -42,13 +46,13 @@ This makes it a more reliable choice for collecting accurate data and maintainin
 In summary, while client-side analytics are easier to implement, server-side analytics provide more accurate and comprehensive data,
 unaffected by ad blockers and privacy tools, making them a better choice for businesses needing reliable metrics.
 
-Wondering how SimpleStats counts visitors, and why its numbers can differ from other analytics tools? See [Counting Visitors](/counting-visitors) for where each tool gains or loses visitors, and what a healthy difference looks like.
+Wondering how SimpleStats counts visitors, and why its numbers can differ from other analytics tools? See [Counting Visitors](./counting-visitors.md) for where each tool gains or loses visitors, and what a healthy difference looks like.
 
 ## KPIs
 
 SimpleStats computes a wide range of [KPIs](https://en.wikipedia.org/wiki/Performance_indicator) from your tracking data, covering acquisition, revenue, retention, and recurring revenue. Which ones apply depends on what your project tracks: visitors only, registrations, payments, or full subscription analytics.
 
-See the full [KPIs reference](/kpis) for every metric, what it means, and how it is calculated.
+See the full [KPIs reference](./kpis.md) for every metric, what it means, and how it is calculated.
 
 ## Help
 

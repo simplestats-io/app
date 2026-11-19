@@ -1,3 +1,7 @@
+---
+description: "Update payments already tracked in SimpleStats, for example after status changes, refunds or chargebacks."
+---
+
 # How to update an already tracked payment
 
 ::: tip

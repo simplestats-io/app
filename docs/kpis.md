@@ -1,3 +1,7 @@
+---
+description: "Reference of every KPI in SimpleStats: visitors, conversion rate, ARPU, ARPPU, MRR, churn, retention and how each one is calculated."
+---
+
 # Key Performance Indicators (KPIs)
 
 SimpleStats turns your raw tracking data into actionable [KPIs](https://en.wikipedia.org/wiki/Performance_indicator) across acquisition, revenue, retention, and recurring revenue. This page is the full reference for every metric we compute, what it means, and how it is calculated.

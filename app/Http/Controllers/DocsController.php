@@ -15,7 +15,11 @@ class DocsController extends Controller
         // Raw markdown for AI agents (e.g. the "set up your agent" prompt in the AI chat). Only pages
         // that are part of the built docs are exposed, so no other markdown file in docs/ leaks.
         if (preg_match('/^[a-z0-9-]+\.md$/', (string) $path) && File::exists($distPath.Str::replaceLast('.md', '.html', $path))) {
-            return new Response(File::get(base_path('docs/'.$path)), 200, ['Content-Type' => 'text/markdown; charset=utf-8']);
+            return new Response(File::get(base_path('docs/'.$path)), 200, [
+                'Content-Type' => 'text/markdown; charset=utf-8',
+                // Duplicates the rendered .html page, which is the one that should rank.
+                'X-Robots-Tag' => 'noindex',
+            ]);
         }
 
         $filePath = $distPath.$path;

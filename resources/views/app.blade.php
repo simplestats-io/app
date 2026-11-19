@@ -10,16 +10,31 @@
 
         @if (! app()->isProduction())
             <meta name="robots" content="noindex, nofollow">
+        @elseif (str_starts_with($page['component'], 'Auth/'))
+            <meta name="robots" content="noindex">
         @endif
 
+        @use('Inertia\Ssr\Gateway')
         @php
+            // Dispatched here instead of in @inertiaHead (which reuses both variables) so the page gets
+            // exactly one title: pages ssr.js does not render come back with an empty one, which is
+            // dropped in favour of ours below.
+            $__inertiaSsrDispatched = true;
+            $__inertiaSsrResponse = app(Gateway::class)->dispatch($page);
+            if ($__inertiaSsrResponse) {
+                $__inertiaSsrResponse->head = preg_replace('#<title[^>]*>\s*</title>#', '', $__inertiaSsrResponse->head);
+            }
+            $ssrRendersTitle = str_contains($__inertiaSsrResponse?->head ?? '', '<title');
+
             $blogPost = $page['component'] === 'Blog/Show' ? $page['props']['post'] : null;
             $metaTitle = config('app.name', 'Laravel').' - '.($blogPost['title'] ?? __('Revenue attribution analytics for Laravel apps'));
             $ogTitle = $blogPost['title'] ?? $metaTitle;
             $metaDescription = $blogPost['excerpt'] ?? __('Discover which channels actually drive revenue, not just traffic. Server-side analytics built for Laravel apps. GDPR compliant, 100% accurate, ad-blocker proof.');
         @endphp
 
-        <title inertia>{{ $metaTitle }}</title>
+        @unless ($ssrRendersTitle)
+            <title inertia>{{ $metaTitle }}</title>
+        @endunless
         <meta name="description" content="{{ $metaDescription }}">
 
         <meta property="og:title" content="{{ $ogTitle }}">

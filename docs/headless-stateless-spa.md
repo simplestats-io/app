@@ -1,3 +1,7 @@
+---
+description: "Use SimpleStats with headless, SPA or stateless Laravel backends: cache-based visitor attribution, setup profiles and forwarding the referrer."
+---
+
 # Headless, SPA & Stateless Backends
 
 The _SimpleStats_ Laravel client supports two storage drivers for visitor attribution: the classic Laravel **session** (default) and the **cache**. The cache driver is what makes the package work in headless setups where the frontend lives on a separate domain (Vue, React, Next, mobile apps), and in stateless auth setups (JWT, Bearer tokens, Sanctum personal access tokens) where no session cookie is available.
@@ -114,7 +118,7 @@ Keep in mind that clearing the cache (for example via `php artisan cache:clear` 
 
 ## Precision on mobile networks
 
-The cache driver identifies the visitor by [the visitor hash](/how-to-track-a-new-visitor#the-visitor-hash), which is derived from `IP + User-Agent + day`. When a mobile user switches between WiFi and 4G, the IP changes, so the visitor hash changes, and the same person can be counted as two visitors for the day.
+The cache driver identifies the visitor by [the visitor hash](./how-to-track-a-new-visitor.md#the-visitor-hash), which is derived from `IP + User-Agent + day`. When a mobile user switches between WiFi and 4G, the IP changes, so the visitor hash changes, and the same person can be counted as two visitors for the day.
 
 In practice, this is mostly a visitor-count issue. Logins and payments stay accurate because they are linked to a user ID, and the user's UTM attribution is captured once at registration and re-used from there.
 

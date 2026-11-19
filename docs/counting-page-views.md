@@ -1,4 +1,5 @@
 ---
+description: "How SimpleStats counts page views, views per visitor and bounce rate, and why the numbers can differ from Google Analytics or Plausible."
 aside: false
 ---
 

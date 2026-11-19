@@ -31,6 +31,9 @@ $exclude = [
 
     '{locale}', // localized routes, tested in LocalizationTest
     '{locale}/*',
+
+    // permanent redirects of the old root docs urls, tested in SeoTest
+    ...array_map(fn (string $doc): string => basename($doc, '.md'), glob(__DIR__.'/../../docs/*.md')),
 ];
 
 routeTesting('all GET routes')

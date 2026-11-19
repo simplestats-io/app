@@ -1,3 +1,7 @@
+---
+description: "Track custom events in Laravel with SimpleStats: button clicks, plan upgrades, feature usage, attributed to the visitor's source."
+---
+
 # How to track a custom event
 
 Custom events let you track any user action in your application, such as button clicks, plan upgrades, feature usage, or anything else that matters to your business.

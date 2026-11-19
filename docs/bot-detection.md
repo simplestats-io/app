@@ -1,3 +1,7 @@
+---
+description: "How SimpleStats filters bots, crawlers, AI scrapers and headless browsers automatically, so your Laravel analytics only count real humans."
+---
+
 # Bot Detection
 
 _SimpleStats_ filters out **bot and crawler traffic** automatically, so your visitor counts reflect real humans, not scrapers or uptime monitors. Bot detection is enabled by default and requires no configuration.

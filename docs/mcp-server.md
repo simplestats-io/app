@@ -1,3 +1,7 @@
+---
+description: "Connect the hosted SimpleStats MCP server to Claude Code, Cursor or Claude Desktop and ask questions about your analytics in plain language."
+---
+
 # MCP Server
 
 _SimpleStats_ ships a hosted [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server. Connect it to AI tools like Claude Code, Cursor, or Claude Desktop and ask questions about your analytics in plain language: "How many registrations did I get last month?", "Which referrer brings the most revenue?", "How did my MRR develop this year?".

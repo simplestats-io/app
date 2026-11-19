@@ -38,8 +38,11 @@ test('sitemap contains published blog posts and docs pages', function (): void {
     expect($sitemap)
         ->toContain("<loc>{$baseUrl}/blog</loc>")
         ->toContain("<loc>{$baseUrl}/blog/published-post</loc>")
-        ->toContain("<loc>{$baseUrl}/docs</loc>")
-        ->toContain("<loc>{$baseUrl}/docs/installation</loc>")
+        ->toContain("<loc>{$baseUrl}/docs/</loc>")
+        ->toContain("<loc>{$baseUrl}/docs/installation.html</loc>")
+        ->toContain("<loc>{$baseUrl}/de/imprint</loc>")
+        ->not->toContain('/login')
+        ->not->toContain('/register')
         ->not->toContain('draft-post')
         ->not->toContain('markdown-examples');
 });
