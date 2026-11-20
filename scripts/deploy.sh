@@ -102,6 +102,10 @@ STORAGE_DIR="$BASE_DIR/shared/storage"
 if [ -d "$STORAGE_DIR" ]; then
   rm -rf ./storage
   ln -s -n -f -T "$STORAGE_DIR" ./storage
+  # Otherwise git status in the release lists every tracked storage file as deleted
+  # and the symlink as untracked.
+  git ls-files -z storage | git update-index -z --skip-worktree --stdin
+  echo '/storage' >> .git/info/exclude
 else
   printf '\nError: storage dir is missing at %s.' "$STORAGE_DIR" && exit 1
 fi
