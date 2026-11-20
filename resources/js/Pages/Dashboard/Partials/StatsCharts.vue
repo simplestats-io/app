@@ -37,6 +37,36 @@ const gridColsClass = (count) => ({
     2: 'grid-cols-1 sm:grid-cols-2',
     3: 'grid-cols-1 lg:grid-cols-3',
 }[Math.min(count, 3)]);
+
+const ROW_SIZE = 3;
+
+const colSpanClass = {
+    1: 'lg:col-span-1',
+    2: 'lg:col-span-2',
+};
+
+// A shared row is as wide as its charts, so two lone charts (1+1) split the row
+// instead of leaving an empty third column.
+const sharedRowClass = (row) => ({
+    2: 'grid grid-cols-1 gap-x-4 gap-y-6 lg:grid-cols-2',
+    3: 'grid grid-cols-1 gap-x-4 gap-y-6 lg:grid-cols-3',
+}[row.reduce((sum, section) => sum + section.kpis.length, 0)]);
+
+// Consecutive sections share a row while their charts fit into ROW_SIZE columns, so
+// e.g. a lone Registrations chart (no visitors tracked) sits next to Revenue instead
+// of spanning the full width. Sections that fill a row on their own stay unchanged.
+const overviewRows = overviewSections.reduce((rows, section) => {
+    const row = rows.at(-1);
+    const used = row ? row.reduce((sum, s) => sum + s.kpis.length, 0) : ROW_SIZE;
+
+    if (used + section.kpis.length <= ROW_SIZE) {
+        row.push(section);
+    } else {
+        rows.push([section]);
+    }
+
+    return rows;
+}, []);
 </script>
 
 <template>
@@ -52,18 +82,30 @@ const gridColsClass = (count) => ({
             The selected period ends before this cohort signed up, so there is nothing to show. Widen the period to cover the time since their registration.
         </p>
 
-        <section v-for="(section, index) in overviewSections" :key="section.name" class="space-y-3" :data-tour="index === 0 ? 'chart-info' : undefined">
-            <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">
-                {{ section.name }}
-            </h2>
-            <div class="grid gap-4" :class="gridColsClass(section.kpis.length)">
-                <StatsSmallChart
-                    v-for="kpi in section.kpis"
-                    :key="kpi.key"
-                    :kpi="kpi"
-                    :filters="filters"
-                />
-            </div>
-        </section>
+        <div
+            v-for="(row, rowIndex) in overviewRows"
+            :key="row.map((section) => section.name).join('|')"
+            :class="row.length > 1 ? sharedRowClass(row) : null"
+        >
+            <section
+                v-for="(section, index) in row"
+                :key="section.name"
+                class="min-w-0 space-y-3"
+                :class="row.length > 1 ? colSpanClass[section.kpis.length] : null"
+                :data-tour="rowIndex === 0 && index === 0 ? 'chart-info' : undefined"
+            >
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">
+                    {{ section.name }}
+                </h2>
+                <div class="grid gap-4" :class="gridColsClass(section.kpis.length)">
+                    <StatsSmallChart
+                        v-for="kpi in section.kpis"
+                        :key="kpi.key"
+                        :kpi="kpi"
+                        :filters="filters"
+                    />
+                </div>
+            </section>
+        </div>
     </div>
 </template>
