@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
-afterEach(fn () => date_default_timezone_set(config('app.timezone')));
+afterEach(fn (): bool => date_default_timezone_set(config('app.timezone')));
 
 it('resets a timezone a previous request left behind in the worker', function (): void {
     config(['app.timezone' => 'UTC']);
