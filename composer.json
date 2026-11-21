@@ -38,6 +38,7 @@
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
+        "baer-software/larabeacon": "^3.6",
         "barryvdh/laravel-debugbar": "^3.9",
         "driftingly/rector-laravel": "^2.0",
         "larastan/larastan": "^3.0",

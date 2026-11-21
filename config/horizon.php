@@ -93,7 +93,7 @@ return [
     'waits' => [
         'redis:default' => 60,
         'redis:ingest' => 60,
-        'redis:low' => 300,
+        'redis-low:low' => 300,
     ],
 
     /*
@@ -202,18 +202,16 @@ return [
             'minProcesses' => (int) env('HORIZON_DEFAULT_MIN_PROCESSES', 2),
             'maxProcesses' => (int) env('HORIZON_DEFAULT_MAX_PROCESSES', 5),
             'timeout' => 60,
-            'retry_after' => 90,
             'tries' => 3,
             'memory' => 256,
         ],
         'supervisor-low' => [
-            'connection' => 'redis',
+            'connection' => 'redis-low',
             'queue' => ['low'],
             'balance' => 'simple',
             'minProcesses' => (int) env('HORIZON_LOW_MIN_PROCESSES', 1),
             'maxProcesses' => (int) env('HORIZON_LOW_MAX_PROCESSES', 1),
             'timeout' => 3600,
-            'retry_after' => 3700,
             'tries' => 1,
             'memory' => 512,
         ],
@@ -224,7 +222,6 @@ return [
             'minProcesses' => (int) env('HORIZON_INGEST_MIN_PROCESSES', 3),
             'maxProcesses' => (int) env('HORIZON_INGEST_MAX_PROCESSES', 10),
             'timeout' => 60,
-            'retry_after' => 90,
             'tries' => 2,
             'memory' => 256,
         ],
