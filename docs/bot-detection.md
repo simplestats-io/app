@@ -13,3 +13,5 @@ A request is **skipped** (no visitor recorded, no API call dispatched) when:
 - the request is a speculative browser **prefetch/prerender**, since the visitor may never actually see the page
 
 On top of that, visits from **datacenter IPs** (AWS, GCP, Hetzner, and the like) are filtered server-side, since they are practically always bots hiding behind a real browser User-Agent. VPN and iCloud Private Relay users are not affected.
+
+Visits whose referrer is a known **referrer spam domain** are dropped server-side as well. Some bots fake a referrer from an unrelated, legitimate looking site and send a real browser User-Agent from residential IPs, so only the referrer gives them away. The domains come from the community-maintained [Matomo referrer spam list](https://github.com/matomo-org/referrer-spam-list), which SimpleStats refreshes weekly.

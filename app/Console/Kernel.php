@@ -67,6 +67,7 @@ class Kernel extends ConsoleKernel
 
             // WEEKLY
             $schedule->command('location:update')->weekly()->at('05:00');
+            $schedule->command('app:update-referrer-spam-list')->weekly()->at('05:15');
         }
 
         $schedule->command('app:clear-old-stats-aggregations')->weekly()->at('4:00');

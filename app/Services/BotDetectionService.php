@@ -7,6 +7,7 @@ use App\Location\Position;
 use DeviceDetector\DeviceDetector;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Throwable;
 
 class BotDetectionService
 {
@@ -19,6 +20,11 @@ class BotDetectionService
      *   on Akamai, Fastly and Cloudflare, and ip-api flags Akamai/Fastly as hosting.
      * Every other datacenter AS (AWS, GCP, Hetzner, Linode, ...) is filtered.
      */
+    /**
+     * Bump when detectBot() changes, so cached results are not reused.
+     */
+    private const int RULES_VERSION = 1;
+
     private const array CONSUMER_EXIT_ASNS = [
         9009,   // M247
         60068,  // Datacamp / CDN77
@@ -86,12 +92,44 @@ class BotDetectionService
         Cache::increment($key);
     }
 
+    /**
+     * Results are cached per User-Agent: a full device-detector parse costs about
+     * 15 ms per request under PHP-FPM, while real traffic shares few distinct UAs.
+     * The detector version and RULES_VERSION are part of the key, so an update of
+     * either re-evaluates every UA. One day keeps attacker-chosen UAs from piling up
+     * in a file store. Fails open to the uncached parse when the store is unavailable.
+     */
     public static function isBot(?string $userAgent): bool
     {
         if (! is_string($userAgent) || $userAgent === '') {
             return true;
         }
 
+        $key = 'is_bot:'.DeviceDetector::VERSION.':'.self::RULES_VERSION.':'.hash('xxh128', $userAgent);
+
+        try {
+            $cached = Cache::get($key);
+        } catch (Throwable) {
+            $cached = null;
+        }
+
+        if (is_bool($cached)) {
+            return $cached;
+        }
+
+        $isBot = self::detectBot($userAgent);
+
+        try {
+            Cache::put($key, $isBot, now()->addDay());
+        } catch (Throwable) {
+            // fail open, the next request parses again
+        }
+
+        return $isBot;
+    }
+
+    private static function detectBot(string $userAgent): bool
+    {
         $detector = new DeviceDetector($userAgent);
         $detector->discardBotInformation();
         $detector->setCache(new DeviceDetectorCache);

@@ -11,6 +11,7 @@ use App\Observers\UserObserver;
 use App\PulseUsers;
 use App\Services\Ai\NullConversationStore;
 use App\Services\LocationService;
+use App\Services\ReferrerSpamService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
         // Singleton so the datacenter check and the geo mutator share one
         // memoized lookup per IP within a worker process.
         $this->app->singleton(LocationService::class);
+        $this->app->singleton(ReferrerSpamService::class);
 
         // While impersonating (and in demo mode, where all visitors share one
         // account) AI conversations are not persisted: the chat still works,

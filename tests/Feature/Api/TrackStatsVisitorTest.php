@@ -6,10 +6,12 @@ use App\Location\Position;
 use App\Models\Project;
 use App\Models\StatsVisitor;
 use App\Models\User;
+use App\Services\ReferrerSpamService;
 use Database\Seeders\TestUserSeeder;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Storage;
 use Stevebauman\Location\Facades\Location;
 
 beforeEach(function (): void {
@@ -131,6 +133,46 @@ test('headless browser user agents are rejected with 200', function (): void {
 
     $response->assertOk()
         ->assertJson(['message' => 'Bots are not allowed']);
+});
+
+test('visitors with a referrer spam referer are rejected with a skip hint for the client', function (string $referer): void {
+    Bus::fake();
+    Storage::fake('local');
+
+    $response = $this->postJson('/api/v1/stats-visitor', validVisitorPayload(['track_referer' => $referer]), apiHeaders($this->token));
+
+    $response->assertOk()->assertExactJson([
+        'message' => 'Bots are not allowed',
+        'skip' => [['type' => 'referer', 'value' => 'aocr.org', 'ttl' => ReferrerSpamService::SKIP_TTL]],
+    ]);
+    Bus::assertNotDispatched(TrackStatsVisitor::class);
+})->with([
+    'host' => ['aocr.org'],
+    'url' => ['https://aocr.org/'],
+    'subdomain' => ['Shop.AOCR.org'],
+    'trailing dot' => ['aocr.org.'],
+]);
+
+test('visitors with a referrer spam source of older clients are rejected without a skip hint', function (): void {
+    Bus::fake();
+    Storage::fake('local');
+
+    $this->postJson('/api/v1/stats-visitor', validVisitorPayload(['track_source' => 'aocr.org']), apiHeaders($this->token))
+        ->assertOk()
+        ->assertExactJson(['message' => 'Bots are not allowed']);
+
+    Bus::assertNotDispatched(TrackStatsVisitor::class);
+});
+
+test('visitors with a regular referer are still tracked', function (): void {
+    Bus::fake();
+    Storage::fake('local');
+
+    $this->postJson('/api/v1/stats-visitor', validVisitorPayload(['track_referer' => 'https://notaocr.org/']), apiHeaders($this->token))
+        ->assertOk()
+        ->assertJsonMissing(['message' => 'Bots are not allowed']);
+
+    Bus::assertDispatched(TrackStatsVisitor::class);
 });
 
 test('tracking fields are accepted', function (): void {

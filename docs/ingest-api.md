@@ -119,6 +119,8 @@ _Core parameters:_
 If no `visitor_hash` is given, it gets generated from `time`, `ip` and `user_agent`. The returned `visitor_hash` can be used to reference this visitor in other endpoints (payments, custom events, custom properties).
 :::
 
+Bots and referrer spam are rejected with `{"message": "Bots are not allowed"}` (status 200, so queued clients do not retry). For a spam referer the response also carries a `skip` list, e.g. `"skip": [{"type": "referer", "value": "spam-domain.com", "ttl": 86400}]`: skip sending visitors whose `track_referer` is this domain or one of its subdomains for `ttl` seconds. Ignore unknown `type` values, more may be added later.
+
 ### Create User
 
 **HTTP Request**

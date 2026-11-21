@@ -82,3 +82,18 @@ it('still detects bots correctly when the cache store fails', function () use ($
     expect(BotDetectionService::isBot('Googlebot/2.1 (+http://www.google.com/bot.html)'))->toBeTrue();
     expect(BotDetectionService::isBot($realBrowser))->toBeFalse();
 });
+
+it('caches the result per user agent', function () use ($realBrowser): void {
+    config(['cache.default' => 'array']);
+    Cache::store('array')->flush();
+
+    expect(BotDetectionService::isBot($realBrowser))->toBeFalse();
+
+    $key = collect(Cache::store('array')->getStore()->all())->keys()->first(fn (string $key): bool => str_starts_with($key, 'is_bot:'));
+
+    expect($key)->not->toBeNull();
+
+    Cache::put($key, true, 60);
+
+    expect(BotDetectionService::isBot($realBrowser))->toBeTrue();
+});
