@@ -2,6 +2,23 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.4.0 - 2026-11-21
+
+### Added
+
+- Visitors with a known referrer spam domain are dropped at ingest. Some bots send a real browser User-Agent from residential IPs and only give themselves away through a faked referer. The domains come from the community-maintained Matomo referrer spam list, which ships with the app and is refreshed weekly by the scheduler (`app:update-referrer-spam-list`).
+- The visitor endpoint answers a spam referer with a `skip` hint, so laravel-client v6.1.0 and newer stop sending visitors from that domain for a day.
+
+### Changed
+
+- The bot check result is cached per User-Agent for a day, which makes the visitor and user endpoints noticeably faster.
+
+### Upgrade notes
+
+- Nothing to do. The weekly list refresh runs through the existing scheduler. Without outbound access to GitHub the bundled list is used.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.3.5...v7.4.0
+
 ## v7.3.5 - 2026-11-18
 
 ### Fixed
