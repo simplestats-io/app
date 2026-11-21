@@ -71,6 +71,19 @@ return [
             'after_commit' => false,
         ],
 
+        // Used by Horizon's supervisor-low for data imports, which may run for
+        // up to an hour. Workers read retry_after from the connection, not from
+        // the supervisor, so it has to be longer than the job timeout here, or
+        // the import is handed out again while it is still running.
+        'redis-low' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'low',
+            'retry_after' => 3700,
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
     ],
 
     /*
