@@ -9,7 +9,7 @@ No two analytics tools report the same visitor numbers, and the gap is usually l
 
 ## The trade-off of cookieless counting
 
-To work without a cookie banner, SimpleStats identifies a visitor with a hash built from IP address, user agent, and a **daily salt**. It has two known limits, the same ones Plausible and Fathom have:
+To work without a [cookie banner](https://simplestats.io/compliance), SimpleStats identifies a visitor with a hash built from IP address, user agent, and a **daily salt**. It has two known limits, the same ones Plausible and Fathom have:
 
 - **The same person can be counted twice in a day** if their IP changes mid-day (mostly mobile visitors switching between Wi-Fi and mobile networks).
 - **Different people can be counted as one** when they share an IP and an identical user agent. Modern browsers deliberately shrink how unique the user agent is, so two people on the same OS and browser version (an office network, or many phones behind one mobile carrier) can look identical.

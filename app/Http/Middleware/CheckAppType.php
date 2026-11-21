@@ -4,10 +4,12 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\DpaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImprintController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\TrademarkController;
 use Closure;
 use Illuminate\Http\Request;
@@ -21,6 +23,8 @@ class CheckAppType
         ImprintController::class,
         DpaController::class,
         TrademarkController::class,
+        ComplianceController::class,
+        SecurityController::class,
         BlogController::class,
         ChangelogController::class,
     ];

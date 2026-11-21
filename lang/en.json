@@ -242,5 +242,11 @@
 
     "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.",
     "Jump to :section": "Jump to :section",
-    ":appName homepage": ":appName homepage"
+    ":appName homepage": ":appName homepage",
+    "Is SimpleStats GDPR, CCPA and PECR compliant?": "Is SimpleStats GDPR, CCPA and PECR compliant?",
+    "Yes! SimpleStats sets no cookies, never stores IP addresses and runs entirely on your server, so you need no cookie banner for analytics. It is built and hosted in the EU, and our <a href=\"/dpa\" target=\"_blank\" class=\"simpleLink\">DPA</a> applies automatically. Read more on our <a href=\"/compliance\" target=\"_blank\" class=\"simpleLink\">compliance page</a>.": "Yes! SimpleStats sets no cookies, never stores IP addresses and runs entirely on your server, so you need no cookie banner for analytics. It is built and hosted in the EU, and our <a href=\"/dpa\" target=\"_blank\" class=\"simpleLink\">DPA</a> applies automatically. Read more on our <a href=\"/compliance\" target=\"_blank\" class=\"simpleLink\">compliance page</a>.",
+    "GDPR, CCPA & PECR compliant": "GDPR, CCPA & PECR compliant",
+    "Compliance & security": "Compliance & security",
+    "Compliance": "Compliance",
+    "Security": "Security"
 }

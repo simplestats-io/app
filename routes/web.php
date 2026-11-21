@@ -6,6 +6,7 @@ use App\Http\Controllers\AiConversationController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\CustomStatsRangePresetController;
 use App\Http\Controllers\DataImportController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\ImprintController;
 use App\Http\Controllers\LoginSummaryController;
 use App\Http\Controllers\PowerUserController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SetupInstallController;
 use App\Http\Controllers\SetupProjectController;
 use App\Http\Controllers\SetupTeamController;
@@ -83,6 +85,8 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/imprint', [ImprintController::class, 'show'])->name('imprint');
 Route::get('/dpa', [DpaController::class, 'show'])->name('dpa');
 Route::get('/trademark', [TrademarkController::class, 'show'])->name('trademark');
+Route::get('/compliance/{page?}', [ComplianceController::class, 'show'])->whereIn('page', array_diff(array_keys(ComplianceController::PAGES), ['index']))->name('compliance');
+Route::get('/security', [SecurityController::class, 'show'])->name('security');
 Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 // Blog (not localized)

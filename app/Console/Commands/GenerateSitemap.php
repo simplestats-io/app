@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\ComplianceController;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use JCFrane\MdBlog\Facades\MdBlog;
@@ -93,6 +94,16 @@ class GenerateSitemap extends Command
                 ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
                 ->setPriority(0.5)
         );
+
+        $legalPaths = ['/security', ...array_map(fn (string $page): string => $page === 'index' ? '/compliance' : '/compliance/'.$page, array_keys(ComplianceController::PAGES))];
+
+        foreach ($legalPaths as $path) {
+            $sitemap->add(
+                Url::create($baseUrl.$path)
+                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
+                    ->setPriority(0.5)
+            );
+        }
 
         foreach (MdBlog::latest() as $post) {
             $sitemap->add(

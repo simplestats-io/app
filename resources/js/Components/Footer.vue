@@ -17,6 +17,8 @@ const appEnv = import.meta.env.VITE_APP_ENV;
         &nbsp;·&nbsp;
         <a class="hover:underline" href="/dpa" target="_blank">{{ $t('DPA') }}</a>
         &nbsp;·&nbsp;
+        <a class="hover:underline" href="/compliance" target="_blank">{{ $t('Compliance') }}</a>
+        &nbsp;·&nbsp;
         <a class="hover:underline" href="/imprint" target="_blank">{{ $t('Imprint') }}</a>
     </footer>
 </template>

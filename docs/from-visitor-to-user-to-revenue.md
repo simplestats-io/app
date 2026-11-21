@@ -60,7 +60,7 @@ These insights are available through KPIs like [ARPU, ARPV, CR, and REG2PU](intr
 
 ## Privacy-First Approach
 
-This attribution chain works entirely **server-side** and is **GDPR-compliant**. Similar privacy-focused analytics tools like **Plausible** and **Fathom Analytics** use comparable hashing techniques for visitor identification, but SimpleStats goes further by connecting the full funnel from visitor to revenue without ever storing personally identifiable information like IP addresses or User-Agents.
+This attribution chain works entirely **server-side** and is **GDPR-compliant** (see our [compliance overview](https://simplestats.io/compliance)). Similar privacy-focused analytics tools like **Plausible** and **Fathom Analytics** use comparable hashing techniques for visitor identification, but SimpleStats goes further by connecting the full funnel from visitor to revenue without ever storing personally identifiable information like IP addresses or User-Agents.
 
 ::: tip
 Since all tracking happens server-side, none of it can be blocked by ad blockers or browser privacy extensions. You get a complete, unfiltered picture of your funnel.

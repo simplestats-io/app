@@ -22,6 +22,7 @@ $exclude = [
     'billing/*',
     'projects/{project}/*', // token-view & token-regenerate routes
     'blog/{slug}', // requires a real slug, tested separately in BlogTest
+    'compliance/{page?}', // restricted to known pages, tested in CompliancePagesTest
     'og-image/*', // requires a generated og-image filename
     'docs/api-documentation.html', // permanent redirect to docs/ingest-api.html
     'livewire*',
@@ -42,7 +43,7 @@ routeTesting('all GET routes')
         // if ($uri !== 'user/confirm-password') return; // only for tests
 
         // public marketing pages redirect to the login on self-hosted
-        if (in_array($uri, ['/', 'blog', 'imprint', 'dpa', 'trademark', 'changelog']) || str_starts_with($uri, 'docs/')) {
+        if (in_array($uri, ['/', 'blog', 'imprint', 'dpa', 'trademark', 'security', 'changelog']) || str_starts_with($uri, 'docs/')) {
             $this->skipUnlessSaas();
         }
 

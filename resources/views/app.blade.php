@@ -27,9 +27,10 @@
             $ssrRendersTitle = str_contains($__inertiaSsrResponse?->head ?? '', '<title');
 
             $blogPost = $page['component'] === 'Blog/Show' ? $page['props']['post'] : null;
-            $metaTitle = config('app.name', 'Laravel').' - '.($blogPost['title'] ?? __('Revenue attribution analytics for Laravel apps'));
-            $ogTitle = $blogPost['title'] ?? $metaTitle;
-            $metaDescription = $blogPost['excerpt'] ?? __('Discover which channels actually drive revenue, not just traffic. Server-side analytics built for Laravel apps. GDPR compliant, 100% accurate, ad-blocker proof.');
+            $pageMeta = $blogPost ? ['title' => $blogPost['title'], 'description' => $blogPost['excerpt']] : ($page['props']['meta'] ?? null);
+            $metaTitle = config('app.name', 'Laravel').' - '.($pageMeta['title'] ?? __('Revenue attribution analytics for Laravel apps'));
+            $ogTitle = $pageMeta['title'] ?? $metaTitle;
+            $metaDescription = $pageMeta['description'] ?? __('Discover which channels actually drive revenue, not just traffic. Server-side analytics built for Laravel apps. GDPR compliant, 100% accurate, ad-blocker proof.');
         @endphp
 
         @unless ($ssrRendersTitle)

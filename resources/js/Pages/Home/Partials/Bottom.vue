@@ -41,6 +41,9 @@ const linkCategories = [
             {"title": () => trans("Imprint"), "url": "/imprint"},
             {"title": () => trans("Privacy"), "url": "/privacy-policy"},
             {"title": () => trans("Terms"), "url": "/terms-of-service"},
+            {"title": () => trans("DPA"), "url": "/dpa"},
+            {"title": () => trans("Compliance"), "url": "/compliance"},
+            {"title": () => trans("Security"), "url": "/security"},
             {"title": () => trans("Trademark"), "url": "/trademark"},
         ],
     },
@@ -61,7 +64,9 @@ const linkCategories = [
                             {{ $t('Based and hosted in the EU') }} <span class="text-lg">🇪🇺</span>
                         </div>
                         <div class="mt-4">
-                            <img class="rounded-xl shadow-md border border-gray-300" src="/images/gdpr.png" loading="lazy" alt="GDPR compliant" width="192" height="66">
+                            <a href="/compliance" target="_blank" class="inline-block">
+                                <img class="rounded-xl shadow-md border border-gray-300" src="/images/gdpr.png" loading="lazy" alt="GDPR compliant" width="192" height="66">
+                            </a>
                         </div>
                         <div class="mt-6">
                             <LanguageSwitcher />

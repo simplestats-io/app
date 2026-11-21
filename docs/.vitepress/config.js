@@ -101,6 +101,7 @@ export default defineConfig({
                     {text: 'Plans and Limits', link: '/plans-and-limits'},
                     {text: 'Counting Visitors', link: '/counting-visitors'},
                     {text: 'Counting Page Views', link: '/counting-page-views'},
+                    {text: 'Compliance & Security', link: 'https://simplestats.io/compliance'},
                     {text: 'Troubleshooting', link: '/troubleshooting'},
                     {text: 'Contribution', link: '/contribution'},
                 ]

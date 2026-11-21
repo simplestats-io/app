@@ -1,6 +1,6 @@
 # Data Processing Agreement
 
-Last updated: October 14, 2026
+Last updated: November 21, 2026
 
 This Data Processing Agreement ("DPA") is an addendum to the [Terms and Conditions](/terms-of-service) between Laracraft GbR, Brunnengasse 12, D-87629 Füssen ("We", "Us", the "Processor") and the customer using the hosted service at simplestats.io ("You", the "Controller"). It applies automatically when You create an account, no separate signature is required.
 
@@ -15,6 +15,8 @@ The processing lasts as long as You use the service. Section 9 describes what ha
 ## 2. Roles
 
 You are the controller of the personal data You send to the service. We are Your processor within the meaning of Art. 28 of the General Data Protection Regulation (GDPR) and process the data only on Your documented instructions. The Terms and Conditions, this DPA and Your configuration of the service (for example which events You track) are Your instructions.
+
+Where the California Consumer Privacy Act, as amended by the California Privacy Rights Act (CCPA), applies, We act as Your service provider. We do not sell or share the personal information, and We do not retain, use or disclose it for any purpose other than providing the service to You, nor outside of Our direct business relationship with You. We do not combine it with personal information We receive from other sources, except as permitted by the CCPA.
 
 We process data of Your own account (name, email, billing details) as an independent controller. That processing is covered by Our [Privacy Policy](/privacy-policy), not by this DPA.
 

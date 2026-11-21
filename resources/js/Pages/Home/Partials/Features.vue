@@ -138,8 +138,11 @@ const f = {
                         <component :is="f.privacy.icon" class="size-6" />
                     </div>
                     <h3 class="text-2xl font-bold tracking-tight">{{ f.privacy.title() }}</h3>
-                    <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('GDPR compliant') }}</div>
+                    <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('GDPR, CCPA & PECR compliant') }}</div>
                     <p class="text-base leading-relaxed text-indigo-100">{{ f.privacy.descr() }}</p>
+                    <a href="/compliance" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-indigo-200">
+                        {{ $t('Compliance & security') }} <span aria-hidden="true">&rarr;</span>
+                    </a>
                     <div class="mt-auto border-t border-white/15 pt-4">
                         <div class="text-sm font-semibold uppercase tracking-widest text-indigo-50">{{ $t('Open source') }}</div>
                         <p class="mt-2 text-sm leading-relaxed text-indigo-100">{{ $t('The code is public, so you can verify exactly what we collect.') }}</p>

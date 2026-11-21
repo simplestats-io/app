@@ -214,5 +214,11 @@
     "View all posts": "Visualizza tutti i post",
     "This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.": "Questo account è stato disattivato perché non è stato utilizzato per molto tempo. I dati possono ancora essere ripristinati, contatta :email.",
     "Jump to :section": "Vai a :section",
-    ":appName homepage": "Home page di :appName"
+    ":appName homepage": "Home page di :appName",
+    "Is SimpleStats GDPR, CCPA and PECR compliant?": "SimpleStats è conforme a GDPR, CCPA e PECR?",
+    "Yes! SimpleStats sets no cookies, never stores IP addresses and runs entirely on your server, so you need no cookie banner for analytics. It is built and hosted in the EU, and our <a href=\"\/dpa\" target=\"_blank\" class=\"simpleLink\">DPA<\/a> applies automatically. Read more on our <a href=\"\/compliance\" target=\"_blank\" class=\"simpleLink\">compliance page<\/a>.": "Sì! SimpleStats non imposta cookie, non memorizza mai indirizzi IP e funziona interamente sul tuo server, quindi non ti serve un banner dei cookie per le analisi. È sviluppato e ospitato nell'UE e il nostro <a href=\"\/dpa\" target=\"_blank\" class=\"simpleLink\">DPA<\/a> si applica automaticamente. Scopri di più nella nostra <a href=\"\/compliance\" target=\"_blank\" class=\"simpleLink\">pagina sulla conformità<\/a>.",
+    "GDPR, CCPA & PECR compliant": "Conforme a GDPR, CCPA e PECR",
+    "Compliance & security": "Conformità e sicurezza",
+    "Compliance": "Conformità",
+    "Security": "Sicurezza"
 }

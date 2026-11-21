@@ -8,7 +8,7 @@ Once you have installed the _SimpleStats_ [client package](installation.md#compo
 visitor tracking is set up **automatically** —
 no additional configuration is required on your part.
 We ensure
-this process is **GDPR**-compliant by generating a unique `visitor_hash` if a new visitor visits your site.
+this process is [**GDPR**-compliant](https://simplestats.io/compliance/gdpr) by generating a unique `visitor_hash` if a new visitor visits your site.
 
 ## The Visitor Hash
 

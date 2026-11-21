@@ -27,6 +27,12 @@ const questions = ref([
         'active': false,
     },
     {
+        'id': 'compliance',
+        'title': () => trans('Is SimpleStats GDPR, CCPA and PECR compliant?'),
+        'answer': () => trans('Yes! SimpleStats sets no cookies, never stores IP addresses and runs entirely on your server, so you need no cookie banner for analytics. It is built and hosted in the EU, and our <a href="/dpa" target="_blank" class="simpleLink">DPA</a> applies automatically. Read more on our <a href="/compliance" target="_blank" class="simpleLink">compliance page</a>.'),
+        'active': false,
+    },
+    {
         'id': 'custom-events',
         'title': () => trans('Do you support custom events?'),
         'answer': () => trans('Yes! You can track custom events to measure any activity that matters to your application. Check out our <a href="/docs/how-to-track-a-custom-event.html" target="_blank" class="simpleLink">documentation</a> to get started.'),

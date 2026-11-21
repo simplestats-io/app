@@ -41,7 +41,7 @@ On the other hand, server-side analytics like _SimpleStats_ are largely unaffect
 This method ensures more accurate and comprehensive data collection, as it bypasses the limitations imposed by client-side tracking methods.
 
 Furthermore, server-side tracking offers enhanced data security and privacy since it does not rely on third-party cookies and is less vulnerable to browser restrictions and privacy settings.
-This makes it a more reliable choice for collecting accurate data and maintaining compliance with data protection regulations like **GDPR**.
+This makes it a more reliable choice for collecting accurate data and maintaining compliance with data protection regulations like **GDPR**, **CCPA** and **PECR**, without a cookie banner. See our [compliance overview](https://simplestats.io/compliance) for details.
 
 In summary, while client-side analytics are easier to implement, server-side analytics provide more accurate and comprehensive data,
 unaffected by ad blockers and privacy tools, making them a better choice for businesses needing reliable metrics.
