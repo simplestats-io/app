@@ -56,13 +56,22 @@ SimpleStats is a **server-side analytics SaaS** built specifically for Laravel a
 
 Self-hosters are pointed to the official image `ghcr.io/simplestats-io/app` (built by `.github/workflows/docker.yml` on every published release, amd64 + arm64, tags `X.Y.Z` / `X.Y` / `X` / `latest`) and the root `docker-compose.yml` (app, horizon, scheduler, postgres, redis, optional Caddy via `--profile https`). Keep these in mind:
 
-- The image is the **self-hosted build** (`composer.json`), based on `serversideup/php` (nginx + PHP-FPM, Alpine). Its entrypoint runs `storage:link`, `migrate --force` and `optimize` on start of the `app` container (`AUTORUN_*` env vars).
+- The image is the **self-hosted build** (`composer.json`), based on `serversideup/php` (`frankenphp-alpine` variant). The `app` container runs Laravel Octane on FrankenPHP (`CMD` in the `Dockerfile`, with the image's Caddyfile so trusted proxies, security headers and the `/up` health check keep working); horizon and scheduler override the command. Its entrypoint runs `storage:link`, `migrate --force` and `optimize` on start of the `app` container (`AUTORUN_*` env vars).
 - **Never enable the view cache for self-hosted builds** (`view:cache`, plain `php artisan optimize`): it compiles every Blade file, and the SaaS-only views (Filament pages, og-image) reference components that do not exist without `composer.saas.json`, so the command fails. Use `php artisan optimize --except=views`; views compile lazily.
 - `VITE_*` values are baked into the bundle at image build time (`VITE_APP_ENV=production`), runtime env cannot change them. `VITE_APP_NAME` is not an env value at all, see "Branding Is Not Configurable".
 - Configuration is runtime env only (`env_file: .env` next to the compose file, template `.env.docker.example`). Nothing environment-specific belongs in the image.
-- nginx FastCGI buffers are raised to 32k in the `Dockerfile`: the Vite preload `Link` headers exceed the 8k default and cause a 502.
 - New PHP extensions, required env vars or changed processes must be reflected in `Dockerfile`, `docker-compose.yml` and `.env.docker.example`. A change that forces self-hosters to edit their compose file or `.env` is a **major** release.
 - Reverse proxies are trusted via `TRUSTED_PROXIES` (`config/trustedproxy.php`, read by the framework's TrustProxies middleware). `/up` is the unauthenticated health probe, registered outside the `web` group so probes do not create sessions.
+
+### Laravel Octane (FrankenPHP)
+
+The app runs under Laravel Octane: the Docker image always, the SaaS on Forge (Octane daemon on FrankenPHP). PHP-FPM must keep working too (classic self-hosted setups, local Herd), so code has to be correct in both runtimes.
+
+- **No process-wide state that outlives a request.** Octane resets the container, config, auth, session, locale and more per request (`config/octane.php` listeners), but not plain PHP state: static properties, `static` variables, globals, `date_default_timezone_set()`, `setlocale()`, `ini_set()`. If code must change such state, reset it in an Octane listener (example: `App\Listeners\ResetDefaultTimezone` on `RequestReceived`, needed because `AppHelper::ensureTeamTimezone()` sets PHP's default timezone).
+- **Singletons live as long as the worker** (up to `--max-requests`, 500). Only bind stateless services or deliberate caches as `singleton()` (`LocationService` memo is capped, `ReferrerSpamService` keeps the spam list until the worker restarts). Anything depending on the request, the user or the session must be `scoped()` (see `ConversationStore`). Never inject `Request`, the auth user or config values into a singleton's constructor.
+- **Reload with `app:reload-octane`, never `octane:reload` or `octane:stop`.** `octane:reload` re-applies the whole Caddy config, requests arriving meanwhile fail with 500 or hang (measured: about 2% of requests under load per reload). `octane:stop` leaves a 1 to 2 second gap of 502s. `app:reload-octane` calls FrankenPHP's `/frankenphp/workers/restart`, which drains requests (measured: 0 failures under load, release switch included).
+- **SaaS deploy:** `scripts/deploy.sh --restart-octane` runs `app:reload-octane` after activating the release. The Forge Octane daemon must start the server with `APP_BASE_PATH=<base>/current` (command prefixed with `env APP_BASE_PATH=...`): without it `base_path()` is the resolved release directory, and restarted workers would boot the old release again. `app:reload-octane` refuses to run in that case. Forge appends `octane:reload` to a site's deploy script that does not contain that string, so the Forge deploy script keeps a comment mentioning it.
+- `public/frankenphp-worker.php` is committed (Octane stub), so the image and every release contain it.
 
 ### Open Source Repo: Self-Hosted Is the Default Build
 

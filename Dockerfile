@@ -12,7 +12,7 @@ COPY . .
 ENV VITE_APP_ENV=production
 RUN npx vite build
 
-FROM serversideup/php:${PHP_VERSION}-fpm-nginx-alpine AS runtime
+FROM serversideup/php:${PHP_VERSION}-frankenphp-alpine AS runtime
 
 USER root
 RUN install-php-extensions intl bcmath gd exif \
@@ -33,13 +33,17 @@ RUN mkdir -p storage/app/public storage/app/private storage/framework/cache/data
         storage/framework/sessions storage/framework/views storage/logs \
     && composer dump-autoload --optimize --no-dev
 
-# The Vite preload Link headers exceed nginx's default 8k FastCGI header buffer (502).
 ENV APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
     HEALTHCHECK_PATH=/up \
-    NGINX_FASTCGI_BUFFER_SIZE=32k \
-    NGINX_FASTCGI_BUFFERS="16 32k" \
+    OCTANE_SERVER=frankenphp \
+    OCTANE_MAX_REQUESTS=500 \
     PHP_OPCACHE_ENABLE=1 \
     PHP_UPLOAD_MAX_FILE_SIZE=100M \
     PHP_POST_MAX_SIZE=100M
+
+# Octane worker mode with the image's Caddyfile (keeps trusted proxies, security headers
+# and the health check). The base image's CMD runs FrankenPHP in classic mode instead,
+# a self-hoster can switch back to it by overriding `command` in docker-compose.yml.
+CMD ["sh", "-c", "exec php artisan octane:start --server=frankenphp --port=8080 --caddyfile=/etc/frankenphp/Caddyfile --max-requests=${OCTANE_MAX_REQUESTS}"]

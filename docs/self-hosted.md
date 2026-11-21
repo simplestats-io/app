@@ -99,6 +99,7 @@ npm run build
 php artisan migrate --force
 php artisan optimize --except=views
 php artisan queue:restart # or: php artisan horizon:terminate
+php artisan app:reload-octane # only if you run Octane
 ```
 
 ## Requirements
@@ -120,6 +121,30 @@ Passkey sign-in only works over HTTPS, and `APP_URL` must be the exact URL your 
 ## Architecture
 
 SimpleStats self-hosted is a standard Laravel application. The ingest API is intentionally thin: every endpoint validates the payload and immediately dispatches a queued job, the actual database write happens in the queue worker. This separation keeps request latency low and lets you scale ingestion throughput independently of web capacity. Beyond that, deployment is up to you, run it however you run other Laravel apps.
+
+## Laravel Octane
+
+The Docker image serves the app with [Laravel Octane](https://laravel.com/docs/12.x/octane) on [FrankenPHP](https://frankenphp.dev). The app boots once per worker and stays in memory, so every request, ingest calls included, skips the framework bootstrap. This gives noticeably lower response times and more requests per second on the same hardware. Nothing needs to be configured.
+
+Workers are restarted after 500 requests to keep memory usage flat. Change it with `OCTANE_MAX_REQUESTS` in `.env`.
+
+To run without Octane (FrankenPHP in classic mode, every request boots the app like PHP-FPM), override the command of the `app` service in a `docker-compose.override.yml`:
+
+```yaml
+services:
+  app:
+    command: ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--adapter", "caddyfile"]
+```
+
+**Classic setup:** Octane is optional. PHP-FPM works as before. To use Octane, install the FrankenPHP binary and start the server with a process manager like Supervisor (`php artisan octane:install --server=frankenphp` downloads the binary):
+
+```bash
+php artisan octane:start --server=frankenphp --port=8000 --max-requests=500
+```
+
+Point your web server or reverse proxy to that port and run `php artisan app:reload-octane` after every update. It restarts the workers without dropping requests (`octane:reload` re-applies the whole FrankenPHP config, requests arriving meanwhile can fail). If you deploy into release directories behind a `current` symlink, start Octane with `APP_BASE_PATH` set to that symlink, otherwise the restarted workers keep running the old release.
+
+Octane speeds up accepting requests. Ingested data is written by the queue workers, so for high traffic scale those as well, see [Queue workers](#queue-workers).
 
 ## Horizontal scaling
 

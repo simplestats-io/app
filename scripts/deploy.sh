@@ -11,6 +11,7 @@
 #     --generate-sitemap \
 #     --restart-horizon \
 #     --restart-fpm \
+#     --restart-octane \
 #     --stop-ssr
 #
 # Base directory is derived from the script path:
@@ -42,6 +43,7 @@ BLOG_WARM_CACHE=false
 GENERATE_SITEMAP=false
 RESTART_HORIZON=false
 RESTART_FPM=false
+RESTART_OCTANE=false
 STOP_SSR=false
 
 for arg in "$@"; do
@@ -52,6 +54,7 @@ for arg in "$@"; do
     --generate-sitemap) GENERATE_SITEMAP=true ;;
     --restart-horizon) RESTART_HORIZON=true ;;
     --restart-fpm) RESTART_FPM=true ;;
+    --restart-octane) RESTART_OCTANE=true ;;
     --stop-ssr) STOP_SSR=true ;;
     *) printf '\nError: Unknown argument %s\n' "$arg" && exit 1 ;;
   esac
@@ -199,6 +202,14 @@ if [ "$RESTART_FPM" = "true" ]; then
   printf '\nℹ️ Restart PHP FPM\n'
   ( flock -w 10 9 || exit 1
       echo 'Restarting FPM...'; sudo -S service $FORGE_PHP_FPM reload ) 9>/tmp/fpmlock
+fi
+
+# Graceful worker restart, see app:reload-octane. The Forge daemon must start Octane with
+# APP_BASE_PATH=<base>/current, otherwise the workers would boot the old release again.
+# A package update is covered too.
+if [ "$RESTART_OCTANE" = "true" ]; then
+  printf '\nℹ️ Reload Octane workers\n'
+  $FORGE_PHP artisan app:reload-octane
 fi
 
 if [ "$STOP_SSR" = "true" ]; then

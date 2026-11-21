@@ -25,6 +25,7 @@
         "laravel/horizon": "^5.33",
         "laravel/jetstream": "^5.0",
         "laravel/mcp": "^1.1.1",
+        "laravel/octane": "^2.25",
         "laravel/pulse": "^1.2",
         "laravel/sanctum": "^4.0",
         "laravel/spark-paddle": "^5.3",
