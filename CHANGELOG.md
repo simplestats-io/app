@@ -2,6 +2,29 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.5.0 - 2026-11-22
+
+### Upgrade notes
+
+- The Docker image now serves the app with Laravel Octane on FrankenPHP (`serversideup/php` frankenphp-alpine) instead of nginx and PHP-FPM. `docker-compose.yml` and `.env` stay unchanged, nothing needs to be configured. To run without Octane, override the `app` command as described in [Laravel Octane](https://github.com/simplestats-io/app/blob/main/docs/self-hosted.md#laravel-octane).
+- Classic installs (without Docker): Octane is optional, PHP-FPM keeps working. If you run Octane, call `php artisan app:reload-octane` after every update.
+
+### Added
+
+- Laravel Octane with FrankenPHP: the app boots once per worker, so requests (ingest included) skip the framework bootstrap and respond noticeably faster.
+- `app:reload-octane` restarts the FrankenPHP workers without dropping requests.
+- Compliance (GDPR, CCPA, PECR) and security pages.
+
+### Changed
+
+- Visitors are always tracked. The project form no longer offers them as an option, and a migration enables them on projects where they were switched off. Their visitor data was stored all along and shows up again.
+
+### Fixed
+
+- The tracking and project option pickers no longer show a stale selection after creating a project.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.4.0...v7.5.0
+
 ## v7.4.0 - 2026-11-21
 
 ### Added
