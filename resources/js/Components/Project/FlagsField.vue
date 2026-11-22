@@ -26,7 +26,7 @@ const visible = computed(() =>
     <div v-if="visible" :class="stacked ? 'mb-6' : 'col-span-6'">
         <InputLabel value="How does your project work?" />
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Select all options that apply to your use case.
+            Pick what applies to your project, if anything.
         </p>
         <div class="mt-2">
             <FlagsSelector

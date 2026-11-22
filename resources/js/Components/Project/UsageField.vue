@@ -15,9 +15,9 @@ defineEmits(['update:modelValue']);
 
 <template>
     <div :class="stacked ? 'mb-6' : 'col-span-6'">
-        <InputLabel value="What would you like to track?" />
+        <InputLabel value="What else would you like to track?" />
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Select all options that apply to your use case.
+            Visitors are always tracked. Pick what fits your app.
         </p>
         <div class="mt-2">
             <UsageSelector

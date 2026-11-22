@@ -496,6 +496,11 @@ Legacy compatibility: the `RedirectLegacyIdUrls` middleware 301-redirects old nu
 
 ## Coding Conventions
 
+### Eloquent Over the Query Builder
+
+- Use Eloquent models wherever possible, also in migrations, commands and jobs (e.g. `StatsAggregation::where(...)->delete()` instead of `DB::table('stats_aggregations')`). Model updates fire observers, so side effects like the notification settings sync in `ProjectObserver::updated()` are not silently skipped.
+- Exceptions: the stats SQL builders and raw aggregation queries, and hot ingest paths that must not fire model events on purpose (e.g. `StatsViewIngestService`). Name the reason in a short comment when you deliberately use `DB::table()` elsewhere.
+
 ### Helpers
 
 - Prefer Laravel helpers (`Str::`, `Arr::`, `collect()`, etc.) over native PHP functions where a Laravel equivalent exists.

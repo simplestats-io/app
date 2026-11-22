@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserNotificationType;
 use App\Models\Project;
 use App\Models\User;
 
@@ -75,24 +76,46 @@ test('recurring tracking is accepted together with registrations and payments', 
     ])->assertSessionHasNoErrors();
 });
 
-test('payments alone are rejected', function (): void {
+test('the visitors bit is always enabled', function (int $usage): void {
     $this->post(route('projects.store'), [
-        'name' => 'Payments Only',
+        'name' => 'No Visitors',
         'domain' => 'example.com',
-        'usage' => Project::USAGE_PAYMENTS,
-    ])->assertSessionHasErrors('usage');
+        'usage' => $usage,
+    ])->assertSessionHasNoErrors();
+
+    expect($this->user->currentTeam->projects()->latest('id')->first()->hasUsages([Project::USAGE_VISITORS]))->toBeTrue();
+})->with([
+    'payments only' => Project::USAGE_PAYMENTS,
+    'registrations and payments' => Project::USAGE_USERS | Project::USAGE_PAYMENTS,
+]);
+
+test('updating a project cannot disable the visitors bit', function (): void {
+    $project = Project::factory()->for($this->user->currentTeam)->create([
+        'usage' => Project::USAGE_VISITORS | Project::USAGE_USERS,
+    ]);
+
+    $this->put(route('projects.update', $project), [
+        'name' => 'No Visitors',
+        'domain' => 'example.com',
+        'usage' => Project::USAGE_USERS,
+    ])->assertSessionHasNoErrors();
+
+    expect((int) $project->fresh()->usage)->toBe(Project::USAGE_VISITORS | Project::USAGE_USERS);
 });
 
-test('payments are accepted together with visitors or registrations', function (int $source): void {
-    $this->post(route('projects.store'), [
-        'name' => 'Linked Payments',
-        'domain' => 'example.com',
-        'usage' => $source | Project::USAGE_PAYMENTS,
-    ])->assertSessionHasNoErrors();
-})->with([
-    'visitors' => Project::USAGE_VISITORS,
-    'registrations' => Project::USAGE_USERS,
-]);
+test('migration enables the visitors bit on projects without it', function (): void {
+    $team = $this->user->currentTeam;
+    $without = Project::factory()->for($team)->create(['usage' => Project::USAGE_USERS | Project::USAGE_PAYMENTS]);
+    $with = Project::factory()->for($team)->create(['usage' => Project::USAGE_VISITORS]);
+
+    $migration = require database_path('migrations/2026_11_22_095139_enable_visitors_bit_on_all_projects.php');
+    $migration->up();
+
+    expect((int) $without->fresh()->usage)->toBe(Project::USAGE_VISITORS | Project::USAGE_USERS | Project::USAGE_PAYMENTS)
+        ->and((int) $with->fresh()->usage)->toBe(Project::USAGE_VISITORS)
+        ->and($without->userNotifications()->where('type', UserNotificationType::PROJECT_REPORT)->sole()->settings['tracking'])
+        ->toHaveKey('visitors', true);
+});
 
 test('the paid-only flag requires registrations and payments', function (): void {
     $this->post(route('projects.store'), [

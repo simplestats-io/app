@@ -18,10 +18,18 @@ class ProjectRequest extends FormRequest
     }
 
     /**
-     * Normalize the domain to a bare host (strip scheme, path, query).
+     * Normalize the domain to a bare host (strip scheme, path, query) and force the
+     * visitors bit: the client package sends visitors regardless of the bit, and all
+     * attribution builds on them, so a project without it only hides data.
      */
     protected function prepareForValidation(): void
     {
+        $usage = filter_var($this->input('usage'), FILTER_VALIDATE_INT);
+
+        if ($usage !== false) {
+            $this->merge(['usage' => $usage | Project::USAGE_VISITORS]);
+        }
+
         if (! $this->filled('domain')) {
             return;
         }
@@ -51,10 +59,6 @@ class ProjectRequest extends FormRequest
 
                     if (($value & Project::USAGE_SUBSCRIPTION) && (($value & $required) !== $required)) {
                         $fail('Subscription tracking requires both Registrations and Payments.');
-                    }
-
-                    if (($value & Project::USAGE_PAYMENTS) && ! ($value & (Project::USAGE_VISITORS | Project::USAGE_USERS))) {
-                        $fail('Payments must be linked to Visitors or Registrations.');
                     }
                 },
             ],
