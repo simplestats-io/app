@@ -30,9 +30,9 @@ class ReloadOctaneWorkers extends Command
 
         // Workers boot from the path the server was started with. A server started from a
         // resolved release directory would boot the old release again after a deploy.
-        $serverBasePath = Str::before($state['state']['octaneConfig']['state_file'] ?? '', '/storage/');
+        $serverBasePath = $this->serverBasePath($state['masterProcessId'] ?? null);
 
-        if ($serverBasePath !== '' && ! is_link($serverBasePath) && realpath($serverBasePath) !== realpath(base_path())) {
+        if ($serverBasePath !== null && ! is_link($serverBasePath) && realpath($serverBasePath) !== realpath(base_path())) {
             $this->error("Octane runs from {$serverBasePath}, not from this release. Start it with APP_BASE_PATH set to the current symlink.");
 
             return self::FAILURE;
@@ -51,5 +51,24 @@ class ReloadOctaneWorkers extends Command
         $this->info('Octane workers restarted.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Octane hands APP_BASE_PATH to the FrankenPHP process. The cached config cannot tell,
+     * it stores the resolved paths of the release that ran config:cache. Without /proc
+     * (e.g. macOS) the check is skipped.
+     */
+    protected function serverBasePath(?int $processId): ?string
+    {
+        $environment = $processId ? @file_get_contents("/proc/{$processId}/environ") : false;
+
+        if ($environment === false) {
+            return null;
+        }
+
+        $basePath = collect(explode("\0", $environment))
+            ->first(fn (string $variable): bool => Str::startsWith($variable, 'APP_BASE_PATH='));
+
+        return $basePath ? Str::after($basePath, 'APP_BASE_PATH=') : null;
     }
 }
