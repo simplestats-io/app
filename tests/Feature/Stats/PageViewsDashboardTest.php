@@ -93,9 +93,43 @@ it('shares the page views state with the dashboard', function (): void {
             ->where('pageViews.since', '2026-03-20 08:00:00'));
 });
 
-it('hides page views on the dashboard of a project that never received any', function (): void {
+it('reports a project without any data as having neither page views nor visitors', function (): void {
     $this->actingAs($this->user)->get(route('dashboard', ['project_id' => $this->project->id]))
-        ->assertInertia(fn ($page) => $page->where('pageViews.visible', false)->where('pageViews.since', null));
+        ->assertInertia(fn ($page) => $page
+            ->where('pageViews.visible', false)
+            ->where('pageViews.since', null)
+            ->where('pageViews.hasVisitors', false));
+});
+
+it('reports visitors without page views so the dashboard can hint at the setup', function (): void {
+    dashboardViewVisitor($this->project, 'hash-without-views');
+
+    $this->actingAs($this->user)->get(route('dashboard', ['project_id' => $this->project->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('pageViews.visible', false)
+            ->where('pageViews.hasVisitors', true));
+});
+
+it('does not treat a project whose page views stopped as never tracked', function (): void {
+    $this->project->update(['page_views_since' => '2026-01-10 08:00:00', 'page_views_seen_at' => '2026-01-31']);
+    dashboardViewVisitor($this->project, 'hash-after-views-stopped');
+
+    $this->actingAs($this->user)->get(route('dashboard', ['project_id' => $this->project->id]))
+        ->assertInertia(fn ($page) => $page
+            ->where('pageViews.visible', false)
+            ->where('pageViews.since', '2026-01-10 08:00:00')
+            ->where('pageViews.hasVisitors', false));
+});
+
+it('reports visitors of another project in the all projects scope only', function (): void {
+    $otherProject = Project::factory()->for($this->team)->create();
+    dashboardViewVisitor($otherProject, 'hash-other-project');
+
+    $this->actingAs($this->user)->get(route('dashboard', ['project_id' => $this->project->id]))
+        ->assertInertia(fn ($page) => $page->where('pageViews.hasVisitors', false));
+
+    $this->actingAs($this->user)->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('pageViews.hasVisitors', true));
 });
 
 it('reports page views as unknown for buckets that ended before the first tracked view', function (): void {

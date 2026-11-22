@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import StatsFilter from "@/Pages/Dashboard/Partials/StatsFilter.vue";
 import StatsGroups from "@/Pages/Dashboard/Partials/StatsGroups/StatsGroups.vue";
 import StatsChartCanvas from "@/Pages/Dashboard/Partials/Charts/StatsChartCanvas.vue";
+import PageViewsEmptyState from "@/Pages/Dashboard/Partials/Charts/PageViewsEmptyState.vue";
 import HeadlineKpiTile from "@/Pages/Dashboard/Partials/HeadlineKpiTile.vue";
 import MetricPlanBreakdown from "@/Pages/Dashboard/Partials/MetricPlanBreakdown.vue";
 import {resolveChartSeries, useChartDefinitions} from "@/Composables/useChartDefinitions.js";
@@ -152,7 +153,9 @@ onMounted(() => {
                         :infoTitle="activeKpi.infoTitle"
                         :infoText="activeKpi.infoText"
                     />
+                    <PageViewsEmptyState v-if="activeKpi.pageViewsMissing" :height="380" show-guide-link />
                     <StatsChartCanvas
+                        v-else
                         :series="resolveChartSeries(activeKpi.serie)"
                         :categories="activeKpi.categories"
                         :formatter="activeKpi.formatter"
@@ -166,6 +169,7 @@ onMounted(() => {
 
                 <MetricPlanBreakdown v-if="activeKpi.isMrr" :planBreakdown="plan_breakdown" />
                 <StatsGroups
+                    v-if="! activeKpi.pageViewsMissing"
                     :filters="filters"
                     :statsGroups="statsGroups"
                     :propertyDimensions="propertyDimensions"

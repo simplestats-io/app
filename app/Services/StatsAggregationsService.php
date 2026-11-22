@@ -17,6 +17,7 @@ use App\Models\BaseStat;
 use App\Models\Project;
 use App\Models\StatsAggregation;
 use App\Models\StatsCustomPropertyName;
+use App\Models\StatsVisitor;
 use App\Models\Team;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -670,23 +671,29 @@ class StatsAggregationsService
 
     /**
      * since is the first tracked view (team-local), so the dashboard can tell views that
-     * were not tracked yet apart from a real 0.
+     * were not tracked yet apart from a real 0. hasVisitors only matters for a scope that
+     * never received views: it tells "no data at all yet" apart from "visitors arrive
+     * without views" (setup issue). Scopes whose views stopped are not "missing" views.
      *
-     * @return array{visible: bool, since: ?string}
+     * @return array{visible: bool, since: ?string, hasVisitors: bool}
      */
     public function pageViewsState(StatsFilterDto $filters): array
     {
         $project = $filters->projectId ? Project::find($filters->projectId) : null;
 
-        if ($project !== null) {
-            return ['visible' => $project->hasRecentPageViews(), 'since' => $project->page_views_since];
-        }
+        $visible = $project?->hasRecentPageViews() ?? $this->groupedScopeHasPageViews(null);
+        $since = $project instanceof Project
+            ? $project->page_views_since
+            : Project::where('team_id', AppHelper::getTeamId())->min('page_views_since');
 
-        $visible = $this->groupedScopeHasPageViews(null);
+        $neverTracked = ! $visible && $since === null;
 
         return [
             'visible' => $visible,
-            'since' => $visible ? Project::where('team_id', AppHelper::getTeamId())->min('page_views_since') : null,
+            'since' => $since,
+            'hasVisitors' => $neverTracked
+                && ($project === null || $project->hasUsages([Project::USAGE_VISITORS]))
+                && StatsVisitor::query()->when($project, fn ($query) => $query->whereBelongsTo($project))->exists(),
         ];
     }
 

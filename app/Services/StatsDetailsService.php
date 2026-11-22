@@ -234,7 +234,7 @@ class StatsDetailsService
     }
 
     /**
-     * @return array{visible: bool, since: ?string}
+     * @return array{visible: bool, since: ?string, hasVisitors: bool}
      */
     public function getPageViewsState(StatsFilterDto $filters): array
     {

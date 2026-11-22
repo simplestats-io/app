@@ -9,6 +9,8 @@ import {useFlags} from "@/Composables/useFlags.js";
 // are not applicable and are dropped from the funnel while a cohort is active.
 const COHORT_NA_KPIS = ['pd_visitor', 'pd_cr', 'lt_arpv', 'pd_view', 'pd_vpv', 'pd_bounce_rate'];
 
+const PAGE_VIEW_KPIS = ['pd_view', 'pd_vpv', 'pd_bounce_rate'];
+
 // KPIs sourced from the MRR snapshot series. The per-plan breakdown (Metric detail
 // view) only applies to these; everything else uses the dimension StatsGroups.
 const MRR_KPI_KEYS = ['mrr', 'subscribers', 'arps'];
@@ -441,8 +443,12 @@ export function useChartDefinitions(ctx) {
 
     const showsRegistrations = currentProjectHasUsages(['users']);
 
-    // No usage bit: page view KPIs show once the scope received views recently.
+    // No usage bit and views are on by default in the client, so a visitor project that
+    // never received views shows the page view KPIs as an empty state hinting at the setup
+    // (a missing worker stays noticeable). Views that stopped hide the KPIs instead: the
+    // views join is skipped then, so an empty state would also blank past ranges with data.
     const pageViewsVisible = !! page.props.pageViews?.visible;
+    const pageViewsNeverTracked = ! pageViewsVisible && ! page.props.pageViews?.since;
 
     // Net revenue's companions depend on what the project tracks: registration-aware
     // (Regs/ARPU) when users are tracked, visitor-aware (Visits/ARPV) for guest-checkout
@@ -469,7 +475,7 @@ export function useChartDefinitions(ctx) {
         && (! kpi.requiresSubscription || subscriptionShown)
         && ! (kpi.hideWhenSubscription && subscriptionShown)
         && ! (kpi.hideWhenPaidOnly && paidOnly)
-        && ! (kpi.requiresPageViews && ! pageViewsVisible)
+        && ! (PAGE_VIEW_KPIS.includes(kpi.key) && ! pageViewsVisible && ! pageViewsNeverTracked)
         && ! (cohortActive && COHORT_NA_KPIS.includes(kpi.key));
 
     const chartDefs = [
@@ -480,9 +486,9 @@ export function useChartDefinitions(ctx) {
                 {key: 'pd_visitor', formatter: 'number', bits: ['visitors'], indicatorCallback: () => statsSum.pd_visitor},
                 {key: 'pd_reg', formatter: 'number', bits: ['users'], indicatorCallback: () => statsSum.pd_reg},
                 {key: 'pd_cr', formatter: 'percent', bits: ['users', 'visitors'], indicatorCallback: () => safeDevision(statsSum.pd_reg, statsSum.pd_visitor) * 100},
-                {key: 'pd_view', formatter: 'number', bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => statsSum.pd_view},
-                {key: 'pd_vpv', formatter: 'number', decimals: 1, bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => safeDevision(statsSum.pd_view, statsSum.pd_viewer)},
-                {key: 'pd_bounce_rate', formatter: 'percent', bits: ['visitors'], requiresPageViews: true, indicatorCallback: () => safeDevision(statsSum.pd_bounce, statsSum.pd_viewer) * 100},
+                {key: 'pd_view', formatter: 'number', bits: ['visitors'], indicatorCallback: () => statsSum.pd_view},
+                {key: 'pd_vpv', formatter: 'number', decimals: 1, bits: ['visitors'], indicatorCallback: () => safeDevision(statsSum.pd_view, statsSum.pd_viewer)},
+                {key: 'pd_bounce_rate', formatter: 'percent', bits: ['visitors'], indicatorCallback: () => safeDevision(statsSum.pd_bounce, statsSum.pd_viewer) * 100},
             ],
         },
         {
@@ -617,6 +623,7 @@ export function useChartDefinitions(ctx) {
         const kpis = chart.data.series.map((serie) => {
             const kpiDef = kpiDefs[serie.key] ?? {};
             const title = kpiDef.long ? `${kpiDef.long} (${kpiDef.short})` : (kpiDef.short ?? serie.key);
+            const pageViewsMissing = pageViewsNeverTracked && PAGE_VIEW_KPIS.includes(serie.key);
 
             const kpi = {
                 key: serie.key,
@@ -628,8 +635,9 @@ export function useChartDefinitions(ctx) {
                 suffix: serie.suffix ?? null,
                 serie,
                 categories: chart.data.categories,
-                indicator: serie.indicator,
-                delta: computeDelta(serie, hasCurrent),
+                indicator: pageViewsMissing ? null : serie.indicator,
+                delta: pageViewsMissing ? 0 : computeDelta(serie, hasCurrent),
+                pageViewsMissing,
                 lowerIsBetter: kpiDef.lowerIsBetter ?? false,
                 info: `<div><div class="font-bold text-green-300">${title}</div><div>${kpiDef.description ?? ''}</div></div>`,
                 infoTitle: kpiDef.long ?? kpiDef.short ?? serie.key,

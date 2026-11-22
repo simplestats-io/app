@@ -4,6 +4,7 @@ import {Link} from "@inertiajs/vue3";
 import {formatMap} from "@/Helpers/NumberHelpers.js";
 import {resolveChartSeries} from "@/Composables/useChartDefinitions.js";
 import StatsChartCanvas from "@/Pages/Dashboard/Partials/Charts/StatsChartCanvas.vue";
+import PageViewsEmptyState from "@/Pages/Dashboard/Partials/Charts/PageViewsEmptyState.vue";
 import InfoTooltip from "@/Components/InfoTooltip.vue";
 import ArrowTrendingDownIcon from "bootstrap-icons/icons/arrow-down-right.svg?component";
 import ArrowTrendingUpIcon from "bootstrap-icons/icons/arrow-up-right.svg?component";
@@ -62,7 +63,9 @@ const numberFractionDigits = computed(() => props.kpi.decimals ?? (props.kpi.ind
                 </div>
             </div>
         </div>
+        <PageViewsEmptyState v-if="kpi.pageViewsMissing" :height="140" />
         <StatsChartCanvas
+            v-else
             :series="resolveChartSeries(kpi.serie)"
             :categories="kpi.categories"
             :formatter="kpi.formatter"

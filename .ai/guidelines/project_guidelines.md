@@ -531,6 +531,10 @@ The name and logo are trademarks (`resources/markdown/trademark.md`), modelled o
 - Use `Rule::enum(MyEnum::class)` (via `Illuminate\Validation\Rule`) in FormRequest validation instead of `new Enum()` or `Rule::in([...])`. This provides a fluent API with `->only()` and `->except()`.
 - See `app/Enums/UserNotificationFrequency.php` as a reference implementation.
 
+### UI Copy: Link the Docs Instead of Explaining Setup
+
+- Empty states and hints in the app stay short and generic (e.g. "No page views received yet."). Do not spell out technical requirements in the UI (package versions, queue drivers, config keys); link the matching docs page instead (e.g. `/docs/how-to-track-page-views.html`). The UI is also read by team members who cannot act on setup details, and docs stay correct when requirements change.
+
 ### Confirmation Dialogs
 
 - Never use the browser's native `confirm()` dialog. Always use the `ConfirmationModal` component (`@/Components/ConfirmationModal.vue`) for delete or destructive action confirmations.
