@@ -1,5 +1,5 @@
 ---
-description: "Track payments in Laravel with SimpleStats, including Cashier, Paddle and Lemon Squeezy, and attribute revenue to your marketing channels."
+description: "Track payments in Laravel with SimpleStats from your own payment model, or from Cashier, Lemon Squeezy and Polar with one line of config, and attribute revenue to your marketing channels."
 ---
 
 # How to track a new payment
@@ -7,7 +7,7 @@ description: "Track payments in Laravel with SimpleStats, including Cashier, Pad
 As the payment model is named very individually, we did not set any default for it. You should give it the name of the model which holds your payments/transactions data.
 
 ::: tip
-Using **Laravel Cashier**, **Paddle** or **Lemon Squeezy**? The same steps apply, see the [Laravel Cashier, Paddle & Lemon Squeezy](#laravel-cashier-paddle-lemon-squeezy) section below.
+Using **Cashier Stripe**, **Cashier Paddle**, **Cashier Mollie**, **Lemon Squeezy** or **Polar**? Then you need no payment model at all: set the provider with one line of config, see [Payment Providers](payment-providers.md). This page covers everything else: your own payment table, any other provider, or custom logic.
 :::
 
 ## Configuration
@@ -244,7 +244,9 @@ You can check as many fields as you like and apply any logic you want here.
 
 ## Laravel Cashier, Paddle & Lemon Squeezy
 
-Using a payment provider package does not change anything about the steps above, it usually even saves you work: packages like [Cashier Paddle](https://laravel.com/docs/cashier-paddle) and [Lemon Squeezy](https://github.com/lmsqueezy/laravel) already ship the payment model, including table, migrations and webhook syncing. You just extend the shipped model, implement the contract on your subclass and register it.
+The quickest way for these packages is a [payment provider](payment-providers.md): one line of config, no code. Implement the contract yourself only if you need custom logic, for example your own plan names or conditions.
+
+Packages like [Cashier Paddle](https://laravel.com/docs/cashier-paddle) and [Lemon Squeezy](https://github.com/lmsqueezy/laravel) ship the payment model, including table, migrations and webhook syncing. You extend the shipped model, implement the contract on your subclass and register it.
 
 For **Cashier Paddle** it looks like this:
 
@@ -324,7 +326,7 @@ And register it as your payment model in the config, as shown in [Configuration]
 **Lemon Squeezy** works the same way: extend `LemonSqueezy\Laravel\Order`, implement the contract and register your subclass via `LemonSqueezy::useOrderModel()`.
 
 ::: info
-**Cashier Stripe** is the one provider package that ships no local payment model, individual charges live entirely in Stripe's API. If your app records payments in an own table anyway, simply use that model as described on this page. If not, see [How to track Stripe payments without a payment model](how-to-track-stripe-payments-without-a-model.md) for how to create one from Stripe webhooks.
+**Cashier Stripe** ships no local payment model, individual charges live entirely in Stripe's API. Use the [Cashier Stripe provider](payment-providers.md#cashier-stripe), which reads them from Stripe for you. If you need full control, see [How to track Stripe payments without a payment model](how-to-track-stripe-payments-without-a-model.md) for how to build your own model from Stripe webhooks.
 :::
 
 ## Multi Currency Support

@@ -4,6 +4,10 @@ description: "Track Laravel Cashier Stripe payments in SimpleStats even if your 
 
 # How to track Stripe payments without a payment model
 
+::: tip The quick way
+Since version 6.2 of the client, the [Cashier Stripe provider](payment-providers.md#cashier-stripe) does all of this for you with one line of config. Follow this guide only if you want your own payment model, for example to store payments for invoices or custom logic.
+:::
+
 Tracking payments always works through an Eloquent model implementing the `TrackablePayment` contract, as described in [How to track a new payment](how-to-track-a-new-payment.md). With **Cashier Stripe** there is one special situation: unlike Paddle or Lemon Squeezy, Cashier Stripe does **not** ship an Eloquent model for individual payments. It stores subscriptions locally (in the `subscriptions` table), but individual charges, invoices, and checkout payments live entirely in Stripe's API. The `Laravel\Cashier\Payment` class is just a wrapper around Stripe's PaymentIntent object, not an Eloquent model.
 
 ::: tip

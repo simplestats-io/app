@@ -1,0 +1,10 @@
+// config/simplestats-client.php
+
+use SimpleStatsIo\LaravelClient\PaymentProviders\CashierStripe;
+
+'tracking_types' => [
+    'payment' => [
+        'provider' => CashierStripe::class,
+        'model' => null,
+    ],
+],

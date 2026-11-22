@@ -9,7 +9,8 @@ import StepText from "@/Pages/Home/Partials/Integration/StepText.vue";
 import GridPlaceholder from "@/Pages/Home/Partials/Integration/GridPlaceholder.vue";
 import installHtml from "@/Pages/Home/Partials/Integration/Snippets/install_package.txt?shiki";
 import trackUserHtml from "@/Pages/Home/Partials/Integration/Snippets/track_user.txt?shiki";
-import trackPaymentHtml from "@/Pages/Home/Partials/Integration/Snippets/track_payment.txt?shiki";
+import PaymentSnippetTabs from "@/Pages/Home/Partials/Integration/PaymentSnippetTabs.vue";
+import PaymentProviderCloud from "@/Pages/Home/Partials/Integration/PaymentProviderCloud.vue";
 
 const appName = import.meta.env.VITE_APP_NAME;
 </script>
@@ -52,9 +53,12 @@ const appName = import.meta.env.VITE_APP_NAME;
                     <SmallStepBullet content="" />
                     <SmallStepText :content="$t('Track your sales')" />
 
-                    <StaticCodeBlock :title="$t('Example of the TrackablePayment contract')" :html="trackPaymentHtml" />
+                    <PaymentSnippetTabs />
                     <GridPlaceholder />
-                    <StepText :content="$t('To enable the client to <b>track</b> your app\'s <b>payments</b>, you need to add the <b>TrackablePayment</b> interface to your payment/transaction model and implement the contract.')" />
+                    <div class="self-start">
+                        <StepText :content="$t('Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other provider or your own payments table? Add the <b>TrackablePayment</b> interface to your payment model.')" />
+                        <PaymentProviderCloud />
+                    </div>
 
                     <GridPlaceholder />
                     <BigStepBullet content="3" />

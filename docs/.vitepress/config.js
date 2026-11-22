@@ -52,6 +52,7 @@ export default defineConfig({
                     {text: 'Users', link: '/how-to-track-a-new-user'},
                     {text: 'Logins', link: '/how-to-track-a-new-login'},
                     {text: 'Payments', link: '/how-to-track-a-new-payment'},
+                    {text: 'Payment Providers', link: '/payment-providers'},
                     {text: 'Funnel Attribution', link: '/from-visitor-to-user-to-revenue'},
                 ]
             },
