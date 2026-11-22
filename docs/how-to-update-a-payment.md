@@ -121,4 +121,6 @@ class Transaction extends Model implements TrackablePaymentWithCondition
 }
 ```
 
+When a tracked payment arrives with a `gross` of `0`, _SimpleStats_ removes it. A fully refunded payment then no longer counts as revenue, paying user or active subscription. For a partial refund, send the remaining amount instead.
+
 This mechanism provides extensive control over the actions triggered by changes in certain states within your model. Utilize this flexibility to implement the required logic according to **your specific needs** - the implementation details are entirely at your discretion!

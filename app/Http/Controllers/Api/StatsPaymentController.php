@@ -14,15 +14,6 @@ class StatsPaymentController extends Controller
 {
     public function store(StatsPaymentRequest $request): JsonResponse
     {
-        // Zero amount transactions are no revenue (e.g. Paddle's payment method changes), so they are not stored.
-        // Still answered with 200, an error would only make the client retry.
-        if ((float) $request->validated('gross') === 0.0) {
-            return response()->json([
-                'message' => 'Stats Payment Request ignored: zero amount.',
-                'id' => $request->validated('id'),
-            ]);
-        }
-
         defer(fn (): PendingDispatch => dispatch(new TrackStatsPayment(input: $request->validated())));
 
         return response()->json([

@@ -139,7 +139,7 @@ class TrackRevenue extends Page
                         TextInput::make('gross')
                             ->label('Gross (cents)')
                             ->numeric()
-                            ->minValue(0)
+                            ->minValue(1)
                             ->required()
                             ->helperText('Amount in cents, e.g. 9900 for 99.00.'),
 

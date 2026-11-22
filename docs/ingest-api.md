@@ -256,7 +256,7 @@ _Core parameters:_
 }
 ```
 
-Payments with a `gross` of `0` are no revenue (e.g. a payment method change at your payment provider). They are answered with `"message": "Stats Payment Request ignored: zero amount."` and not stored.
+A new payment with a `gross` of `0` is no revenue (e.g. a payment method change at your payment provider), so it is not stored. Sending `0` for an already tracked payment `id` records a full refund: the payment is removed, so it no longer counts as revenue, paying user or active subscription.
 
 ### Create Custom Event
 

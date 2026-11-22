@@ -283,7 +283,7 @@ class StripeChargeSucceeded
             [
                 'user_id' => $user->id,
                 'amount' => $charge['amount'],
-                'tax' => $charge['amount'] - ($charge['amount_captured'] ?? $charge['amount']),
+                'tax' => 0,
                 'currency' => $charge['currency'],
             ]
         );
@@ -293,7 +293,7 @@ class StripeChargeSucceeded
 
 The listener maps the Stripe customer back to your local user via the `stripe_id` column that Cashier adds to your `users` table.
 
-> **Tax handling note:** Stripe's `charge.succeeded` payload doesn't include a separate tax field. If you need accurate tax breakdowns, you can pull the tax amount from the related invoice. For many use cases, passing the full charge amount as both gross and net is a perfectly valid starting point.
+> **Tax handling note:** Stripe's `charge.succeeded` payload doesn't include a separate tax field, so the listener stores a tax of `0` and the net equals the gross. That is a perfectly valid starting point. For charges that belong to an invoice, the subscription section below also reads the tax from the invoice.
 
 ### Step 4: Register the Listener
 
@@ -363,12 +363,17 @@ use Laravel\Cashier\Cashier;
 
 $billingInterval = null;
 $plan = null;
+$tax = 0;
 
 if ($charge['invoice']) {
     $invoice = Cashier::stripe()->invoices->retrieve(
         $charge['invoice'],
         ['expand' => ['lines.data.price']]
     );
+
+    $tax = $invoice->total_excluding_tax !== null
+        ? $invoice->total - $invoice->total_excluding_tax
+        : 0;
 
     $priceId = $invoice->lines->data[0]->price->id ?? null;
 
@@ -384,7 +389,7 @@ Payment::updateOrCreate(
     [
         'user_id' => $user->id,
         'amount' => $charge['amount'],
-        'tax' => $charge['amount'] - ($charge['amount_captured'] ?? $charge['amount']),
+        'tax' => $tax,
         'currency' => $charge['currency'],
         'billing_interval' => $billingInterval,
         'plan' => $plan,

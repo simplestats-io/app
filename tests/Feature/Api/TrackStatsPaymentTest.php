@@ -3,6 +3,7 @@
 use App\Enums\SubscriptionInterval;
 use App\Helpers\AppHelper;
 use App\Models\Project;
+use App\Models\StatsAggregation;
 use App\Models\StatsPayment;
 use App\Models\StatsUser;
 use App\Models\StatsVisitor;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Database\Seeders\TestUserSeeder;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function (): void {
     $this->seed(TestUserSeeder::class);
@@ -176,22 +178,76 @@ test('payment is created with correct amounts', function (): void {
         ->and($payment->net)->toBe(4200.0);
 });
 
-test('zero amount payment is ignored and not stored', function (): void {
+test('new zero amount payment is not stored', function (): void {
     $payload = validPaymentPayload([
         'gross' => 0,
         'net' => 0,
     ]);
 
-    $this->postJson('/api/v1/stats-payment', $payload, apiHeaders($this->token))
-        ->assertOk()
-        ->assertJson([
-            'message' => 'Stats Payment Request ignored: zero amount.',
-            'id' => $payload['id'],
-        ]);
+    $this->postJson('/api/v1/stats-payment', $payload, apiHeaders($this->token))->assertOk();
 
     setPaymentProjectContext($this->project);
 
     expect(StatsPayment::where('id', $payload['id'])->exists())->toBeFalse();
+});
+
+test('existing payment updated to zero amount is deleted as a full refund', function (): void {
+    $payload = validPaymentPayload();
+
+    $this->postJson('/api/v1/stats-payment', $payload, apiHeaders($this->token))->assertOk();
+
+    setPaymentProjectContext($this->project);
+    expect(StatsPayment::whereKey($payload['id'])->exists())->toBeTrue();
+
+    $this->postJson('/api/v1/stats-payment', [...$payload, 'gross' => 0, 'net' => 0], apiHeaders($this->token))->assertOk();
+
+    setPaymentProjectContext($this->project);
+    expect(StatsPayment::whereKey($payload['id'])->exists())->toBeFalse();
+});
+
+test('later payments of the user move up when a refunded payment is deleted', function (): void {
+    $first = subscriptionPaymentPayload(['time' => now()->subDays(2)->format('Y-m-d H:i:s P')]);
+    $second = validPaymentPayload([
+        'stats_user_id' => $first['stats_user_id'],
+        'stats_user_time' => $first['stats_user_time'],
+    ]);
+
+    $this->postJson('/api/v1/stats-payment', $first, apiHeaders($this->token))->assertOk();
+    $this->postJson('/api/v1/stats-payment', $second, apiHeaders($this->token))->assertOk();
+    $this->postJson('/api/v1/stats-payment', [...$first, 'gross' => 0, 'net' => 0], apiHeaders($this->token))->assertOk();
+
+    setPaymentProjectContext($this->project);
+
+    expect(StatsPayment::whereKey($first['id'])->exists())->toBeFalse()
+        ->and(StatsPayment::whereKey($second['id'])->value('counter'))->toBe(1);
+});
+
+test('refund deletion invalidates the cache of a shifted payment that lies before it', function (): void {
+    $later = subscriptionPaymentPayload(['time' => '2026-05-10 10:00:00 +00:00']);
+    $earlier = validPaymentPayload([
+        'stats_user_id' => $later['stats_user_id'],
+        'stats_user_time' => $later['stats_user_time'],
+        'time' => '2026-03-10 10:00:00 +00:00',
+    ]);
+
+    $this->postJson('/api/v1/stats-payment', $later, apiHeaders($this->token))->assertOk();
+    $this->postJson('/api/v1/stats-payment', $earlier, apiHeaders($this->token))->assertOk();
+
+    StatsAggregation::query()->withoutGlobalScopes()->delete();
+    DB::table('stats_aggregations')->insert([
+        'team_id' => $this->project->team_id,
+        'project_id' => $this->project->id,
+        'filter_hash' => md5('march'),
+        'filter' => '[]',
+        'type' => 'months',
+        'time' => '2026-03-01',
+        'kind' => 'period',
+        'data' => json_encode(['pd_pu' => 0]),
+    ]);
+
+    $this->postJson('/api/v1/stats-payment', [...$later, 'gross' => 0, 'net' => 0], apiHeaders($this->token))->assertOk();
+
+    expect(DB::table('stats_aggregations')->where('project_id', $this->project->id)->exists())->toBeFalse();
 });
 
 test('payment alert does not crash for a payment without an attributed person', function (): void {
