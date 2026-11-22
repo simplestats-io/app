@@ -2,6 +2,15 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.5.1 - 2026-11-22
+
+### Fixed
+
+- Payments with a gross amount of 0 are ignored on ingest (`POST /api/v1/stats-payment`). Payment providers create completed transactions without any charge, e.g. Paddle when a customer changes the payment method. They are no revenue, but were stored as payments and triggered payment alerts. The API answers them with 200 and does not store them. laravel-client v6.1.1 stops sending them in the first place.
+- Calendar range presets are sorted after the rolling ones.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.5.0...v7.5.1
+
 ## v7.5.0 - 2026-11-22
 
 ### Upgrade notes
