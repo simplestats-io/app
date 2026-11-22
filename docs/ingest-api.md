@@ -256,6 +256,8 @@ _Core parameters:_
 }
 ```
 
+Payments with a `gross` of `0` are no revenue (e.g. a payment method change at your payment provider). They are answered with `"message": "Stats Payment Request ignored: zero amount."` and not stored.
+
 ### Create Custom Event
 
 **HTTP Request**

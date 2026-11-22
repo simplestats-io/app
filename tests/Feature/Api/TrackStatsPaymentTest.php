@@ -176,6 +176,24 @@ test('payment is created with correct amounts', function (): void {
         ->and($payment->net)->toBe(4200.0);
 });
 
+test('zero amount payment is ignored and not stored', function (): void {
+    $payload = validPaymentPayload([
+        'gross' => 0,
+        'net' => 0,
+    ]);
+
+    $this->postJson('/api/v1/stats-payment', $payload, apiHeaders($this->token))
+        ->assertOk()
+        ->assertJson([
+            'message' => 'Stats Payment Request ignored: zero amount.',
+            'id' => $payload['id'],
+        ]);
+
+    setPaymentProjectContext($this->project);
+
+    expect(StatsPayment::where('id', $payload['id'])->exists())->toBeFalse();
+});
+
 test('payment alert does not crash for a payment without an attributed person', function (): void {
     // The project's default payment alert fires on creation; a payment with
     // neither a stats user nor a visitor must still render the alert (amount
