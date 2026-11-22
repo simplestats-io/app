@@ -64,7 +64,7 @@ SimpleStats is a regular Laravel application. If you want to run it on your own 
 
 ### Docker (recommended)
 
-The official image `ghcr.io/simplestats-io/app` contains everything the app needs. The [docker-compose.yml](docker-compose.yml) starts the web app, Horizon, the scheduler, PostgreSQL and Redis, and runs the database migrations on every start. All you need is Docker Engine with the Compose plugin.
+The official image `ghcr.io/simplestats-io/app` contains everything the app needs. The [docker-compose.yml](docker-compose.yml) starts the web app, Horizon, the scheduler, PostgreSQL and Redis, and runs the database migrations on every start. The web app runs on Laravel Octane with FrankenPHP, so requests skip the framework bootstrap. All you need is Docker Engine with the Compose plugin.
 
 Download the compose file, the env template and the Caddyfile:
 
@@ -99,7 +99,7 @@ Create the first user (it becomes the admin):
 docker compose exec app php artisan app:create-new-user "Jane Doe" jane@example.com "a-secure-password"
 ```
 
-To update, pin a release in `.env` (e.g. `SIMPLESTATS_VERSION=6`), then run `docker compose pull && docker compose up -d`. External databases, volumes and all other settings are covered in the [Docker docs](https://simplestats.io/docs/self-hosted.html#docker-recommended).
+To update, pin a release in `.env` (e.g. `SIMPLESTATS_VERSION=7`), then run `docker compose pull && docker compose up -d`. External databases, volumes and all other settings are covered in the [Docker docs](https://simplestats.io/docs/self-hosted.html#docker-recommended).
 
 ### Manual installation
 
@@ -202,7 +202,7 @@ SIMPLESTATS_API_URL=https://stats.example.com/api/v1/
 
 ### Deployment
 
-SimpleStats is a standard Laravel application, so deploy it the way you deploy your other Laravel apps (Docker, Forge, Cloud, plain servers, ...). Make sure the queue workers and the scheduler are running. See the [self-hosted docs](https://simplestats.io/docs/self-hosted.html) for queue, scaling and database notes.
+SimpleStats is a standard Laravel application, so deploy it the way you deploy your other Laravel apps (Docker, Forge, Cloud, plain servers, ...). Make sure the queue workers and the scheduler are running. See the [self-hosted docs](https://simplestats.io/docs/self-hosted.html) for queue, scaling and database notes. Laravel Octane (FrankenPHP) is optional and makes responses noticeably faster, see [Laravel Octane](https://simplestats.io/docs/self-hosted.html#laravel-octane).
 
 To update, check out the next [release](https://github.com/simplestats-io/app/releases) and redeploy. See [Updating](https://simplestats.io/docs/self-hosted.html#updating) for the steps.
 

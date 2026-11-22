@@ -79,7 +79,7 @@ Releases follow [semantic versioning](https://semver.org):
 
 To update, read the release notes of every version between yours and the target.
 
-**Docker:** pin the release in `.env` (e.g. `SIMPLESTATS_VERSION=6`, which follows all 6.x releases), then pull and restart. Migrations run automatically:
+**Docker:** pin the release in `.env` (e.g. `SIMPLESTATS_VERSION=7`, which follows all 7.x releases), then pull and restart. Migrations run automatically:
 
 ```bash
 docker compose pull
@@ -143,6 +143,8 @@ php artisan octane:start --server=frankenphp --port=8000 --max-requests=500
 ```
 
 Point your web server or reverse proxy to that port and run `php artisan app:reload-octane` after every update. It restarts the workers without dropping requests (`octane:reload` re-applies the whole FrankenPHP config, requests arriving meanwhile can fail). If you deploy into release directories behind a `current` symlink, start Octane with `APP_BASE_PATH` set to that symlink, otherwise the restarted workers keep running the old release.
+
+The proxy must send `X-Forwarded-Proto`, and `TRUSTED_PROXIES` must include its address (e.g. `127.0.0.1`), otherwise the app does not detect HTTPS. The downloaded binary ships its own PHP and reads no `php.ini` by default, so start Octane with `PHPRC` pointing to your `php.ini` (e.g. `PHPRC=/etc/php/8.5/fpm/php.ini`) to keep your memory and upload limits.
 
 Octane speeds up accepting requests. Ingested data is written by the queue workers, so for high traffic scale those as well, see [Queue workers](#queue-workers).
 
