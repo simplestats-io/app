@@ -2,6 +2,7 @@
 
 use App\Enums\StatsRangePreset;
 use App\Models\CustomStatsRangePreset;
+use App\Models\Project;
 use App\Models\User;
 
 beforeEach(function (): void {
@@ -184,4 +185,22 @@ test('custom preset toRange returns correct format', function (): void {
     expect($range['range_amount'])->toBe(14);
     expect($range['range_type'])->toBe('days');
     expect($range['range_start'])->not->toBeNull();
+});
+
+test('custom rolling presets are sorted between the rolling default presets', function (): void {
+    $this->user->currentTeam->update(['currency' => 'USD', 'timezone' => 'UTC']);
+    Project::factory()->create(['team_id' => $this->user->currentTeam->id]);
+    CustomStatsRangePreset::factory()->create([
+        'user_id' => $this->user->id,
+        'name' => 'Last 12 Months',
+        'range_amount' => 12,
+        'range_type' => 'months',
+    ]);
+
+    $this->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('presets', fn ($presets): bool => collect($presets)->pluck('id')->slice(5, 3)->values()->all() === [
+            StatsRangePreset::LAST_6_MONTHS->value,
+            'custom_'.$this->user->customStatsRangePresets->first()->id,
+            StatsRangePreset::THIS_MONTH->value,
+        ]));
 });

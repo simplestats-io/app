@@ -40,10 +40,12 @@ enum StatsRangePreset: string
             self::LAST_30_DAYS => 3000,
             self::LAST_12_WEEKS => 8400,
             self::LAST_6_MONTHS => 18000,
-            self::THIS_MONTH => 18100,
-            self::LAST_MONTH => 18200,
-            self::THIS_YEAR => 36500,
-            self::LAST_YEAR => 36600,
+            // Calendar presets come after all rolling ranges up to about a year
+            // (52 weeks = 41600), so custom rolling presets stay grouped together.
+            self::THIS_MONTH => 42000,
+            self::LAST_MONTH => 42100,
+            self::THIS_YEAR => 42200,
+            self::LAST_YEAR => 42300,
             self::ALL_TIME => 99998,
             self::CUSTOM => 99999,
         };
