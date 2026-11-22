@@ -3,8 +3,8 @@
 # =============================================================================
 # SimpleStats Deploy Script (Zero-Downtime)
 #
-# Usage:
-#   bash ~/simplestats.io/current/scripts/deploy.sh \
+# Usage (Forge site root directory set to /current, so FORGE_SITE_PATH ends in /current):
+#   bash "$FORGE_SITE_PATH/scripts/deploy.sh" \
 #     --keep-releases=10 \
 #     --build-docs \
 #     --blog-warm-cache \
@@ -25,6 +25,7 @@
 #       .env
 #       storage/
 #       packages/
+#       frankenphp    (optional, Octane binary, linked into every release)
 #
 # Required Forge variables: FORGE_SITE_BRANCH, FORGE_PHP, FORGE_COMPOSER
 # =============================================================================
@@ -120,6 +121,15 @@ if [ -d "$PACKAGES_DIR" ]; then
   ln -s -n -f -T "$PACKAGES_DIR" ./packages
 else
   printf '\nError: packages dir is missing at %s.' "$PACKAGES_DIR" && exit 1
+fi
+
+# Octane looks for the binary in base_path(). Without the link every release would start
+# without it and octane:start would download the latest version on the next daemon start.
+FRANKENPHP_BINARY="$BASE_DIR/shared/frankenphp"
+if [ -f "$FRANKENPHP_BINARY" ]; then
+  printf '\nℹ️ Link FrankenPHP binary\n'
+  ln -s -n -f -T "$FRANKENPHP_BINARY" ./frankenphp
+  echo '/frankenphp' >> .git/info/exclude
 fi
 
 # --- Install dependencies ----------------------------------------------------
