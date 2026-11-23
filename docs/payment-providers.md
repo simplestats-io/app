@@ -40,6 +40,7 @@ Two things are needed for every provider:
 
 - **Your user model implements `TrackablePerson`**, as described in [How to track a new user](how-to-track-a-new-user.md). Payments are linked to the paying user, which is what attributes revenue to the channel the user came from. If your billable model is not a user (for example a team), use [your own payment model](how-to-track-a-new-payment.md) instead.
 - **A queue worker runs**, because the payments of some providers (and Paddle refunds) are processed as queued jobs. See [Queue](queue.md).
+- **Your webhook receives the events listed for your provider below.** Cashier and the other packages do not enable them for you. An event that is not enabled in your provider's dashboard never reaches your app, so its payments or refunds are silently missing.
 
 Then check the setup:
 
@@ -88,9 +89,13 @@ Package: [`laravel/cashier-paddle`](https://laravel.com/docs/cashier-paddle)
 
 Payments are tracked from the transactions Cashier stores. Paddle books refunds as adjustments, which Cashier does not process, so the client reads them from the webhook itself.
 
-In your Paddle dashboard, make sure your Cashier webhook receives these events:
+::: warning Enable the transaction and adjustment events
+Without the adjustment events, refunds are not tracked. In your Paddle dashboard, add these events to the notification destination of your Cashier webhook (`/paddle/webhook`):
 
 `transaction.completed`, `transaction.updated`, `adjustment.created`, `adjustment.updated`
+:::
+
+A refund is tracked once Paddle has approved it, which can take a while after you issued it.
 
 ## Lemon Squeezy
 
@@ -102,9 +107,11 @@ Package: [`lemonsqueezy/laravel`](https://github.com/lmsqueezy/laravel)
 
 Every purchase is an order, including the first payment of a subscription. Renewals are tracked from the subscription invoices.
 
-In your Lemon Squeezy webhook settings, enable these events:
+::: warning Enable the order and subscription events
+Without these events, payments and refunds are not tracked. In your Lemon Squeezy webhook settings, enable:
 
 `order_created`, `order_refunded`, `subscription_created`, `subscription_payment_success`, `subscription_payment_refunded`
+:::
 
 ## Cashier Mollie
 
@@ -130,9 +137,11 @@ Package: [`danestves/laravel-polar`](https://github.com/danestves/laravel-polar)
 
 Polar creates an order for every purchase and every subscription cycle, so renewals are tracked like purchases.
 
-In your Polar webhook settings, enable these events:
+::: warning Enable the order events
+Without these events, payments and refunds are not tracked. In your Polar webhook settings, enable:
 
 `order.paid`, `order.refunded`
+:::
 
 ## Switching from your own payment model
 
