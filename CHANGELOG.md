@@ -2,6 +2,20 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.5.3 - 2026-11-23
+
+### Added
+
+- Blog post on tracking Stripe, Paddle, Mollie and Polar payments in Laravel, linked from the related docs and blog posts.
+
+### Fixed
+
+- The promo banner on the landing page now stays pinned above the header while scrolling, also after jumping to the pricing section.
+- Docs: every payment provider page now lists the webhook events it needs.
+- Docs and landing page: Mollie and Polar are marked as beta, Lemon Squeezy as ending.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.5.2...v7.5.3
+
 ## v7.5.2 - 2026-11-23
 
 ### Fixed
