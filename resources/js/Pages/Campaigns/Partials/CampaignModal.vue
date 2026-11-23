@@ -51,7 +51,7 @@ const save = () => {
             <form @submit.prevent="save" class="mt-4 space-y-4">
                 <div v-if="projects.length > 1">
                     <InputLabel for="campaign-project" value="Project" />
-                    <SelectInput id="campaign-project" v-model="form.project_id" :options="projects" class="mt-1 block w-full" />
+                    <SelectInput id="campaign-project" v-model="form.project_id" :options="projects" track-by="uuid" class="mt-1 block w-full" />
                     <InputError :message="form.errors.project_id" class="mt-1" />
                 </div>
                 <div>
