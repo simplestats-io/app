@@ -89,6 +89,12 @@ The repo is public. Its default build is the self-hosted one, the SaaS is the sp
 - `APP_TYPE` defaults to self-hosted; only `APP_TYPE=saas` enables SaaS code paths.
 - External contributions require the signed CLA (`CLA.md`, `.github/workflows/cla.yml`). It is what allows combining contributed AGPL code with proprietary Spark in the SaaS. Never merge an external PR without a signed CLA.
 - Issues in the public `simplestats-io/app` repo are visible to everyone (GitHub has no private issues in public repos), so they are reserved for external bug reports and feature requests. Internal ideas, roadmap items and maintainer-only tasks live as issues in the **private repo `simplestats-io/internal`** (all pre-launch issues were transferred there on 2026-10-13 and got new numbers; old `#123` references in commit messages do not match the `internal` numbers, but the old `github.com/simplestats-io/app/issues/123` URLs redirect to the transferred issue for maintainers). Never put customer names, domains, dashboard screenshots or other internal details into public issues, PRs or commit messages. Internal notes stay in `notes/` (gitignored).
+- **New issues in `simplestats-io/internal` go onto the Kanban board:** add them to the org project "SimpleStats" (number 1) with status **Backlog** and assign the maintainer who asked for it (`--assignee @me`), unless they say otherwise or work on the issue starts right away (then status In Progress). Otherwise the issue does not show up on the board.
+  ```bash
+  url=$(gh issue create -R simplestats-io/internal --title "..." --body-file body.md --assignee @me --project SimpleStats)
+  item=$(gh project item-list 1 --owner simplestats-io --format json --limit 500 --jq ".items[] | select(.content.url == \"$url\") | .id")
+  gh project item-edit --project-id PVT_kwDOCWrhT84AcEuv --id "$item" --field-id PVTSSF_lADOCWrhT84AcEuvzgSHakE --single-select-option-id 39a85e23 # Backlog (In Progress: 47fc9ee4)
+  ```
 - **`notes/` is its own git repository**, a checkout of the private `simplestats-io/internal` repo nested inside the app working tree (not a submodule, so the private URL never appears in the public repo). Commit and push notes from inside `notes/` (`git -C notes ...`), never from the app repo, and only after the maintainer's go-ahead like any other commit. On a fresh clone of the app, restore it with `git clone git@github.com:simplestats-io/internal.git notes`.
 
 ### Keep `composer.json` and `composer.saas.json` in Sync
@@ -421,6 +427,15 @@ This matters because the app runs in two different contexts:
 
 - **HTTP requests**: The `SetTeamContext` middleware sets `Context::add('team_id', ...)` from the authenticated user. Both Context and auth are available.
 - **CLI / Queued jobs**: No middleware runs. Code that needs auth must call `auth()->setUser(...)` manually. Context is only available if explicitly set.
+
+#### Team Isolation Is Mandatory
+
+Every query on team-owned data must be filtered by `team_id`, no matter how it is built. A missing filter leaks one customer's data to another, which is the worst bug this app can have.
+
+- **Eloquent:** every model with a `team_id` column uses `HasTeamScope` (stats models get it via `BaseStat`). Add it to any new team-owned model. Never bypass it with `withoutGlobalScope('team')` / `withoutGlobalScopes()` in web, API or MCP code unless the team is resolved and checked explicitly instead (see the Jetstream member routes under "Project Access").
+- **Query builder / raw SQL** (stats SQL builders, `DB::table()`, ingest services): the global scope does not apply, so add `where('team_id', AppHelper::getTeamId())` (or the team of the authenticated project) yourself. Prefer a composite index that leads with `team_id`.
+- **Exception: console commands and maintenance jobs** that deliberately work across all teams (cleanup, nightly aggregation refresh, migrations). There `AppHelper::getTeamId()` is null and the scope is skipped on purpose. As soon as such a command acts on behalf of one team or user (reports, alerts, imports), set the team context as described below.
+- Tests for new endpoints or queries should include a foreign team's row and assert it is not returned.
 
 #### Rules for Team Context
 
