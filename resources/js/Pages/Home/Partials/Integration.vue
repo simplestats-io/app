@@ -1,4 +1,5 @@
 <script setup>
+import { shallowRef } from "vue";
 import SectionHeader from "@/Pages/Home/Partials/SectionHeader.vue";
 import StaticCodeBlock from "@/Components/StaticCodeBlock.vue";
 import BigStepBullet from "@/Pages/Home/Partials/Integration/BigStepBullet.vue";
@@ -9,10 +10,13 @@ import StepText from "@/Pages/Home/Partials/Integration/StepText.vue";
 import GridPlaceholder from "@/Pages/Home/Partials/Integration/GridPlaceholder.vue";
 import installHtml from "@/Pages/Home/Partials/Integration/Snippets/install_package.txt?shiki";
 import trackUserHtml from "@/Pages/Home/Partials/Integration/Snippets/track_user.txt?shiki";
-import PaymentSnippetTabs from "@/Pages/Home/Partials/Integration/PaymentSnippetTabs.vue";
+import PaymentSnippet from "@/Pages/Home/Partials/Integration/PaymentSnippet.vue";
+import { paymentProviders } from "@/Pages/Home/Partials/Integration/paymentProviders.js";
 import PaymentProviderCloud from "@/Pages/Home/Partials/Integration/PaymentProviderCloud.vue";
 
 const appName = import.meta.env.VITE_APP_NAME;
+// shallowRef: the cloud compares the options by identity, a deep ref would wrap them in proxies.
+const paymentProvider = shallowRef(paymentProviders[0]);
 </script>
 
 <template>
@@ -53,11 +57,11 @@ const appName = import.meta.env.VITE_APP_NAME;
                     <SmallStepBullet content="" />
                     <SmallStepText :content="$t('Track your sales')" />
 
-                    <PaymentSnippetTabs />
+                    <PaymentSnippet :provider="paymentProvider" />
                     <GridPlaceholder />
                     <div class="self-start">
-                        <StepText :content="$t('Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other provider or your own payments table? Add the <b>TrackablePayment</b> interface to your payment model.')" />
-                        <PaymentProviderCloud />
+                        <StepText :content="$t('Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.')" />
+                        <PaymentProviderCloud v-model="paymentProvider" />
                     </div>
 
                     <GridPlaceholder />

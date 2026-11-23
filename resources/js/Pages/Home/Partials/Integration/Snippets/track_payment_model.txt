@@ -1,0 +1,25 @@
+// config/simplestats-client.php
+
+'tracking_types' => [
+    'payment' => [
+        'provider' => null,
+        'model' => App\Models\Transaction::class,
+    ],
+],
+
+// app/Models/Transaction.php
+
+class Transaction extends Model implements TrackablePayment
+{
+    public function getTrackingPerson(): TrackablePerson
+    {
+        return $this->user;
+    }
+
+    public function getTrackingGross(): float
+    {
+        return $this->total;
+    }
+
+    // getTrackingNet(), getTrackingCurrency(), ...
+}
