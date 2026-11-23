@@ -98,7 +98,7 @@ Because SimpleStats knows both the recurring revenue attributed to each campaign
 
 There's no new integration to learn. If you're already tracking payments with SimpleStats, you're most of the way there:
 
-1. **Track payments** so revenue can be attributed to a channel. If you're on Stripe, Paddle, or Lemon Squeezy, our [Cashier payment tracking guide](/blog/how-to-track-laravel-cashier-payments) walks through it in a few minutes.
+1. **Track payments** so revenue can be attributed to a channel. If you use Cashier Stripe, Cashier Paddle, Cashier Mollie or Polar, it is [one line of config](/docs/payment-providers.html). For any other setup, our [payment tracking guide](/docs/how-to-track-a-new-payment.html) walks through it in a few minutes.
 2. **Create a campaign** in SimpleStats and link it to the UTM values you use in your ad URLs.
 3. **Enter your ad spend** for that campaign and date range.
 

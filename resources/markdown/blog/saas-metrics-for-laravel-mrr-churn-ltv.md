@@ -142,7 +142,7 @@ Two things to note:
 
 The `interval` (`Month` or `Year`) is what SimpleStats uses to normalize every subscription into a monthly figure for MRR. A €120/year plan and a €10/month plan both contribute €10 to MRR, as they should.
 
-For the full payment-tracking walkthrough across Stripe, Paddle, and Lemon Squeezy, see the [Cashier payment tracking guide](/blog/how-to-track-laravel-cashier-payments).
+Using Cashier Stripe, Cashier Paddle, Cashier Mollie or Polar? Then the interval and plan are tracked for you with [one line of config](/docs/payment-providers.html). For your own payment model, see the [Cashier payment tracking guide](/blog/how-to-track-laravel-cashier-payments).
 
 ---
 

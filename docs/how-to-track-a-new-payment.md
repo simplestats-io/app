@@ -323,6 +323,10 @@ public function boot(): void
 
 And register it as your payment model in the config, as shown in [Configuration](#configuration) above. Done, every completed Paddle transaction now gets tracked automatically.
 
+::: warning Refunds
+Paddle books refunds as adjustments, which Cashier Paddle does not write to the `Transaction` model. With your own model, refunds are therefore not tracked. The [Cashier Paddle provider](payment-providers.md#cashier-paddle) tracks them.
+:::
+
 **Lemon Squeezy** works the same way: extend `LemonSqueezy\Laravel\Order`, implement the contract and register your subclass via `LemonSqueezy::useOrderModel()`.
 
 ::: info

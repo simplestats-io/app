@@ -70,6 +70,8 @@ That's it. Every time a new instance of that model gets created, SimpleStats aut
 
 ## Cashier Paddle
 
+> **Quicker with the provider:** set `CashierPaddle::class` as your [payment provider](/docs/payment-providers.html#cashier-paddle) instead. It also tracks **refunds**, which Cashier Paddle books as adjustments and never writes to the `Transaction` model below. Use the model only if you need custom logic.
+
 Paddle is the easiest integration because Cashier Paddle ships with a `Transaction` Eloquent model that you can extend directly.
 
 ### Step 1: Create Your Transaction Model
@@ -156,6 +158,8 @@ By the way, this is the same setup we use ourselves: SimpleStats runs on Cashier
 ---
 
 ## Cashier Stripe
+
+> **Quicker with the provider:** set `CashierStripe::class` as your [payment provider](/docs/payment-providers.html#cashier-stripe) and skip everything in this section. It reads each charge from Stripe, including tax, plan, refunds and lost disputes. The manual way below is only for apps that need full control.
 
 Stripe requires a bit more work. Unlike Paddle and Lemon Squeezy, Cashier Stripe does **not** ship with an Eloquent model for individual payments. It stores subscriptions locally (in the `subscriptions` table), but individual charges, invoices, and checkout payments live entirely in Stripe's API. The `Laravel\Cashier\Payment` class you might have seen in the docs is just a wrapper around Stripe's PaymentIntent object, not an Eloquent model.
 
@@ -453,6 +457,6 @@ You can use any logic you want here. Check multiple fields, combine conditions, 
 
 ## Works with Any Provider
 
-While this guide focuses on Laravel Cashier (Stripe and Paddle), the pattern works with any payment provider. If you use a different gateway, the approach is the same: create or extend a model, implement the contract, register it in the config.
+While this guide focuses on Laravel Cashier (Stripe and Paddle), the pattern works with any payment provider. For Cashier Stripe, Cashier Paddle, Cashier Mollie and Polar there is a ready made [payment provider](/docs/payment-providers.html). If you use a different gateway, the approach is the same: create or extend a model, implement the contract, register it in the config.
 
 For the full payment tracking documentation, including the Cashier Paddle and Lemon Squeezy setup, visitor-based payment tracking for guest checkouts and multi-currency support, check out our [payment tracking guide](/docs/how-to-track-a-new-payment.html). The Stripe webhook setup is also documented in [How to track Stripe payments without a payment model](/docs/how-to-track-stripe-payments-without-a-model.html).
