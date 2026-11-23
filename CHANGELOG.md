@@ -2,6 +2,19 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.5.2 - 2026-11-23
+
+### Fixed
+
+- A fully refunded payment (`POST /api/v1/stats-payment` with a gross amount of 0 for a tracked payment id) is now removed instead of ignored, so it no longer counts as revenue, paying user or subscriber. The user's later payments move up, so the next one becomes the first payment. A gross of 0 for an unknown payment id is still ignored.
+- Page view KPIs show an empty state until the first page views arrive, with a link to the setup docs, also for projects that do not track visitors.
+
+### Added
+
+- Docs: new page "Payment Providers" for laravel-client v6.2, which tracks Cashier Stripe, Cashier Paddle, Lemon Squeezy, Cashier Mollie and Polar payments with one line of config.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.5.1...v7.5.2
+
 ## v7.5.1 - 2026-11-22
 
 ### Fixed
