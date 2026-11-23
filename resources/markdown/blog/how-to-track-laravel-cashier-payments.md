@@ -12,7 +12,7 @@ published: true
 author_id: 1
 ---
 
-> **Update:** it got a lot easier. Since version 6.2 of the client, Cashier Stripe, Cashier Paddle, Cashier Mollie, Lemon Squeezy and Polar work with one line of config, no model and no listener. See [Payment Providers](/docs/payment-providers.html). The guide below is still the way to go for your own payment model or any other provider.
+> **Update:** it got a lot easier. Since version 6.2 of the client, Cashier Stripe, Cashier Paddle, Cashier Mollie and Polar work with one line of config, no model and no listener. See [Payment Providers](/docs/payment-providers.html). The guide below is still the way to go for your own payment model or any other provider.
 
 One of the most common questions we get is: *"How does SimpleStats work with Laravel Cashier?"*
 

@@ -167,7 +167,7 @@
     "Install :appName": "Install :appName",
     "In your Laravel project, you just need to <b>install</b> the :appName <b>client</b>. Congrats, the tool is now already tracking your visitors!": "In your Laravel project, you just need to <b>install</b> the :appName <b>client</b>. Congrats, the tool is now already tracking your visitors!",
     "To make the client <b>track</b> your user <b>registrations</b>, you only have to add the <b>TrackablePerson</b> interface and implement the contract.": "To make the client <b>track</b> your user <b>registrations</b>, you only have to add the <b>TrackablePerson</b> interface and implement the contract.",
-    "Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.": "Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.",
+    "Using Laravel Cashier or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.": "Using Laravel Cashier or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.",
     "Own payment model": "Own payment model",
     "One line of config": "One line of config",
     "Pick your payment provider": "Pick your payment provider",

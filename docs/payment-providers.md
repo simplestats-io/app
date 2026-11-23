@@ -1,5 +1,5 @@
 ---
-description: "Track Laravel Cashier Stripe, Cashier Paddle, Cashier Mollie, Lemon Squeezy and Polar payments in SimpleStats with one line of config, or any other provider with one interface."
+description: "Track Laravel Cashier Stripe, Cashier Paddle, Cashier Mollie and Polar payments in SimpleStats with one line of config, or any other provider with one interface."
 ---
 
 # Payment Providers
@@ -9,7 +9,6 @@ Using one of these payment packages? Then you track payments with **one line of 
 <div class="provider-cloud">
   <a href="#cashier-stripe"><img src="./payment-providers/stripe.svg" alt=""><span>Stripe<small>via Cashier</small></span></a>
   <a href="#cashier-paddle"><img src="./payment-providers/paddle.svg" alt=""><span>Paddle<small>via Cashier</small></span></a>
-  <a href="#lemon-squeezy"><img src="./payment-providers/lemon-squeezy.svg" alt=""><span>Lemon Squeezy</span></a>
   <a href="#cashier-mollie"><img class="wordmark" src="./payment-providers/mollie.svg" alt="Mollie"><span><small>via Cashier</small></span></a>
   <a href="#polar"><img src="./payment-providers/polar.svg" alt=""><span>Polar</span></a>
   <a href="#your-provider-is-not-listed"><span class="any">&lt;/&gt;</span><span>Any other<small>your own model</small></span></a>
@@ -97,23 +96,11 @@ Without the adjustment events, refunds are not tracked. In your Paddle dashboard
 
 A refund is tracked once Paddle has approved it, which can take a while after you issued it.
 
-## Lemon Squeezy
+## Cashier Mollie <Badge type="warning" text="Beta" /> {#cashier-mollie}
 
-Package: [`lemonsqueezy/laravel`](https://github.com/lmsqueezy/laravel)
-
-```php
-'provider' => \SimpleStatsIo\LaravelClient\PaymentProviders\LemonSqueezy::class,
-```
-
-Every purchase is an order, including the first payment of a subscription. Renewals are tracked from the subscription invoices.
-
-::: warning Enable the order and subscription events
-Without these events, payments and refunds are not tracked. In your Lemon Squeezy webhook settings, enable:
-
-`order_created`, `order_refunded`, `subscription_created`, `subscription_payment_success`, `subscription_payment_refunded`
+::: info Beta
+This provider is covered by automated tests, but not yet tested against a live Mollie account. Payments missing or wrong? Please [open an issue](https://github.com/simplestats-io/laravel-client/issues).
 :::
-
-## Cashier Mollie
 
 Package: [`mollie/laravel-cashier-mollie`](https://github.com/mollie/laravel-cashier-mollie)
 
@@ -127,7 +114,11 @@ Payments are tracked from the orders Cashier Mollie stores, first payments as we
 Cashier Mollie only processes refunds started through Cashier (for example `$order->refundCompletely()`). A refund made directly in the Mollie dashboard does not reach your app and is therefore not tracked.
 :::
 
-## Polar
+## Polar <Badge type="warning" text="Beta" /> {#polar}
+
+::: info Beta
+This provider is covered by automated tests, but not yet tested against a live Polar account. Payments missing or wrong? Please [open an issue](https://github.com/simplestats-io/laravel-client/issues).
+:::
 
 Package: [`danestves/laravel-polar`](https://github.com/danestves/laravel-polar) (requires PHP 8.3)
 
@@ -141,6 +132,26 @@ Polar creates an order for every purchase and every subscription cycle, so renew
 Without these events, payments and refunds are not tracked. In your Polar webhook settings, enable:
 
 `order.paid`, `order.refunded`
+:::
+
+## Lemon Squeezy <Badge type="danger" text="Ending" /> {#lemon-squeezy}
+
+::: danger Lemon Squeezy is winding down
+Lemon Squeezy closed new sign ups on November 16, 2026 and stops processing payments on March 31, 2027. Existing stores move to Stripe Managed Payments, see the [Lemon Squeezy migration guide](https://docs.lemonsqueezy.com/migration). This provider keeps working for existing stores until then. It is not tested against a live Lemon Squeezy account, since new test accounts are no longer possible.
+:::
+
+Package: [`lemonsqueezy/laravel`](https://github.com/lmsqueezy/laravel)
+
+```php
+'provider' => \SimpleStatsIo\LaravelClient\PaymentProviders\LemonSqueezy::class,
+```
+
+Every purchase is an order, including the first payment of a subscription. Renewals are tracked from the subscription invoices.
+
+::: warning Enable the order and subscription events
+Without these events, payments and refunds are not tracked. In your Lemon Squeezy webhook settings, enable:
+
+`order_created`, `order_refunded`, `subscription_created`, `subscription_payment_success`, `subscription_payment_refunded`
 :::
 
 ## Switching from your own payment model

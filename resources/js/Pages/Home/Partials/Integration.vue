@@ -60,7 +60,7 @@ const paymentProvider = shallowRef(paymentProviders[0]);
                     <PaymentSnippet :provider="paymentProvider" />
                     <GridPlaceholder />
                     <div class="self-start">
-                        <StepText :content="$t('Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.')" />
+                        <StepText :content="$t('Using Laravel Cashier or Polar? Set it as your <b>payment provider</b> with one line of config. Any other setup? Just use your own <b>custom payment model</b>.')" />
                         <PaymentProviderCloud v-model="paymentProvider" />
                     </div>
 

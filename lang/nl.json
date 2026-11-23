@@ -148,7 +148,7 @@
     "Install :appName": ":appName installeren",
     "In your Laravel project, you just need to <b>install<\/b> the :appName <b>client<\/b>. Congrats, the tool is now already tracking your visitors!": "In je Laravel-project hoef je alleen de :appName <b>client<\/b> te <b>installeren<\/b>. Klaar, de tool trackt nu al je bezoekers!",
     "To make the client <b>track<\/b> your user <b>registrations<\/b>, you only have to add the <b>TrackablePerson<\/b> interface and implement the contract.": "Om de client je <b>registraties<\/b> te laten <b>tracken<\/b>, hoef je alleen de <b>TrackablePerson<\/b>-interface toe te voegen en het contract te implementeren.",
-    "Using Laravel Cashier, Lemon Squeezy or Polar? Set it as your <b>payment provider<\/b> with one line of config. Any other setup? Just use your own <b>custom payment model<\/b>.": "Gebruik je Laravel Cashier, Lemon Squeezy of Polar? Stel het dan in als je <b>betalingsprovider<\/b> met één regel in de configuratie. Heb je een andere opzet? Gebruik dan gewoon je eigen <b>aangepaste betalingsmodel<\/b>.",
+    "Using Laravel Cashier or Polar? Set it as your <b>payment provider<\/b> with one line of config. Any other setup? Just use your own <b>custom payment model<\/b>.": "Gebruik je Laravel Cashier of Polar? Stel het dan in als je <b>betalingsprovider<\/b> met één regel configuratie. Heb je een andere opzet? Gebruik dan gewoon je eigen <b>aangepaste betalingsmodel<\/b>.",
     "Own payment model": "Eigen betalingsmodel",
     "One line of config": "Eén regel in het configuratiebestand",
     "Pick your payment provider": "Kies je betalingsprovider",

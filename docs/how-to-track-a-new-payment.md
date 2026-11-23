@@ -1,5 +1,5 @@
 ---
-description: "Track payments in Laravel with SimpleStats from your own payment model, or from Cashier, Lemon Squeezy and Polar with one line of config, and attribute revenue to your marketing channels."
+description: "Track payments in Laravel with SimpleStats from your own payment model, or from Cashier and Polar with one line of config, and attribute revenue to your marketing channels."
 ---
 
 # How to track a new payment
@@ -7,7 +7,7 @@ description: "Track payments in Laravel with SimpleStats from your own payment m
 As the payment model is named very individually, we did not set any default for it. You should give it the name of the model which holds your payments/transactions data.
 
 ::: tip
-Using **Cashier Stripe**, **Cashier Paddle**, **Cashier Mollie**, **Lemon Squeezy** or **Polar**? Then you need no payment model at all: set the provider with one line of config, see [Payment Providers](payment-providers.md). This page covers everything else: your own payment table, any other provider, or custom logic.
+Using **Cashier Stripe**, **Cashier Paddle**, **Cashier Mollie** or **Polar**? Then you need no payment model at all: set the provider with one line of config, see [Payment Providers](payment-providers.md). This page covers everything else: your own payment table, any other provider, or custom logic.
 :::
 
 ## Configuration
