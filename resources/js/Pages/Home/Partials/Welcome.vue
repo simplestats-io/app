@@ -25,9 +25,11 @@ defineProps({
 <template>
     <Gradient position="fixed" />
 
-    <Banners :banners="banners" />
+    <div class="sticky top-0 z-20">
+        <Banners :banners="banners" />
 
-    <Header />
+        <Header />
+    </div>
 
     <main class="min-h-screen relative">
         <Hero />
