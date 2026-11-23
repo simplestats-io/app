@@ -152,8 +152,6 @@
     "Own payment model": "Modèle de paiement propre",
     "One line of config": "Une ligne de configuration",
     "Pick your payment provider": "Choisis ton prestataire de paiement",
-    ":provider setup in the docs": "Configuration de :provider dans la doc",
-    "Own payment model in the docs": "Modèle de paiement personnalisé dans la documentation",
     "Any other": "Autre prestataire",
     "your own model": "ton propre modèle",
     "via Cashier": "via Cashier",

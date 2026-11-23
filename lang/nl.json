@@ -152,8 +152,6 @@
     "Own payment model": "Eigen betalingsmodel",
     "One line of config": "Eén regel in het configuratiebestand",
     "Pick your payment provider": "Kies je betalingsprovider",
-    ":provider setup in the docs": ":provider instellen in de documentatie",
-    "Own payment model in the docs": "Eigen betalingsmodel in de documentatie",
     "Any other": "Andere provider",
     "your own model": "je eigen model",
     "via Cashier": "via Cashier",

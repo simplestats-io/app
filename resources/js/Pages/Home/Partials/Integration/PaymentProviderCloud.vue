@@ -1,7 +1,6 @@
 <script setup>
 import { nextTick, ref } from "vue";
 import CodeSlashIcon from "bootstrap-icons/icons/code-slash.svg?component";
-import ArrowRightIcon from "bootstrap-icons/icons/arrow-right.svg?component";
 import { paymentProviders } from "@/Pages/Home/Partials/Integration/paymentProviders.js";
 
 // null stands for "Any other", the own payment model.
@@ -76,13 +75,5 @@ const tile = (active) => [
                 </template>
             </button>
         </div>
-        <a
-            :href="selected ? `/docs/payment-providers.html#${selected.anchor}` : '/docs/how-to-track-a-new-payment.html'"
-            target="_blank"
-            class="simpleLink mt-3 inline-flex items-center gap-1 text-sm"
-        >
-            {{ selected ? $t(':provider setup in the docs', { provider: selected.name }) : $t('Own payment model in the docs') }}
-            <ArrowRightIcon class="size-4" aria-hidden="true" />
-        </a>
     </div>
 </template>
