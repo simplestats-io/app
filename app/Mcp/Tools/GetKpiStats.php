@@ -13,9 +13,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Get KPI time series (visitors, registrations, conversion rate, revenue, active users, ARPU, ...) for a date range, bucketed per hour/day/week/month. Also returns range totals so you never have to add numbers yourself. Keys prefixed pd_ are per bucket, lt_ are lifetime values up to that bucket. When called for all projects (project_id 0) the response additionally contains per_project range totals for breaking the answer down by project.')]
+#[IsReadOnly]
 class GetKpiStats extends Tool
 {
     use ResolvesStatsFilters;

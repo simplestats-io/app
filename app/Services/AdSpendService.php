@@ -122,6 +122,11 @@ class AdSpendService
     }
 
     /**
+     * Campaigns for all projects only appear in the all-projects view: their spend
+     * cannot be split per project, so a single project would show the whole spend
+     * against a fraction of the revenue. Members limited to selected projects never
+     * see them (HasProjectAccessScope drops NULL project ids).
+     *
      * @return Builder<Campaign>
      */
     private function campaignsForFilter(StatsFilterDto $filters): Builder
@@ -141,8 +146,13 @@ class AdSpendService
      * (stats_user_id IS NULL), because a payment of a registered user is
      * attributed to the user's registration tracking codes.
      *
+     * utm_campaign dimensions are team-wide while a campaign usually belongs to one
+     * project, so the totals are split per project: a project campaign only counts
+     * its own, a campaign for all projects sums them (see buildRow()). Projects
+     * outside a limited member's selection are never part of the totals.
+     *
      * @param  array<int, int>  $utmIds
-     * @return Collection<int, array{net: int, reg: int, visitors: int}> utm id => totals
+     * @return Collection<int, Collection<int, array{net: int, reg: int, visitors: int}>> utm id => project id => totals
      */
     private function cohortRevenueByUtm(array $utmIds, CarbonImmutable $windowStart, CarbonImmutable $windowEnd): Collection
     {
@@ -163,12 +173,11 @@ class AdSpendService
             ->where('su.registered', true)
             ->whereIn('su.stats_track_campaign_id', $utmIds)
             ->whereBetween('su.time', $window)
-            ->groupBy('su.stats_track_campaign_id')
-            ->select('su.stats_track_campaign_id as utm_id')
+            ->groupBy('su.stats_track_campaign_id', 'su.project_id')
+            ->select('su.stats_track_campaign_id as utm_id', 'su.project_id')
             ->selectRaw('COUNT(DISTINCT su.id) as reg')
             ->selectRaw('COALESCE(SUM(p.net), 0) as net')
-            ->get()
-            ->keyBy('utm_id');
+            ->get();
 
         $visitors = DB::table('stats_visitors as sv')
             ->leftJoin('stats_payments as p', fn (JoinClause $join) => $join
@@ -179,22 +188,32 @@ class AdSpendService
             ->when($accessibleProjectIds !== null, fn (QueryBuilder $query): QueryBuilder => $query->whereIn('sv.project_id', $accessibleProjectIds))
             ->whereIn('sv.stats_track_campaign_id', $utmIds)
             ->whereBetween('sv.time', $window)
-            ->groupBy('sv.stats_track_campaign_id')
-            ->select('sv.stats_track_campaign_id as utm_id')
+            ->groupBy('sv.stats_track_campaign_id', 'sv.project_id')
+            ->select('sv.stats_track_campaign_id as utm_id', 'sv.project_id')
             ->selectRaw('COUNT(DISTINCT sv.id) as visitors')
             ->selectRaw('COALESCE(SUM(p.net), 0) as net')
-            ->get()
-            ->keyBy('utm_id');
+            ->get();
 
-        return collect($utmIds)->mapWithKeys(fn (int $utmId): array => [$utmId => [
-            'net' => (int) round(($users->get($utmId)->net ?? 0) + ($visitors->get($utmId)->net ?? 0)),
-            'reg' => (int) ($users->get($utmId)->reg ?? 0),
-            'visitors' => (int) ($visitors->get($utmId)->visitors ?? 0),
-        ]]);
+        $totals = [];
+
+        foreach ($users as $row) {
+            $totals[(int) $row->utm_id][(int) $row->project_id] = ['net' => (float) $row->net, 'reg' => (int) $row->reg, 'visitors' => 0];
+        }
+
+        foreach ($visitors as $row) {
+            $utmId = (int) $row->utm_id;
+            $projectId = (int) $row->project_id;
+            $entry = $totals[$utmId][$projectId] ?? ['net' => 0.0, 'reg' => 0, 'visitors' => 0];
+
+            $totals[$utmId][$projectId] = [...$entry, 'net' => $entry['net'] + $row->net, 'visitors' => (int) $row->visitors];
+        }
+
+        return collect($totals)->map(fn (array $byProject): Collection => collect($byProject)
+            ->map(fn (array $total): array => [...$total, 'net' => (int) round($total['net'])]));
     }
 
     /**
-     * @param  Collection<int, array{net: int, reg: int, visitors: int}>  $revenueByUtm
+     * @param  Collection<int, Collection<int, array{net: int, reg: int, visitors: int}>>  $revenueByUtm
      * @return array<string, mixed>
      */
     private function buildRow(Campaign $campaign, Collection $revenueByUtm, CarbonImmutable $windowStart, CarbonImmutable $windowEnd, StatsFilterDto $filters): array
@@ -204,15 +223,14 @@ class AdSpendService
         $visitors = 0;
 
         foreach ($campaign->statsTrackCampaigns as $utm) {
-            $revenue = $revenueByUtm->get($utm->id);
+            $byProject = $revenueByUtm->get($utm->id, collect());
+            $revenues = $campaign->spansAllProjects() ? $byProject : $byProject->only([$campaign->project_id]);
 
-            if ($revenue === null) {
-                continue;
+            foreach ($revenues as $revenue) {
+                $net += $revenue['net'];
+                $reg += $revenue['reg'];
+                $visitors += $revenue['visitors'];
             }
-
-            $net += $revenue['net'];
-            $reg += $revenue['reg'];
-            $visitors += $revenue['visitors'];
         }
 
         $spend = (int) $campaign->adSpends->sum(fn (AdSpend $adSpend): int => $adSpend->allocatedFor($windowStart, $windowEnd));
@@ -225,7 +243,7 @@ class AdSpendService
             'name' => $campaign->name,
             'project_id' => $campaign->project_id,
             'project_uuid' => $campaign->project?->uuid,
-            'project_name' => $campaign->project?->name ?? '–',
+            'project_name' => $campaign->spansAllProjects() ? 'All projects' : ($campaign->project?->name ?? '–'),
             'visitors' => $visitors,
             'reg' => $reg,
             'net' => $net,
@@ -260,7 +278,15 @@ class AdSpendService
     {
         $empty = ['ltv_cac' => null, 'cac_payback' => null];
 
-        if ($cac === null || ! $campaign->project?->hasUsages([Project::USAGE_SUBSCRIPTION])) {
+        if ($cac === null) {
+            return $empty;
+        }
+
+        $tracksSubscriptions = $campaign->spansAllProjects()
+            ? $campaign->team()->sole()->tracksUsage(Project::USAGE_SUBSCRIPTION)
+            : $campaign->project?->hasUsages([Project::USAGE_SUBSCRIPTION]);
+
+        if (! $tracksSubscriptions) {
             return $empty;
         }
 
@@ -280,7 +306,7 @@ class AdSpendService
     {
         $scoped = clone $base;
         $scoped->campaign = $campaign->id;
-        $scoped->projectId = $campaign->project_id;
+        $scoped->projectId = $campaign->project_id ?? StatsFilterDto::TRACK_ALL;
         $scoped->rangeType = StatsRangeType::MONTH;
         $scoped->rangeAmount = self::ECONOMICS_TRAILING_MONTHS;
         $scoped->rangeStart = now();

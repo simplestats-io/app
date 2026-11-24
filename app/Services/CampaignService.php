@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class CampaignService
 {
-    public function create(int $projectId, string $name): Campaign
+    public function create(?int $projectId, string $name): Campaign
     {
         return Campaign::firstOrCreate([
             'project_id' => $projectId,

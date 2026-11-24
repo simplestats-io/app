@@ -34,8 +34,10 @@ class CampaignController extends Controller
 
     public function store(CampaignRequest $request): RedirectResponse
     {
+        $projectId = $request->validated('project_id');
+
         $campaign = $this->campaignService->create(
-            (int) $request->validated('project_id'),
+            $projectId === null ? null : (int) $projectId,
             $request->validated('name'),
         );
 

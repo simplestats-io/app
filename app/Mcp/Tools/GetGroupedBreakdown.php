@@ -13,9 +13,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Break down stats by a dimension (e.g. track_referer, track_source, track_campaign, location_country, device_platform) for a date range. Answers questions like "which referrer brings the most revenue". Returns the top entries sorted by the given metric.')]
+#[IsReadOnly]
 class GetGroupedBreakdown extends Tool
 {
     use ResolvesStatsFilters;

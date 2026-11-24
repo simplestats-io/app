@@ -52,6 +52,9 @@ const save = () => {
                 <div v-if="projects.length > 1">
                     <InputLabel for="campaign-project" value="Project" />
                     <SelectInput id="campaign-project" v-model="form.project_id" :options="projects" track-by="uuid" class="mt-1 block w-full" />
+                    <p v-if="form.project_id === 'all'" class="mt-1 text-xs text-gray-500 dark:text-dark-400">
+                        Counts the linked <span class="font-mono">utm_campaign</span> values in every project of this team.
+                    </p>
                     <InputError :message="form.errors.project_id" class="mt-1" />
                 </div>
                 <div>

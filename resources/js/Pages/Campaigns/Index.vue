@@ -34,6 +34,7 @@ const props = defineProps({
     usageBits: Object,
     campaigns: {type: Object, default: () => ({data: [], links: []})},
     projects: {type: Array, default: () => []},
+    canCreateForAllProjects: Boolean,
 });
 
 const page = usePage();
@@ -45,7 +46,10 @@ const showsRevenue = currentProjectHasUsages(['payments']);
 const showsRegistrations = currentProjectHasUsages(['users']);
 const showsSubscription = currentProjectHasUsages(['subscription']);
 const showProjectColumn = props.projects.length > 1 && (props.filters.project_id ?? 0) === 0;
-const defaultProjectId = props.projects.find(project => project.uuid === props.filters.project_id)?.uuid ?? props.projects[0]?.uuid;
+const offersAllProjects = props.canCreateForAllProjects && props.projects.length > 1;
+const campaignProjectOptions = offersAllProjects ? [{uuid: 'all', name: 'All projects'}, ...props.projects] : props.projects;
+const defaultProjectId = props.projects.find(project => project.uuid === props.filters.project_id)?.uuid
+    ?? (offersAllProjects ? 'all' : props.projects[0]?.uuid);
 
 const columnCount = 3 + (showProjectColumn ? 1 : 0) + (showsRevenue ? 3 : 0) + (showsRegistrations ? 1 : 0) + (showsSubscription ? 2 : 0);
 
@@ -77,8 +81,11 @@ const manageCampaign = (row) => {
     router.get(route('campaigns.show', {campaign: row.campaign_uuid, ...props.filters}));
 };
 
+// A campaign for all projects has no project uuid; 0 is the "All projects" scope.
+const rowScope = (row) => row.project_uuid ?? 0;
+
 const analyzeCampaign = (row) => {
-    router.get(route('dashboard', {...props.filters, project_id: row.project_uuid, campaign: row.campaign_uuid}));
+    router.get(route('dashboard', {...props.filters, project_id: rowScope(row), campaign: row.campaign_uuid}));
 };
 
 // Only projects that track subscriptions have a revenue view to drill into.
@@ -89,11 +96,11 @@ const usersBit = props.usageBits.users;
 const tracksUsers = (projectId) => !! ((props.teamStats.projects[projectId]?.usage ?? 0) & usersBit);
 
 const analyzeCampaignRevenue = (row) => {
-    router.get(route('revenue', {...props.filters, project_id: row.project_uuid, campaign: row.campaign_uuid}));
+    router.get(route('revenue', {...props.filters, project_id: rowScope(row), campaign: row.campaign_uuid}));
 };
 
 const analyzeCampaignRetention = (row) => {
-    router.get(route('retention', {...props.filters, project_id: row.project_uuid, campaign: row.campaign_uuid}));
+    router.get(route('retention', {...props.filters, project_id: rowScope(row), campaign: row.campaign_uuid}));
 };
 </script>
 
@@ -193,10 +200,10 @@ const analyzeCampaignRetention = (row) => {
                                 <button type="button" aria-label="Analyze in dashboard" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" v-tooltip="'Analyze in dashboard'" @click="analyzeCampaign(row)">
                                     <DashboardIcon class="size-5" />
                                 </button>
-                                <button v-if="tracksSubscription(row.project_uuid)" type="button" aria-label="Analyze revenue" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" v-tooltip="'Analyze revenue'" @click="analyzeCampaignRevenue(row)">
+                                <button v-if="tracksSubscription(rowScope(row))" type="button" aria-label="Analyze revenue" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" v-tooltip="'Analyze revenue'" @click="analyzeCampaignRevenue(row)">
                                     <Wallet2Icon class="size-5" />
                                 </button>
-                                <button v-if="tracksUsers(row.project_uuid)" type="button" aria-label="Analyze retention" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" v-tooltip="'Analyze retention'" @click="analyzeCampaignRetention(row)">
+                                <button v-if="tracksUsers(rowScope(row))" type="button" aria-label="Analyze retention" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" v-tooltip="'Analyze retention'" @click="analyzeCampaignRetention(row)">
                                     <RetentionIcon class="size-5" />
                                 </button>
                             </div>
@@ -220,7 +227,7 @@ const analyzeCampaignRetention = (row) => {
 
         <CampaignModal
             :show="showCampaignModal"
-            :projects="projects"
+            :projects="campaignProjectOptions"
             :defaultProjectId="defaultProjectId"
             @close="showCampaignModal = false"
         />

@@ -168,3 +168,34 @@ test('campaigns exposes ltv:cac and cac payback keys on each row', function (): 
             )
         );
 });
+
+test('campaigns for all projects are listed in the all projects view and offered in the modal', function (): void {
+    Project::factory()->create(['team_id' => $this->team->id]);
+    Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    Campaign::factory()->create(['project_id' => $this->project->id, 'name' => 'Spring Sale']);
+
+    $this->get(route('campaigns', ['project_id' => 0]))
+        ->assertInertia(fn ($page) => $page
+            ->where('canCreateForAllProjects', true)
+            ->where('campaigns.data', fn ($rows): bool => collect($rows)->firstWhere('name', 'Black Friday')['project_name'] === 'All projects'));
+
+    $this->get(route('campaigns', ['project_id' => $this->project->uuid]))
+        ->assertInertia(fn ($page) => $page->where('campaigns.data', fn ($rows): bool => collect($rows)->pluck('name')->all() === ['Spring Sale']));
+});
+
+test('a member limited to selected projects sees neither campaigns for all projects nor the option', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    Campaign::factory()->create(['project_id' => $otherProject->id, 'name' => 'Blog Sale']);
+    Campaign::factory()->create(['project_id' => $this->project->id, 'name' => 'Spring Sale']);
+
+    $member = User::factory()->create();
+    $this->team->users()->attach($member, ['role' => 'editor', 'project_ids' => [$this->project->id]]);
+    $member->switchTeam($this->team);
+
+    $this->actingAs($member->fresh())
+        ->get(route('campaigns'))
+        ->assertInertia(fn ($page) => $page
+            ->where('canCreateForAllProjects', false)
+            ->where('campaigns.data', fn ($rows): bool => collect($rows)->pluck('name')->all() === ['Spring Sale']));
+});

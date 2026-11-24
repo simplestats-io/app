@@ -12,9 +12,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('List the projects you can access, the available breakdown dimensions, date range presets, and a legend of all KPI keys. Call this first when unsure which project, dimension, or preset to use.')]
+#[IsReadOnly]
 class ListStatsCapabilities extends Tool
 {
     public function handle(Request $request): Response|ResponseFactory
@@ -62,29 +64,22 @@ class ListStatsCapabilities extends Tool
     }
 
     /**
-     * A project API token only sees its own project, see ResolvesStatsFilters::resolveFilters().
-     *
      * @return list<array<string, mixed>>
      */
     private function projects(): array
     {
-        $tokenProject = auth('sanctum')->user();
+        $rows = Project::query()
+            ->get(['id', 'name', 'usage', 'page_views_seen_at'])
+            ->map(fn (Project $project): array => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'tracks_registrations' => $project->hasUsages([Project::USAGE_USERS]),
+                'tracks_subscriptions' => $project->hasUsages([Project::USAGE_SUBSCRIPTION]),
+                'tracks_page_views' => $project->hasRecentPageViews(),
+            ])
+            ->all();
 
-        $projects = $tokenProject instanceof Project
-            ? collect([$tokenProject])
-            : Project::query()->get(['id', 'name', 'usage', 'page_views_seen_at']);
-
-        $rows = $projects->map(fn (Project $project): array => [
-            'id' => $project->id,
-            'name' => $project->name,
-            'tracks_registrations' => $project->hasUsages([Project::USAGE_USERS]),
-            'tracks_subscriptions' => $project->hasUsages([Project::USAGE_SUBSCRIPTION]),
-            'tracks_page_views' => $project->hasRecentPageViews(),
-        ])->all();
-
-        return $tokenProject instanceof Project
-            ? $rows
-            : [['id' => StatsFilterDto::TRACK_ALL, 'name' => 'All projects'], ...$rows];
+        return [['id' => StatsFilterDto::TRACK_ALL, 'name' => 'All projects'], ...$rows];
     }
 
     /**

@@ -33,7 +33,7 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        $allowedProjects = $user->currentTeam->owner->sparkPlan()->options[Project::class];
+        $allowedProjects = $user->currentTeam->billingOwner?->sparkPlan()->options[Project::class] ?? 0;
 
         // Members limited to selected projects could not see a project they create.
         return $user->hasTeamPermission($user->currentTeam, 'action:create')

@@ -20,9 +20,10 @@ class CampaignPolicy
     public function view(User $user, Campaign $campaign): bool
     {
         return $user->hasTeamPermission($campaign->team, 'action:read')
-            && $campaign->project !== null
-            && $user->canAccessProject($campaign->project)
-            && $campaign->project->hasUsages([Project::USAGE_PAYMENTS]);
+            && $this->canReachCampaignProjects($user, $campaign)
+            && ($campaign->spansAllProjects()
+                ? $campaign->team->tracksUsage(Project::USAGE_PAYMENTS)
+                : $campaign->project->hasUsages([Project::USAGE_PAYMENTS]));
     }
 
     public function create(User $user): bool
@@ -34,7 +35,19 @@ class CampaignPolicy
     public function update(User $user, Campaign $campaign): bool
     {
         return $user->hasTeamPermission($campaign->team, 'action:update')
-            && $campaign->project !== null
-            && $user->canAccessProject($campaign->project);
+            && $this->canReachCampaignProjects($user, $campaign);
+    }
+
+    /**
+     * A campaign for all projects would show numbers of projects outside a limited
+     * member's selection, so only members with access to every project reach it.
+     */
+    private function canReachCampaignProjects(User $user, Campaign $campaign): bool
+    {
+        if ($campaign->spansAllProjects()) {
+            return $user->accessibleProjectIds($campaign->team_id) === null;
+        }
+
+        return $campaign->project !== null && $user->canAccessProject($campaign->project);
     }
 }

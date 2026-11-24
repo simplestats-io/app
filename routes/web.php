@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdSpendController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiConversationController;
+use App\Http\Controllers\AiPendingActionController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ChangelogController;
@@ -162,6 +163,8 @@ Route::middleware([
     Route::post('ai/chat', [AiChatController::class, 'store'])->middleware('throttle:30,1')->name('ai.chat.store');
     Route::get('ai/conversations', [AiConversationController::class, 'index'])->name('ai.conversations.index');
     Route::get('ai/conversations/{conversation}', [AiConversationController::class, 'show'])->name('ai.conversations.show');
+    Route::post('ai/pending-actions/{pendingAction}/confirm', [AiPendingActionController::class, 'confirm'])->whereUuid('pendingAction')->middleware('throttle:30,1')->name('ai.pending-actions.confirm');
+    Route::delete('ai/pending-actions/{pendingAction}', [AiPendingActionController::class, 'destroy'])->whereUuid('pendingAction')->middleware('throttle:30,1')->name('ai.pending-actions.destroy');
     Route::post('stats/hide-free-plan-warning', [StatsController::class, 'hideFreePlanWarning'])->name('stats.hide-free-plan-warning');
 
     Route::resource('custom-presets', CustomStatsRangePresetController::class)->only(['index', 'store', 'update', 'destroy']);

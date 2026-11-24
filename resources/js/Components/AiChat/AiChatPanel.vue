@@ -40,6 +40,9 @@ const exampleQuestions = [
     'Which referrer brings the most revenue?',
     'How did my conversion rate develop this month?',
     'How do I set up payment tracking?',
+    'Help me set up a campaign for my next newsletter',
+    'Create a new project',
+    'Help me invite a team member',
 ];
 
 const appName = import.meta.env.VITE_APP_NAME;

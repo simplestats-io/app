@@ -38,6 +38,7 @@ class CampaignsDataProvider extends AbstractStatsDataProvider
             'campaigns' => $this->adSpendService->getCampaignProfitability($filters)
                 ->through(fn (array $row) => Arr::except($row, ['campaign_id', 'project_id'])),
             'projects' => $this->projectOptions($teamStats),
+            'canCreateForAllProjects' => ! $user->hasRestrictedProjectAccess($user->currentTeam),
         ]);
     }
 

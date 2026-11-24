@@ -195,3 +195,67 @@ test('unlinking detaches the tracked dimension', function (): void {
 
     expect(StatsTrackCampaign::find($utmId)->campaign_id)->toBeNull();
 });
+
+function limitedCampaignMember(Project $project, string $role = 'editor'): User
+{
+    $member = User::factory()->create();
+    $project->team->users()->attach($member, ['role' => $role, 'project_ids' => [$project->id]]);
+    $member->switchTeam($project->team);
+
+    return $member->fresh();
+}
+
+test('an unrestricted member creates a campaign for all projects', function (): void {
+    $this->post(route('campaigns.store'), ['project_id' => 'all', 'name' => 'Black Friday'])
+        ->assertSessionHasNoErrors();
+
+    expect(Campaign::where('name', 'Black Friday')->sole())
+        ->project_id->toBeNull()
+        ->team_id->toBe($this->team->id);
+
+    $this->post(route('campaigns.store'), ['project_id' => 'all', 'name' => 'Black Friday']);
+    $this->post(route('campaigns.store'), ['project_id' => $this->project->uuid, 'name' => 'Black Friday']);
+
+    expect(Campaign::where('name', 'Black Friday')->count())->toBe(2);
+});
+
+test('an unknown project uuid never becomes a campaign for all projects', function (): void {
+    $this->post(route('campaigns.store'), ['project_id' => (string) Str::uuid(), 'name' => 'Black Friday'])
+        ->assertSessionHasErrors('project_id');
+
+    expect(Campaign::count())->toBe(0);
+});
+
+test('a member limited to selected projects cannot create a campaign for all projects', function (): void {
+    $this->actingAs(limitedCampaignMember($this->project));
+
+    $this->post(route('campaigns.store'), ['project_id' => 'all', 'name' => 'Black Friday'])
+        ->assertSessionHasErrors(['project_id' => 'Select one of your projects. Campaigns for all projects need access to every project.']);
+
+    expect(Campaign::withoutGlobalScopes()->count())->toBe(0);
+});
+
+test('a member limited to selected projects cannot open, rename or fund a campaign for all projects', function (): void {
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    $this->actingAs(limitedCampaignMember($this->project));
+
+    $this->get(route('campaigns.show', $campaign))->assertNotFound();
+    $this->patch(route('campaigns.update', $campaign), ['name' => 'Hijacked'])->assertNotFound();
+    $this->post(route('ad-spends.store'), [
+        'campaign_id' => $campaign->uuid, 'amount' => 10, 'currency' => 'EUR', 'starts_on' => '2026-06-01', 'ends_on' => '2026-06-10',
+    ])->assertSessionHasErrors('campaign_id');
+
+    expect($campaign->fresh()->name)->toBe('Black Friday')
+        ->and($campaign->adSpends()->withoutGlobalScopes()->count())->toBe(0);
+});
+
+test('renaming a campaign for all projects to a name already used in that scope fails', function (): void {
+    Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    Campaign::factory()->create(['project_id' => $this->project->id, 'name' => 'Cyber Monday']);
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Spring']);
+
+    $this->patch(route('campaigns.update', $campaign), ['name' => 'Black Friday'])->assertSessionHasErrors('name');
+    $this->patch(route('campaigns.update', $campaign), ['name' => 'Cyber Monday'])->assertSessionHasNoErrors();
+
+    expect($campaign->fresh()->name)->toBe('Cyber Monday');
+});

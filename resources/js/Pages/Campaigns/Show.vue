@@ -64,7 +64,7 @@ const ltvCacClass = (value) => ltvCacClassBase(value, neutral);
 const paybackClass = (value) => paybackClassBase(value, neutral);
 
 const analyzeIn = (routeName) => {
-    router.get(route(routeName, {...props.filters, project_id: props.summary?.project_uuid, campaign: props.campaign.uuid}));
+    router.get(route(routeName, {...props.filters, project_id: props.summary?.project_uuid ?? 0, campaign: props.campaign.uuid}));
 };
 
 const showModal = ref(false);
@@ -167,6 +167,7 @@ const unlink = (trackCampaign) => {
                         </form>
                         <InputError :message="nameForm.errors.name" class="mt-1" />
                     </template>
+                    <p v-if="summary?.project_name" class="text-sm text-gray-500 dark:text-dark-400">{{ summary.project_name }}</p>
                 </div>
                 <CampaignFilter
                     :teamStats="teamStats"
@@ -251,7 +252,7 @@ const unlink = (trackCampaign) => {
                         <Link
                             v-for="utm in linkedTrackCampaigns"
                             :key="utm.id"
-                            :href="route('dashboard', {...filters, project_id: summary?.project_uuid, track_campaign: utm.id})"
+                            :href="route('dashboard', {...filters, project_id: summary?.project_uuid ?? 0, track_campaign: utm.id})"
                             class="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-500 dark:text-dark-100 hover:bg-indigo-200 dark:hover:bg-indigo-400 border rounded-md px-2 py-1 text-sm font-mono"
                             v-tooltip="'Analyse this utm_campaign in the dashboard'"
                         >

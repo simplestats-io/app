@@ -379,6 +379,15 @@ An administrator can limit an Editor or Viewer to selected projects (typically a
 - **Policies:** limited members cannot create projects, and `ProjectPolicy` / `CampaignPolicy` / `AdSpendPolicy` check `canAccessProject()`. The team page only shows a limited member themselves (no other members, no invitations).
 - Member management (`TeamMemberController`, `TeamMemberAccessRequest`, `UpdateTeamMember`) and invitation accept (`TeamInvitationController`, overriding the Jetstream route) resolve projects within the managed team via `withoutGlobalScopes()`, because it is not necessarily the admin's current team.
 
+### Campaigns for All Projects
+
+A campaign belongs to one project (`campaigns.project_id`) or, with `project_id = NULL`, to all projects of its team (`Campaign::spansAllProjects()`), e.g. one `utm_campaign=bf` running on shop1 and shop2. `utm_campaign` dimensions (`stats_track_campaigns`) are team-wide and link to at most one campaign.
+
+- **Counting:** a project campaign only counts its own project (`stats.project_id = campaign project` in `StatsFilterConditionsBuilder`, per-project keys in `AdSpendService::cohortRevenueByUtm()`), a campaign for all projects sums every project. Both are intersected with `accessibleProjectIds()`.
+- **Visibility:** only members without project restriction create, see or change campaigns for all projects (`CampaignPolicy`, `CampaignRequest`). `HasProjectAccessScope` drops NULL project ids for limited members, so they never see them. They are only listed in the all-projects view of the Campaigns page, and the dashboard campaign summary is skipped for them on a single project, because their spend cannot be split per project.
+- **Uniqueness:** `(project_id, name)` for project campaigns plus the partial unique index `(team_id, name) WHERE project_id IS NULL`. Unique rules must scope by `team_id` too (`CampaignUpdateRequest::uniqueName()`), a NULL `project_id` alone matches other teams.
+- The web form sends `CampaignRequest::ALL_PROJECTS` (`'all'`) for this scope, the MCP tools take `project_id` 0 or none. An unknown uuid resolves to 0 and fails validation, it never becomes a team campaign.
+
 ### The Team Owner Can Be Soft-Deleted (`billingOwner` vs `owner`)
 
 `app:check-inactive-users` **soft-deletes** inactive owners, and `app:purge-pending-deleted-users` only hard-deletes them (cascading into teams, projects and stats) **two months later**. Throughout that grace window the team, its projects and its API tokens keep working normally, but `Team::owner()` is a plain `belongsTo(User::class)` and `User` uses `SoftDeletes`, so **`$team->owner` is `null` while the account is fully alive**. Never assume a live team has a non-null `owner`.
@@ -488,6 +497,22 @@ Passkeys use Fortify's built-in feature (`Features::passkeys()`), backed by `lar
 - **Soft-deleted users:** passkey logins bypass `Fortify::authenticateUsing()`, so `Passkeys::authorizeLoginUsing()` in `FortifyServiceProvider` repeats the soft-delete block (a verified passkey proves ownership, so the deactivation notice is shown). `Passkey::user()` is `withTrashed()` for that reason.
 
 The table comes from our own migration (no vendor publish, no `down()`). Passkey management is only shown to users with a password (`socialstream.hasPassword`), because it sits behind `password.confirm`.
+
+### MCP Server Authentication (Passport OAuth Only)
+
+`/mcp` only accepts OAuth access tokens (`RejectProjectApiTokens` + `auth:api` + `AuthenticateMcpCaller`). Project API tokens (Sanctum, `id|secret`) were accepted until MCP server 2.0 and now get a 401 with a hint to reconnect via OAuth; they stay the credential of the Ingest and Query APIs only.
+
+- **OAuth access token** (Passport via `Mcp::oauthRoutes()`): acts as the user in their **current team** with their role and project access (`SetTeamContext`, `HasTeamScope`, `accessibleProjectIds()` apply as in the web app). Requires the `mcp:use` scope, a verified email and a current team. Writes additionally need `mcp:write` (`App\Enums\McpScope`); clients register themselves with a self-chosen name, so `mcp:write` is an explicit opt-in on the consent page (`Pages/OAuth/Authorize.vue`, "Also allow changes"); without it `App\Http\Controllers\OAuth\ApproveAuthorizationController` drops the write scope. Keep read-only as the default.
+
+Rules and gotchas:
+
+- `User` uses **Passport's** `HasApiTokens` (Sanctum's and Passport's trait cannot coexist). Users therefore have no Sanctum tokens; only `Project` does (`HasApiPlainTokens`). Jetstream's API feature stays off.
+- The tools resolve the caller via `ResolvesMcpUser` (the OAuth user, or the session user of the in-app "Ask AI" chat, which shares the stats tools). User-level tools hide themselves via `shouldRegister()` without a user; writing tools also hide for read-only connections and call `ensureWriteAccess()`. New writing tools must do both. `Mcp::local` runs without a user, so team-scoped tools refuse it.
+- `McpRegistrar` (bound over `Laravel\Mcp\Server\Registrar`) and `RegisterClientController` advertise both scopes, otherwise clients only ever request `mcp:use`.
+- Passport routes live under `mcp/oauth` (`config/passport.php`), because Socialstream's `oauth/{provider}` swallows `oauth/authorize`. Device code grant is disabled.
+- The RSA key pair is created on first use (`OAuthKeyService`, hooked before `AuthorizationServer`/`ResourceServer` resolve) in `storage/`, so self-hosters never run `passport:keys`. `PASSPORT_PRIVATE_KEY`/`PASSPORT_PUBLIC_KEY` take precedence (multi-server without shared storage).
+- Never return existing project tokens through MCP; `create-project` returns the new token once, like the UI flash. Never offer admin invites, role changes or member removal through MCP (prompt-injection risk).
+- **Ask AI chat writes only after a click.** The chat reads attacker-controllable data (referrers, utm values, page paths, custom properties), so `StatsAssistant` wraps every writing tool (`AiPendingActionService::WRITE_TOOLS`) in `App\Ai\Tools\ConfirmableMcpTool`: a model call only stores a pending action (cache, 15 min, bound to user, team and conversation, single use via an atomic `Cache::add` claim) and returns "awaiting confirmation". The SSE stream emits it as a `pending_action` event, the panel shows a Confirm / Cancel card (`AiChatActionCard.vue`), and `AiPendingActionController` runs the real tool on confirm, so role, project access and plan limits are checked at execution time by the tool itself. The outcome is appended to the conversation as an assistant message; a new project's API token goes only to the card, never into the conversation or to the AI provider. Viewers get no writing tools in the chat. A new writing tool must be added to `WRITE_TOOLS` (plus a title in `TITLES`), never directly to `StatsAssistant::tools()`. The MCP (OAuth) path is unchanged: there the client confirms, plus the `mcp:write` opt-in.
 
 ### Public UUIDs Instead of Internal IDs
 

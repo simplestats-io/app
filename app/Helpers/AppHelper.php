@@ -30,9 +30,9 @@ class AppHelper
 
     /**
      * The project ids the authenticated user may access in the current team, or
-     * null when nothing is restricted. API and MCP requests authenticate as a
-     * Project (already limited to itself), console code without a user and
-     * unrestricted members all resolve to null.
+     * null when nothing is restricted. API requests authenticate as a Project
+     * (already limited to itself), console code without a user and unrestricted
+     * members resolve to null. MCP requests act as the OAuth user and are limited here.
      *
      * Resolved from auth instead of Context on purpose: route model binding runs
      * before SetTeamContext, and console loops switch users via auth()->setUser().

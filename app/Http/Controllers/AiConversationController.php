@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Ai\AiConversationService;
+use App\Services\Ai\AiPendingActionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -20,10 +21,13 @@ class AiConversationController extends Controller
         );
     }
 
-    public function show(Request $request, Conversation $conversation, AiConversationService $conversationService): JsonResponse
+    public function show(Request $request, Conversation $conversation, AiConversationService $conversationService, AiPendingActionService $pendingActions): JsonResponse
     {
         Gate::allowIf($conversation->user_id === $request->user()->id);
 
-        return response()->json($conversationService->toPayload($conversation));
+        return response()->json([
+            ...$conversationService->toPayload($conversation),
+            'pending_actions' => $pendingActions->openFor($conversation->id, $request->user()),
+        ]);
     }
 }

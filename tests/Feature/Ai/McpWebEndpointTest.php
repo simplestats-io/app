@@ -1,20 +1,29 @@
 <?php
 
+use App\Enums\McpScope;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
 
 beforeEach(function (): void {
     $this->seed();
     $this->user = User::where('email', config('app.test.user')['email'])->firstOrFail();
     $this->project = Project::first();
-    $this->token = $this->project->createToken('mcp-test-token')->plainTextToken;
 
-    // TestUserSeeder leaves the test user on the web guard; forget it so the
-    // Bearer token (the project) wins over Sanctum's stateful session check.
+    // TestUserSeeder leaves the test user on the web guard and its team in the
+    // context; the endpoint must resolve both from the bearer token alone.
     auth()->forgetGuards();
+    Context::forget('team_id');
 });
+
+function actAsMcpUser(User $user): void
+{
+    Passport::actingAs($user, [McpScope::READ->value, McpScope::WRITE->value]);
+}
 
 function mcpRequest(string $method, array $params = [], int $id = 1): array
 {
@@ -39,26 +48,36 @@ it('rejects unauthenticated requests', function (): void {
         ->assertUnauthorized();
 });
 
-it('rejects user tokens, only project tokens are allowed', function (): void {
-    $userToken = $this->user->createToken('user-token')->plainTextToken;
-    auth()->forgetGuards();
+it('rejects project api tokens with a hint to connect via oauth', function (): void {
+    Exceptions::fake();
+    $token = $this->project->createToken('mcp-test-token')->plainTextToken;
 
-    $this->postJson('/mcp', mcpRequest('initialize'), mcpHeaders($userToken))
-        ->assertForbidden();
+    $this->postJson('/mcp', mcpRequest('initialize'), mcpHeaders($token))
+        ->assertUnauthorized()
+        ->assertHeader('WWW-Authenticate', 'Bearer realm="mcp", resource_metadata="'.url('/.well-known/oauth-protected-resource/mcp').'"')
+        ->assertJsonPath('message', fn (string $message): bool => str_contains($message, 'requires an OAuth connection') && str_contains($message, '/docs/mcp-server.html'));
+
+    $this->postJson('/mcp', mcpRequest('tools/call', ['name' => 'list-stats-capabilities', 'arguments' => []], 2), mcpHeaders($token))
+        ->assertUnauthorized()
+        ->assertDontSee($this->project->name);
+
+    Exceptions::assertNothingReported();
 });
 
-it('initializes with a project token', function (): void {
+it('initializes over oauth', function (): void {
+    actAsMcpUser($this->user);
+
     $response = $this->postJson('/mcp', mcpRequest('initialize', [
         'protocolVersion' => '2025-03-26',
         'capabilities' => [],
         'clientInfo' => ['name' => 'pest', 'version' => '1.0'],
-    ]), mcpHeaders($this->token));
+    ]), mcpHeaders(null));
 
     $response->assertOk();
     expect($response->getContent())->toContain('SimpleStats');
 });
 
-it('serves team-scoped kpi stats defaulting to the token project', function (): void {
+it('serves team-scoped kpi stats defaulting to all projects', function (): void {
     DB::table('stats_visitors')->delete();
 
     $time = now()->subDay()->format('Y-m-d').' 12:00:00';
@@ -73,48 +92,35 @@ it('serves team-scoped kpi stats defaulting to the token project', function (): 
         ]);
     }
 
+    actAsMcpUser($this->user);
+
     $response = $this->postJson('/mcp', mcpRequest('tools/call', [
         'name' => 'get-kpi-stats',
         'arguments' => ['preset' => 'last_7_days'],
-    ], 2), mcpHeaders($this->token));
+    ], 2), mcpHeaders(null));
 
     $response->assertOk();
 
-    expect($response->getContent())
-        ->toContain($this->project->name)
-        ->not->toContain('All projects');
+    expect($response->getContent())->toContain('All projects');
 });
 
-it('limits a project token to its own project', function (int|string $projectId): void {
-    $otherProject = Project::factory()->create(['team_id' => $this->project->team_id, 'name' => 'Other Client']);
+it('lists the projects of the current team only as capability', function (): void {
+    $foreignTeam = User::factory()->withPersonalTeam()->create()->currentTeam;
+    Project::factory()->create(['team_id' => $foreignTeam->id, 'name' => 'Foreign Client']);
 
-    $response = $this->postJson('/mcp', mcpRequest('tools/call', [
-        'name' => 'get-kpi-stats',
-        'arguments' => ['preset' => 'last_7_days', 'project_id' => $projectId === 'other' ? $otherProject->id : $projectId],
-    ], 2), mcpHeaders($this->token));
-
-    $response->assertOk();
-
-    expect($response->getContent())
-        ->toContain('only grants access to the project')
-        ->not->toContain('Other Client')
-        ->not->toContain('All projects');
-})->with(['another team project' => 'other', 'all projects' => 0]);
-
-it('lists only the token project as capability', function (): void {
-    Project::factory()->create(['team_id' => $this->project->team_id, 'name' => 'Other Client']);
+    actAsMcpUser($this->user);
 
     $response = $this->postJson('/mcp', mcpRequest('tools/call', [
         'name' => 'list-stats-capabilities',
         'arguments' => [],
-    ], 2), mcpHeaders($this->token));
+    ], 2), mcpHeaders(null));
 
     $response->assertOk();
 
     expect($response->getContent())
         ->toContain($this->project->name)
-        ->not->toContain('Other Client')
-        ->not->toContain('All projects');
+        ->toContain('All projects')
+        ->not->toContain('Foreign Client');
 });
 
 it('serves clients on the 2026-07-28 protocol revision', function (): void {
@@ -123,8 +129,10 @@ it('serves clients on the 2026-07-28 protocol revision', function (): void {
         'io.modelcontextprotocol/clientCapabilities' => [],
     ];
 
+    actAsMcpUser($this->user);
+
     $this->postJson('/mcp', mcpRequest('server/discover', ['_meta' => $meta]), [
-        ...mcpHeaders($this->token),
+        ...mcpHeaders(null),
         'MCP-Protocol-Version' => '2026-07-28',
         'Mcp-Method' => 'server/discover',
     ])->assertOk()->assertJsonPath('result.supportedVersions', ['2026-07-28']);
@@ -134,7 +142,7 @@ it('serves clients on the 2026-07-28 protocol revision', function (): void {
         'arguments' => [],
         '_meta' => $meta,
     ], 2), [
-        ...mcpHeaders($this->token),
+        ...mcpHeaders(null),
         'MCP-Protocol-Version' => '2026-07-28',
         'Mcp-Method' => 'tools/call',
         'Mcp-Name' => 'list-stats-capabilities',

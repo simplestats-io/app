@@ -997,18 +997,6 @@ parameters:
 			path: app/Http/Middleware/HandleInertiaRequests.php
 
 		-
-			message: '#^Instanceof between App\\Models\\User\|null and App\\Models\\Project will always evaluate to false\.$#'
-			identifier: instanceof.alwaysFalse
-			count: 1
-			path: app/Http/Middleware/Mcp/EnsureMcpProjectToken.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: app/Http/Middleware/Mcp/EnsureMcpProjectToken.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Team\:\:\$uuid\.$#'
 			identifier: property.notFound
 			count: 1

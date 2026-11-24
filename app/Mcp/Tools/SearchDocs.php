@@ -10,9 +10,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Search the SimpleStats documentation (installation, tracking setup, client package configuration, API reference, plans, troubleshooting). Returns the most relevant doc pages with title, link, and an excerpt. Use this for "how do I ..." setup and usage questions, not for stats data.')]
+#[IsReadOnly]
 class SearchDocs extends Tool
 {
     public function __construct(protected DocsSearchService $docsSearchService) {}

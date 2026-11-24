@@ -186,7 +186,12 @@ class StatsIndexDataProvider extends AbstractStatsDataProvider
 
         $campaign = Campaign::find($filters->campaign);
 
-        return $campaign === null ? null : $this->adSpendService->campaignSummary($filters, $campaign);
+        // The spend of a campaign for all projects cannot be split per project either.
+        if ($campaign === null || ($campaign->spansAllProjects() && $filters->projectId !== StatsFilterDto::TRACK_ALL)) {
+            return null;
+        }
+
+        return $this->adSpendService->campaignSummary($filters, $campaign);
     }
 
     /**

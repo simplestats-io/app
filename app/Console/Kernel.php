@@ -73,6 +73,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:clear-old-stats-aggregations')->weekly()->at('4:00');
         $schedule->command('model:prune', ['--model' => [StatsViewBatch::class, StatsViewPending::class]])->daily()->at('04:30');
         $schedule->command('app:refresh-page-view-aggregations')->daily()->at('04:45');
+        $schedule->command('passport:purge')->daily()->at('04:50');
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes();
     }

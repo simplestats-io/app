@@ -99,6 +99,8 @@ How long it takes users to move through your funnel. Both are medians, by the da
 
 On the **Campaigns** page you enter how much you spent on ads per campaign (e.g. "Google Ads = 500 € from June 1 to June 30"). SimpleStats already knows the revenue each campaign brought in, so it turns your spend into profit metrics per campaign. These are not on the main dashboard, they sit directly on each campaign, because spend and return are always per channel.
 
+A campaign belongs to one project, or to **all projects** of your team. Pick "All projects" when the same campaign runs on several sites (e.g. one `utm_campaign=black-friday` on two shops): it then counts the linked `utm_campaign` values in every project and is listed when the Campaigns page shows all projects. Only members with access to every project can create and see these campaigns.
+
 ![The Campaigns page: spend versus revenue, ROAS, CAC and payback per campaign](https://simplestats.io/images/screenshots/screenshot_campaigns_light.webp)
 
 | Key            | Short                    | Description                                                                                                                                                  |

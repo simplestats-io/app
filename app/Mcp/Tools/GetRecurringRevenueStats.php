@@ -13,9 +13,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Get recurring revenue (subscription) stats for a date range. Pick one section per call: snapshot (MRR/ARR now vs range start), by_plan (MRR + subscribers per plan), time_series (MRR + subscribers per bucket), movements (new/expansion/contraction/churn MRR per bucket), mrr_retention (NRR/GRR/quick ratio over the range), revenue_churn (churn rates per bucket), economics (ARPS, monthly churn, LTV). Only meaningful for projects that track subscriptions.')]
+#[IsReadOnly]
 class GetRecurringRevenueStats extends Tool
 {
     use ResolvesStatsFilters;

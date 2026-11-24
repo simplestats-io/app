@@ -4,9 +4,11 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Cashier;
+use Laravel\Passport\Passport;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -17,6 +19,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+        $this->usePassportTestKeys();
 
         Http::preventStrayRequests();
 
@@ -46,6 +49,18 @@ abstract class TestCase extends BaseTestCase
                 Cashier::apiUrl().'/pricing-preview' => Http::response(['data' => ['details' => ['line_items' => []]]]),
             ]);
         }
+    }
+
+    /**
+     * Passport creates its key pair on first use. Tests keep theirs outside the
+     * storage folder, one pair per parallel process.
+     */
+    protected function usePassportTestKeys(): void
+    {
+        $keyPath = sys_get_temp_dir().'/simplestats-passport-test-keys-'.(getenv('TEST_TOKEN') ?: '0');
+
+        File::ensureDirectoryExists($keyPath);
+        Passport::loadKeysFrom($keyPath);
     }
 
     /**

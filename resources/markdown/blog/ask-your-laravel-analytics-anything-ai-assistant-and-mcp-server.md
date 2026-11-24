@@ -55,8 +55,7 @@ That unlocks workflows a dashboard can't do:
 Setup takes one command in Claude Code:
 
 ```bash
-claude mcp add --transport http simplestats https://simplestats.io/mcp \
-  --header "Authorization: Bearer API_TOKEN_HERE"
+claude mcp add --transport http simplestats https://simplestats.io/mcp
 ```
 
 For Cursor or VS Code, add it to your `mcp.json`:
@@ -65,18 +64,13 @@ For Cursor or VS Code, add it to your `mcp.json`:
 {
     "mcpServers": {
         "simplestats": {
-            "url": "https://simplestats.io/mcp",
-            "headers": {
-                "Authorization": "Bearer API_TOKEN_HERE"
-            }
+            "url": "https://simplestats.io/mcp"
         }
     }
 }
 ```
 
-Authentication uses your **project API token**, the same token you already use for the Ingest and Query APIs. You'll find it on your project page inside the app. All data is scoped to the team the project belongs to, and questions default to the token's project unless you ask about another one.
-
-Claude Desktop currently expects OAuth for remote servers; the [MCP server docs](/docs/mcp-server.html) show a small workaround using `mcp-remote`.
+Authentication runs via OAuth: your AI tool opens the browser, you sign in to SimpleStats and approve the connection. The agent then works with your role and project access in the team you have selected in the app. Claude Desktop and claude.ai connect the same way via **Settings → Connectors**, the [MCP server docs](/docs/mcp-server.html) cover every client.
 
 ## Bring your own AI key
 
@@ -86,6 +80,6 @@ That gives you full control over which model reads your questions and lets heavy
 
 ## Availability
 
-The AI assistant and the MCP server are included in **all paid plans**. MCP requests are rate limited to 60 requests per minute per project, which is plenty for interactive use. Self-hosted installations get the MCP server on their own domain, working the same way.
+The AI assistant and the MCP server are included in **all paid plans**. MCP requests are rate limited to 60 requests per minute per user, which is plenty for interactive use. Self-hosted installations get the MCP server on their own domain, working the same way.
 
 Ready to try it? Open your [dashboard](https://simplestats.io) and hit the sparkle button, or connect [the MCP server](/docs/mcp-server.html) to your editor and ask your analytics something you've always been too lazy to click together.

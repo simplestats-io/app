@@ -40,7 +40,7 @@ afterEach(function (): void {
     CarbonImmutable::setTestNow();
 });
 
-function makeCampaign(int $teamId, int $projectId, string $name): int
+function makeCampaign(int $teamId, ?int $projectId, string $name): int
 {
     return DB::table('campaigns')->insertGetId([
         'uuid' => (string) Str::uuid(),
@@ -468,4 +468,45 @@ it('paginates campaigns and only computes kpis for the visible page', function (
         ->and($paginator->total())->toBe(25)
         ->and($paginator->perPage())->toBe(20)
         ->and($paginator->count())->toBe(20);
+});
+
+it('counts every project for a campaign for all projects and only its own project otherwise', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    $teamWide = makeCampaign($this->team->id, null, 'Black Friday');
+    $projectOnly = makeCampaign($this->team->id, $this->pid, 'Spring Sale');
+    $bf = makeTrackCampaign($this->team->id, 'bf', $teamWide);
+    $spring = makeTrackCampaign($this->team->id, 'spring', $projectOnly);
+
+    foreach ([['u1', $this->pid, $bf, 1000], ['u2', $otherProject->id, $bf, 3000], ['u3', $this->pid, $spring, 500], ['u4', $otherProject->id, $spring, 7000]] as [$userId, $projectId, $utm, $net]) {
+        makeCampaignUser($userId, $this->team->id, $projectId, $utm, '2026-06-15 10:00:00');
+        makeCampaignPayment("p-{$userId}", $userId, $this->team->id, $projectId, $net, '2026-06-15 10:00:00');
+    }
+
+    $rows = collect($this->service->getCampaignProfitability(rangeFilter(StatsFilterDto::TRACK_ALL, 30, '2026-06-21'))->items())->keyBy('name');
+
+    expect($rows['Black Friday'])->toMatchArray(['reg' => 2, 'net' => 4000, 'project_id' => null, 'project_uuid' => null, 'project_name' => 'All projects'])
+        ->and($rows['Spring Sale'])->toMatchArray(['reg' => 1, 'net' => 500, 'project_id' => $this->pid]);
+
+    expect(collect($this->service->getCampaignProfitability(rangeFilter($this->pid, 30, '2026-06-21'))->items())->pluck('name')->all())
+        ->toBe(['Spring Sale']);
+});
+
+it('shows a member limited to selected projects only their project campaigns and numbers', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    makeTrackCampaign($this->team->id, 'bf', makeCampaign($this->team->id, null, 'Black Friday'));
+    makeCampaign($this->team->id, $otherProject->id, 'Blog Sale');
+    $spring = makeTrackCampaign($this->team->id, 'spring', makeCampaign($this->team->id, $this->pid, 'Spring Sale'));
+    makeCampaignUser('u1', $this->team->id, $this->pid, $spring, '2026-06-15 10:00:00');
+
+    $member = User::factory()->create();
+    $this->team->users()->attach($member, ['role' => 'editor', 'project_ids' => [$this->pid]]);
+    $member->switchTeam($this->team);
+    auth()->setUser($member->fresh());
+
+    $rows = collect($this->service->getCampaignProfitability(rangeFilter($this->pid, 30, '2026-06-21'))->items());
+
+    expect($rows->pluck('name')->all())->toBe(['Spring Sale'])
+        ->and($rows->first()['reg'])->toBe(1)
+        ->and($this->service->getCampaignProfitability(rangeFilter(StatsFilterDto::TRACK_ALL, 30, '2026-06-21'))->items())
+        ->each->not->toHaveKey('name', 'Black Friday');
 });

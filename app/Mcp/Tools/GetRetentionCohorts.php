@@ -12,9 +12,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Get registration retention cohorts for a date range: for each cohort of users registered in a bucket, the percentage that came back (logged in) in each following bucket. Only meaningful for projects that track registrations.')]
+#[IsReadOnly]
 class GetRetentionCohorts extends Tool
 {
     use ResolvesStatsFilters;

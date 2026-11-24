@@ -98,3 +98,47 @@ it('notes when the project does not track payments', function (): void {
         ->assertOk()
         ->assertSee('does not track payments');
 });
+
+it('only counts the traffic of the campaign project for a utm value shared across projects', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+
+    $campaignId = DB::table('campaigns')->insertGetId([
+        'uuid' => (string) Str::uuid(),
+        'team_id' => $this->team->id,
+        'project_id' => $this->project->id,
+        'name' => 'Black Week',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $trackCampaignId = DB::table('stats_track_campaigns')->insertGetId([
+        'uuid' => (string) Str::uuid(),
+        'team_id' => $this->team->id,
+        'name' => 'black-week',
+        'campaign_id' => $campaignId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $time = now()->subDay()->format('Y-m-d').' 12:00:00';
+
+    foreach ([$this->project->id, $otherProject->id, $otherProject->id] as $projectId) {
+        DB::table('stats_users')->insert([
+            'id' => (string) Str::uuid(),
+            'team_id' => $this->team->id,
+            'project_id' => $projectId,
+            'stats_track_campaign_id' => $trackCampaignId,
+            'time' => $time,
+            'time_utc' => $time,
+        ]);
+    }
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(GetCampaignPerformance::class, ['preset' => 'last_7_days', 'project_id' => $this->project->id])
+        ->assertOk()
+        ->assertStructuredContent(function ($json): void {
+            $json->where('campaigns.0.name', 'Black Week')
+                ->where('campaigns.0.reg', fn ($reg): bool => (int) $reg === 1)
+                ->etc();
+        });
+});

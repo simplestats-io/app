@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Controllers\HealthUpController;
 use App\Http\Controllers\WebManifestController;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -37,10 +38,10 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('page-views', fn (Request $request): Limit => $this->planRateLimit($request, 'page-views:'));
 
         RateLimiter::for('mcp', function (Request $request) {
-            $project = $request->user();
+            $caller = $request->user();
 
-            return $project instanceof Project
-                ? Limit::perMinute(self::MCP_RATE_LIMIT)->by('mcp:'.$project->id)
+            return $caller instanceof User
+                ? Limit::perMinute(self::MCP_RATE_LIMIT)->by('mcp-user:'.$caller->id)
                 : Limit::perMinute(10)->by($request->ip());
         });
 

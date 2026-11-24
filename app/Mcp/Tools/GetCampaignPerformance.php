@@ -12,9 +12,11 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
 #[Description('Get per-campaign profitability for a date range: visitors, registrations, revenue, ad spend, net profit, ROAS, CAC, LTV:CAC and CAC payback. Use this to compare campaigns ("which campaign performs best?"), to explain campaign metrics, or for ad spend / ROI questions. Only meaningful for projects that track payments.')]
+#[IsReadOnly]
 class GetCampaignPerformance extends Tool
 {
     use ResolvesStatsFilters;

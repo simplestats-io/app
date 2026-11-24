@@ -186,3 +186,79 @@ it('rejects a campaign filter referencing another team', function (): void {
         ->get(route('dashboard', ['campaign' => $foreignCampaignId, 'project_id' => $this->pid]))
         ->assertSessionHasErrors('campaign');
 });
+
+it('only counts the campaign project when all projects are selected', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => $this->pid, 'name' => 'Black Week']);
+    $linked = makeFilterTrackCampaign($this->team->id, 'black-week', $campaign->id);
+
+    foreach ([$this->pid, $this->pid, $otherProject->id] as $projectId) {
+        DB::table('stats_visitors')->insert([
+            'team_id' => $this->team->id,
+            'project_id' => $projectId,
+            'visitor_hash' => Str::uuid()->toString(),
+            'stats_track_campaign_id' => $linked,
+            'time' => '2026-03-30 12:00:00',
+            'time_utc' => '2026-03-30 12:00:00',
+        ]);
+    }
+
+    $filters = new StatsFilterDto(
+        projectId: StatsFilterDto::TRACK_ALL, rangeAmount: 1, rangeType: StatsRangeType::DAY,
+        rangeStart: CarbonImmutable::parse('2026-03-30'), comparison: '0',
+        campaign: $campaign->id,
+    );
+
+    expect(resolve(StatsAggregationsService::class)->getAggregatedData($filters)['2026-03-30']['pd_visitor'])->toBe(2);
+});
+
+it('counts every project for a campaign for all projects, narrowed by the project filter', function (): void {
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    $linked = makeFilterTrackCampaign($this->team->id, 'bf', $campaign->id);
+
+    foreach ([$this->pid, $this->pid, $otherProject->id] as $projectId) {
+        DB::table('stats_visitors')->insert([
+            'team_id' => $this->team->id,
+            'project_id' => $projectId,
+            'visitor_hash' => Str::uuid()->toString(),
+            'stats_track_campaign_id' => $linked,
+            'time' => '2026-03-30 12:00:00',
+            'time_utc' => '2026-03-30 12:00:00',
+        ]);
+    }
+
+    $visitorsFor = fn (int $projectId): int => resolve(StatsAggregationsService::class)->getAggregatedData(new StatsFilterDto(
+        projectId: $projectId, rangeAmount: 1, rangeType: StatsRangeType::DAY,
+        rangeStart: CarbonImmutable::parse('2026-03-30'), comparison: '0',
+        campaign: $campaign->id,
+    ))['2026-03-30']['pd_visitor'];
+
+    expect($visitorsFor(StatsFilterDto::TRACK_ALL))->toBe(3)
+        ->and($visitorsFor($otherProject->id))->toBe(1);
+});
+
+it('shows the summary of a campaign for all projects only in the all projects view', function (): void {
+    Project::factory()->create(['team_id' => $this->team->id]);
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['campaign' => $campaign->uuid, 'project_id' => 0]))
+        ->assertInertia(fn ($page) => $page->where('campaign_summary.name', 'Black Friday')->where('campaign_summary.project_name', 'All projects'));
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['campaign' => $campaign->uuid, 'project_id' => $this->project->uuid]))
+        ->assertInertia(fn ($page) => $page->where('campaign_summary', null));
+});
+
+it('rejects a campaign for all projects as filter for a member limited to selected projects', function (): void {
+    $campaign = Campaign::create(['team_id' => $this->team->id, 'project_id' => null, 'name' => 'Black Friday']);
+    $member = User::factory()->create();
+    $this->team->users()->attach($member, ['role' => 'viewer', 'project_ids' => [$this->pid]]);
+    $member->switchTeam($this->team);
+    Context::forget('team_id');
+
+    $this->actingAs($member->fresh())
+        ->get(route('dashboard', ['campaign' => $campaign->id, 'project_id' => $this->pid]))
+        ->assertSessionHasErrors('campaign');
+});

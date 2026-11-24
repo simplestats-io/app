@@ -11,6 +11,8 @@ use Throwable;
 
 class AiChatStreamer
 {
+    public function __construct(protected AiPendingActionService $pendingActions) {}
+
     /**
      * Stream agent events as SSE, translating provider failures into error
      * events instead of letting the exception dump Laravel's HTML error page
@@ -24,6 +26,10 @@ class AiChatStreamer
             try {
                 foreach ($events as $event) {
                     yield 'data: '.($event)."\n\n";
+
+                    foreach ($this->pendingActions->pullProposed() as $action) {
+                        yield 'data: '.json_encode(['type' => 'pending_action', 'action' => $action])."\n\n";
+                    }
                 }
             } catch (RateLimitedException) {
                 yield $this->errorEvent('The AI provider\'s rate limit is reached. Please wait a minute and try again.'.$teamKeyHint);

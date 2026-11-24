@@ -112,10 +112,18 @@ class StatsFilterConditionsBuilder
         }
 
         if (! empty($filters->campaign)) {
-            $campaignTrackIds = Campaign::find($filters->campaign)?->statsTrackCampaigns()->pluck('id');
+            $campaign = Campaign::find($filters->campaign);
+            $campaignTrackIds = $campaign?->statsTrackCampaigns()->pluck('id');
 
+            // utm dimensions are team-wide, so a project campaign only counts its own project's
+            // traffic. A campaign for all projects relies on the project condition above,
+            // which already narrows a limited member to the accessible projects.
             if ($campaignTrackIds?->isNotEmpty()) {
                 $trackingCondition .= ' AND stats.stats_track_campaign_id IN ('.$campaignTrackIds->implode(',').') ';
+
+                if (! $campaign->spansAllProjects()) {
+                    $trackingCondition .= " AND stats.project_id = {$campaign->project_id} ";
+                }
             } else {
                 // A campaign with no linked utm dimensions must match nothing.
                 $trackingCondition .= ' AND 1 = 0 ';

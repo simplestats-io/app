@@ -2,6 +2,7 @@
 import {computed} from 'vue';
 import {router} from '@inertiajs/vue3';
 import {renderSimpleMarkdown} from '@/Helpers/simpleMarkdown.js';
+import AiChatActionCard from '@/Components/AiChat/AiChatActionCard.vue';
 
 const props = defineProps({
     message: Object,
@@ -49,7 +50,8 @@ const onContentClick = (event) => {
     <div v-if="message.role === 'user'" class="flex justify-end">
         <div class="max-w-[85%] rounded-lg rounded-br-sm bg-indigo-100 dark:bg-indigo-500 px-3 py-2 text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words">{{ message.content }}</div>
     </div>
-    <div v-else class="flex">
-        <div @click="onContentClick" class="max-w-full text-sm text-gray-700 dark:text-gray-200 space-y-2 break-words" v-html="renderedContent"></div>
+    <div v-else class="flex flex-col gap-3">
+        <div v-if="message.content" @click="onContentClick" class="max-w-full text-sm text-gray-700 dark:text-gray-200 space-y-2 break-words" v-html="renderedContent"></div>
+        <AiChatActionCard v-for="action in message.actions ?? []" :key="action.id" :action="action" />
     </div>
 </template>

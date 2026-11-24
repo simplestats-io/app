@@ -46,6 +46,14 @@ class Campaign extends Model
     }
 
     /**
+     * A campaign without a project counts the matching traffic of every project in its team.
+     */
+    public function spansAllProjects(): bool
+    {
+        return $this->project_id === null;
+    }
+
+    /**
      * @return HasMany<StatsTrackCampaign, $this>
      */
     public function statsTrackCampaigns(): HasMany

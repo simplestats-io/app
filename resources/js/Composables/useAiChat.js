@@ -36,6 +36,18 @@ const toolLabels = {
     'get-campaign-performance': 'Comparing your campaigns…',
     'search-docs': 'Searching the docs…',
     'list-app-pages': 'Finding the right page…',
+    'list-campaigns': 'Looking up your campaigns…',
+    'list-projects': 'Looking up your projects…',
+    'get-team': 'Looking up your team…',
+    'list-team-members': 'Looking up your team members…',
+    'create-campaign': 'Preparing the change…',
+    'update-campaign': 'Preparing the change…',
+    'record-ad-spend': 'Preparing the change…',
+    'update-ad-spend': 'Preparing the change…',
+    'create-project': 'Preparing the change…',
+    'update-project': 'Preparing the change…',
+    'update-team-settings': 'Preparing the change…',
+    'invite-team-member': 'Preparing the change…',
 };
 
 // localStorage is only touched lazily from onMounted hooks, never at module
@@ -98,12 +110,45 @@ const hydrateConversation = async () => {
 
     try {
         const {data} = await axios.get(route('ai.conversations.show', conversationId.value));
-        messages.value = data.messages.map(({role, content}) => ({role, content}));
+        messages.value = data.messages.map(({role, content, created_at}) => ({role, content, createdAt: created_at, actions: []}));
+        restorePendingActions(data.pending_actions ?? []);
     } catch {
         // Stale or foreign conversation id: start fresh.
         persistConversationId(null);
         messages.value = [];
     }
+};
+
+const restorePendingActions = (actions) => {
+    if (!actions.length) {
+        return;
+    }
+
+    // The answer of a turn is stored after its tool calls ran, so a proposal
+    // belongs to the first assistant message created after it.
+    actions.forEach((action) => {
+        let target = messages.value.find((message) => message.role === 'assistant' && message.createdAt && Date.parse(message.createdAt) >= Date.parse(action.proposed_at))
+            ?? messages.value.findLast((message) => message.role === 'assistant');
+
+        if (!target) {
+            messages.value.push({role: 'assistant', content: '', actions: []});
+            target = messages.value.at(-1);
+        }
+
+        target.actions.push({...action, state: 'pending', resultMessage: null, apiToken: null});
+    });
+};
+
+// Mirrors the backend: a proposal of a new turn replaces the open ones of earlier turns.
+const supersedeOpenActions = (currentMessage) => {
+    messages.value
+        .filter((message) => message !== currentMessage && message.actions?.length)
+        .flatMap((message) => message.actions)
+        .filter((action) => action.state === 'pending')
+        .forEach((action) => {
+            action.state = 'superseded';
+            action.resultMessage = 'Replaced by a newer proposal.';
+        });
 };
 
 const newConversation = () => {
@@ -166,7 +211,7 @@ const sendMessage = async (text) => {
 
     // reactive() wrapper, because we keep mutating this object after pushing:
     // mutations on the raw object would bypass Vue's reactivity entirely.
-    const assistantMessage = reactive({role: 'assistant', content: ''});
+    const assistantMessage = reactive({role: 'assistant', content: '', actions: []});
     messages.value.push(assistantMessage);
 
     abortController = new AbortController();
@@ -248,14 +293,14 @@ const sendMessage = async (text) => {
             }
         }
 
-        if (!done && assistantMessage.content === '') {
+        if (!done && assistantMessage.content === '' && !assistantMessage.actions.length) {
             throw new Error('The response stream ended unexpectedly.');
         }
     } catch (e) {
         if (e.name !== 'AbortError') {
             error.value = e.message || 'Something went wrong. Please try again.';
 
-            if (assistantMessage.content === '') {
+            if (assistantMessage.content === '' && !assistantMessage.actions.length) {
                 messages.value.pop();
             }
         }
@@ -288,6 +333,10 @@ const handleEvent = (event, assistantMessage) => {
         case 'tool_result':
             toolActivity.value = null;
             break;
+        case 'pending_action':
+            supersedeOpenActions(assistantMessage);
+            assistantMessage.actions.push({...event.action, state: 'pending', resultMessage: null, apiToken: null});
+            break;
         case 'stream_end':
             // Flaky models (flash-lite in particular) sometimes stop
             // mid-sentence; the provider then reports no proper stop reason.
@@ -298,6 +347,28 @@ const handleEvent = (event, assistantMessage) => {
             break;
         case 'error':
             throw new Error(event.message || 'The assistant ran into an error.');
+    }
+};
+
+// The action object lives inside a reactive message, so mutating it updates the card.
+const resolveAction = async (action, confirmed) => {
+    if (action.state !== 'pending' || isStreaming.value) {
+        return;
+    }
+
+    action.state = 'busy';
+
+    try {
+        const {data} = confirmed
+            ? await axios.post(route('ai.pending-actions.confirm', action.id), {conversation_id: conversationId.value})
+            : await axios.delete(route('ai.pending-actions.destroy', action.id), {data: {conversation_id: conversationId.value}});
+
+        action.state = data.status;
+        action.resultMessage = data.message;
+        action.apiToken = data.api_token ?? null;
+    } catch (e) {
+        action.state = 'failed';
+        action.resultMessage = e.response?.data?.message || 'Something went wrong. Please try again.';
     }
 };
 
@@ -332,6 +403,8 @@ export function useAiChat() {
         sendMessage,
         abort,
         retry,
+        confirmAction: (action) => resolveAction(action, true),
+        cancelAction: (action) => resolveAction(action, false),
         newConversation,
         loadConversations,
         switchConversation,

@@ -26,10 +26,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Jetstream\Jetstream;
-use Laravel\Sanctum\HasApiTokens;
+use Laravel\Passport\Contracts\OAuthenticatable;
+use Laravel\Passport\HasApiTokens;
 use Spatie\DeletedModels\Models\Concerns\KeepsDeletedModels;
 
-abstract class UserBase extends Authenticatable implements MustVerifyEmail, PasskeyUser
+abstract class UserBase extends Authenticatable implements MustVerifyEmail, OAuthenticatable, PasskeyUser
 {
     use HasApiTokens;
     use HasConnectedAccounts;
