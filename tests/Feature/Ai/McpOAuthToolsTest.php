@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\McpScope;
+use App\Http\Controllers\OAuth\McpOAuthMetadataController;
 use App\Mail\TeamInvitation;
 use App\Models\Campaign;
 use App\Models\Project;
@@ -10,6 +11,7 @@ use App\Services\OAuthKeyService;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia;
@@ -94,6 +96,15 @@ it('advertises the read and write scope for discovery and client registration', 
         ->assertCreated()
         ->assertJsonPath('scope', 'mcp:use mcp:write');
 });
+
+it('registers the discovery routes as controller actions so route:cache keeps the write scope', function (string $routeName): void {
+    expect(Route::getRoutes()->getByName($routeName)->getControllerClass())->toBe(McpOAuthMetadataController::class);
+})->with([
+    'mcp.oauth.protected-resource',
+    'mcp.oauth.protected-resource.nested',
+    'mcp.oauth.authorization-server',
+    'mcp.oauth.authorization-server.nested',
+]);
 
 it('points unauthenticated clients to the oauth metadata', function (): void {
     mcpPost(['method' => 'initialize'])
