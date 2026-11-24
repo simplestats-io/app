@@ -8,6 +8,15 @@
         {{-- Inline and in the head so the dark class is set before the body is parsed: no extra request, no restyle of the rendered page, no flash. --}}
         <script>{!! file_get_contents(public_path('js/dark_mode.js')) !!}</script>
 
+        @if ($page['component'] === 'Home/LandingPage')
+            {{-- Running ads link to #pricing and cannot be edited. Cold paid traffic should see the product first, so the fragment is dropped before the browser jumps to it. --}}
+            <script>
+                if (location.hash === '#pricing' && new URLSearchParams(location.search).get('utm_medium') === 'paid') {
+                    history.replaceState(history.state, '', location.pathname + location.search);
+                }
+            </script>
+        @endif
+
         @if (! app()->isProduction())
             <meta name="robots" content="noindex, nofollow">
         @elseif (str_starts_with($page['component'], 'Auth/'))

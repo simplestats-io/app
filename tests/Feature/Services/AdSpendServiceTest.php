@@ -4,6 +4,7 @@ use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangeType;
 use App\Enums\SubscriptionInterval;
 use App\Models\AdSpend;
+use App\Models\Campaign;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\AdSpendService;
@@ -509,4 +510,117 @@ it('shows a member limited to selected projects only their project campaigns and
         ->and($rows->first()['reg'])->toBe(1)
         ->and($this->service->getCampaignProfitability(rangeFilter(StatsFilterDto::TRACK_ALL, 30, '2026-06-21'))->items())
         ->each->not->toHaveKey('name', 'Black Friday');
+});
+
+function makeCampaignVisitor(int $teamId, int $projectId, int $trackCampaignId, ?int $sourceId, string $time, ?int $views = null): void
+{
+    $visitorId = DB::table('stats_visitors')->insertGetId([
+        'team_id' => $teamId,
+        'project_id' => $projectId,
+        'visitor_hash' => (string) Str::uuid(),
+        'stats_track_campaign_id' => $trackCampaignId,
+        'stats_track_source_id' => $sourceId,
+        'time' => $time,
+        'time_utc' => $time,
+    ]);
+
+    if ($views !== null) {
+        DB::table('stats_visitor_views')->insert([
+            'stats_visitor_id' => $visitorId,
+            'team_id' => $teamId,
+            'project_id' => $projectId,
+            'time' => $time,
+            'last_viewed_at' => $time,
+            'views' => $views,
+        ]);
+    }
+}
+
+function makeCampaignSource(int $teamId, string $name): int
+{
+    return DB::table('stats_track_sources')->insertGetId([
+        'team_id' => $teamId,
+        'name' => $name,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+it('splits the campaign cohort per utm_source with bounce rates over viewers', function (): void {
+    $this->project->forceFill(['page_views_seen_at' => now()])->save();
+
+    $campaign = makeCampaign($this->team->id, $this->pid, 'Black Week');
+    $utm = makeTrackCampaign($this->team->id, 'black_week', $campaign);
+    $google = makeCampaignSource($this->team->id, 'google');
+    $meta = makeCampaignSource($this->team->id, 'meta');
+
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $google, '2026-06-18 10:00:00', 1);
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $google, '2026-06-19 10:00:00', 3);
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $meta, '2026-06-19 11:00:00', 1);
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, null, '2026-06-20 11:00:00');
+
+    DB::table('stats_users')->insert([
+        'id' => 'u_google', 'team_id' => $this->team->id, 'project_id' => $this->pid,
+        'stats_track_campaign_id' => $utm, 'stats_track_source_id' => $google,
+        'time' => '2026-06-19 10:05:00', 'time_utc' => '2026-06-19 10:05:00',
+    ]);
+    makeCampaignPayment('p1', 'u_google', $this->team->id, $this->pid, 5000, '2026-06-19 10:10:00');
+
+    // Same utm dimension, but another project of the team and another team: neither counts.
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    makeCampaignVisitor($this->team->id, $otherProject->id, $utm, $google, '2026-06-19 10:00:00', 1);
+    $foreignTeam = User::factory()->withPersonalTeam()->create()->currentTeam;
+    $foreignProject = Project::factory()->create(['team_id' => $foreignTeam->id]);
+    makeCampaignVisitor($foreignTeam->id, $foreignProject->id, $utm, $google, '2026-06-19 10:00:00', 1);
+
+    $traffic = $this->service->campaignTraffic(rangeFilter($this->pid, 7, '2026-06-21'), Campaign::findOrFail($campaign));
+
+    expect($traffic['page_views'])->toBeTrue()
+        ->and($traffic['bounce_rate'])->toBe(66.7)
+        ->and($traffic['sources'])->toBe([
+            ['name' => 'google', 'visitors' => 2, 'reg' => 1, 'bounce_rate' => 50.0, 'net' => 5000],
+            ['name' => 'meta', 'visitors' => 1, 'reg' => 0, 'bounce_rate' => 100.0, 'net' => 0],
+            ['name' => null, 'visitors' => 1, 'reg' => 0, 'bounce_rate' => null, 'net' => 0],
+        ]);
+});
+
+it('omits bounce rates for a project without recent page views', function (): void {
+    $this->project->forceFill(['page_views_seen_at' => null])->save();
+
+    $campaign = makeCampaign($this->team->id, $this->pid, 'No Views');
+    $utm = makeTrackCampaign($this->team->id, 'no_views', $campaign);
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, null, '2026-06-19 10:00:00', 1);
+
+    $traffic = $this->service->campaignTraffic(rangeFilter($this->pid, 7, '2026-06-21'), Campaign::findOrFail($campaign));
+
+    expect($traffic['page_views'])->toBeFalse()
+        ->and($traffic['bounce_rate'])->toBeNull()
+        ->and($traffic['sources'][0]['bounce_rate'])->toBeNull();
+});
+
+it('reports the total recorded spend and the cost per visitor next to the range share', function (): void {
+    $campaign = makeCampaign($this->team->id, $this->pid, 'Partial Range');
+    $utm = makeTrackCampaign($this->team->id, 'partial_range', $campaign);
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, null, '2026-06-19 10:00:00');
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, null, '2026-06-20 10:00:00');
+
+    foreach ([11500, 5000] as $amount) {
+        AdSpend::factory()->create([
+            'team_id' => $this->team->id,
+            'campaign_id' => $campaign,
+            'amount' => $amount,
+            'starts_on' => '2026-06-14',
+            'ends_on' => '2026-06-21',
+        ]);
+    }
+
+    $summary = $this->service->campaignSummary(rangeFilter($this->pid, 7, '2026-06-21'), Campaign::findOrFail($campaign));
+
+    // 7 of 8 run days fall into the range
+    expect($summary)->toMatchArray([
+        'spend' => 14438,
+        'spend_total' => 16500,
+        'visitors' => 2,
+        'cost_per_visitor' => 7219.0,
+    ]);
 });

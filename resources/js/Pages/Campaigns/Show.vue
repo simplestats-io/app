@@ -41,6 +41,7 @@ const props = defineProps({
     usageBits: Object,
     campaign: Object,
     summary: Object,
+    traffic: {type: Object, default: () => ({page_views: false, bounce_rate: null, sources: []})},
     adSpends: Object,
     linkedTrackCampaigns: {type: Array, default: () => []},
     linkableTrackCampaigns: {type: Array, default: () => []},
@@ -51,12 +52,15 @@ const page = usePage();
 const currentProject = props.teamStats.projects[props.summary?.project_uuid] ?? props.teamStats.projects[0];
 const {currentProjectHasUsages} = useUsage(currentProject, props.usageBits);
 
+const showsVisitors = currentProjectHasUsages(['visitors']);
 const showsRevenue = currentProjectHasUsages(['payments']);
 const showsRegistrations = currentProjectHasUsages(['users']);
 const showsSubscription = currentProjectHasUsages(['subscription']);
 
 const neutral = 'text-gray-950 dark:text-white';
 const currency = (cents, code = page.props.teamCurrency) => formatMap.currency(cents, {notation: 'standard'}, code);
+const number = (value) => formatMap.number(value, {notation: 'standard'});
+const percent = (value) => value === null ? '–' : formatMap.percent(value, {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const roas = formatRoas;
 const roasClass = (value) => roasClassBase(value, neutral);
 const profitClass = (value) => profitClassBase(value, neutral);
@@ -192,50 +196,114 @@ const unlink = (trackCampaign) => {
                 </SecondaryButton>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 gap-3">
-                <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        Spend <InfoTooltip :title="metricInfo.spend.title" :text="metricInfo.spend.text" />
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 gap-3">
+                    <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            Spend <InfoTooltip :title="metricInfo.spend.title" :text="metricInfo.spend.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ currency(summary.spend) }}</div>
+                        <div v-if="summary.spend < summary.spend_total" class="text-xs text-gray-500 dark:text-dark-400">
+                            of {{ currency(summary.spend_total) }} total
+                        </div>
                     </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ currency(summary.spend) }}</div>
+                    <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            Revenue <InfoTooltip :title="metricInfo.revenue.title" :text="metricInfo.revenue.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ currency(summary.net) }}</div>
+                    </div>
+                    <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            Net profit <InfoTooltip :title="metricInfo.netProfit.title" :text="metricInfo.netProfit.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight" :class="profitClass(summary.net_profit)">
+                            {{ currency(summary.net_profit) }}
+                        </div>
+                    </div>
+                    <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            ROAS <InfoTooltip :title="metricInfo.roas.title" :text="metricInfo.roas.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight" :class="roasClass(summary.roas)">{{ roas(summary.roas) }}</div>
+                    </div>
+                    <div v-if="showsRegistrations" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            CAC <InfoTooltip :title="metricInfo.cac.title" :text="metricInfo.cac.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight" :class="ltvCacClass(summary.ltv_cac)">{{ summary.cac === null ? '–' : currency(summary.cac) }}</div>
+                    </div>
+                    <div v-if="showsSubscription" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            LTV:CAC <InfoTooltip :title="metricInfo.ltvCac.title" :text="metricInfo.ltvCac.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight" :class="ltvCacClass(summary.ltv_cac)">{{ formatLtvCac(summary.ltv_cac) }}</div>
+                    </div>
+                    <div v-if="showsSubscription" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            Payback <InfoTooltip :title="metricInfo.cacPayback.title" :text="metricInfo.cacPayback.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight" :class="paybackClass(summary.cac_payback)">{{ formatPayback(summary.cac_payback) }}</div>
+                    </div>
                 </div>
-                <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        Revenue <InfoTooltip :title="metricInfo.revenue.title" :text="metricInfo.revenue.text" />
+
+                <div v-if="showsVisitors" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-white dark:bg-dark-800 border rounded-md py-2 px-4 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1 text-sm text-gray-700 dark:text-dark-400">
+                            Visitors <InfoTooltip :title="metricInfo.visitors.title" :text="metricInfo.visitors.text" />
+                        </div>
+                        <div class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ number(summary.visitors) }}</div>
                     </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ currency(summary.net) }}</div>
+                    <div class="bg-white dark:bg-dark-800 border rounded-md py-2 px-4 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1 text-sm text-gray-700 dark:text-dark-400">
+                            Cost per visitor <InfoTooltip :title="metricInfo.costPerVisitor.title" :text="metricInfo.costPerVisitor.text" />
+                        </div>
+                        <div class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ summary.cost_per_visitor === null ? '–' : currency(summary.cost_per_visitor) }}</div>
+                    </div>
+                    <div v-if="showsRegistrations" class="bg-white dark:bg-dark-800 border rounded-md py-2 px-4 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1 text-sm text-gray-700 dark:text-dark-400">
+                            Registrations <InfoTooltip :title="metricInfo.registrations.title" :text="metricInfo.registrations.text" />
+                        </div>
+                        <div class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ number(summary.reg) }}</div>
+                    </div>
+                    <div v-if="traffic.page_views" class="bg-white dark:bg-dark-800 border rounded-md py-2 px-4 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1 text-sm text-gray-700 dark:text-dark-400">
+                            Bounce rate <InfoTooltip :title="metricInfo.bounceRate.title" :text="metricInfo.bounceRate.text" />
+                        </div>
+                        <div class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ percent(traffic.bounce_rate) }}</div>
+                    </div>
                 </div>
-                <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        Net profit <InfoTooltip :title="metricInfo.netProfit.title" :text="metricInfo.netProfit.text" />
-                    </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight" :class="profitClass(summary.net_profit)">
-                        {{ currency(summary.net_profit) }}
-                    </div>
+            </div>
+
+            <div v-if="traffic.sources.length > 1" class="bg-white dark:bg-dark-800 border dark:border-dark-700 rounded-md">
+                <div class="px-4 py-3 border-b dark:border-dark-700">
+                    <h2 class="font-semibold">By source</h2>
+                    <p class="text-sm text-gray-500 dark:text-dark-400">
+                        This campaign's traffic per <span class="font-mono">utm_source</span> in the selected period. Spend is not split per source.
+                    </p>
                 </div>
-                <div v-if="showsRevenue" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        ROAS <InfoTooltip :title="metricInfo.roas.title" :text="metricInfo.roas.text" />
-                    </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight" :class="roasClass(summary.roas)">{{ roas(summary.roas) }}</div>
-                </div>
-                <div v-if="showsRegistrations" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        CAC <InfoTooltip :title="metricInfo.cac.title" :text="metricInfo.cac.text" />
-                    </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight" :class="ltvCacClass(summary.ltv_cac)">{{ summary.cac === null ? '–' : currency(summary.cac) }}</div>
-                </div>
-                <div v-if="showsSubscription" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        LTV:CAC <InfoTooltip :title="metricInfo.ltvCac.title" :text="metricInfo.ltvCac.text" />
-                    </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight" :class="ltvCacClass(summary.ltv_cac)">{{ formatLtvCac(summary.ltv_cac) }}</div>
-                </div>
-                <div v-if="showsSubscription" class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
-                    <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
-                        Payback <InfoTooltip :title="metricInfo.cacPayback.title" :text="metricInfo.cacPayback.text" />
-                    </div>
-                    <div class="mt-1 text-xl font-semibold tracking-tight" :class="paybackClass(summary.cac_payback)">{{ formatPayback(summary.cac_payback) }}</div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-gray-700 dark:text-dark-300">
+                                <th class="px-4 py-2 font-semibold">Source</th>
+                                <th class="px-4 py-2 font-semibold text-right">Visitors</th>
+                                <th v-if="showsRegistrations" class="px-4 py-2 font-semibold text-right">Registrations</th>
+                                <th v-if="traffic.page_views" class="px-4 py-2 font-semibold text-right">Bounce rate</th>
+                                <th v-if="showsRevenue" class="px-4 py-2 font-semibold text-right">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(source, index) in traffic.sources" :key="index" class="border-t dark:border-dark-700 text-gray-700 dark:text-dark-300">
+                                <td v-if="source.name !== null" class="px-4 py-2 font-mono">{{ source.name }}</td>
+                                <td v-else class="px-4 py-2 italic text-gray-500 dark:text-dark-400">No utm_source</td>
+                                <td class="px-4 py-2 text-right tabular-nums">{{ number(source.visitors) }}</td>
+                                <td v-if="showsRegistrations" class="px-4 py-2 text-right tabular-nums">{{ number(source.reg) }}</td>
+                                <td v-if="traffic.page_views" class="px-4 py-2 text-right tabular-nums">{{ percent(source.bounce_rate) }}</td>
+                                <td v-if="showsRevenue" class="px-4 py-2 text-right tabular-nums">{{ currency(source.net) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

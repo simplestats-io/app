@@ -34,6 +34,7 @@ class CampaignShowDataProvider extends AbstractStatsDataProvider
         return array_merge($this->commonProps($user, $filters, $teamStats), [
             'campaign' => ['uuid' => $campaign->uuid, 'name' => $campaign->name],
             'summary' => $this->adSpendService->campaignSummary($filters, $campaign),
+            'traffic' => $this->adSpendService->campaignTraffic($filters, $campaign),
             'adSpends' => $this->adSpendService->paginatedForCampaign($campaign),
             'linkedTrackCampaigns' => $this->adSpendService->linkedTrackCampaigns($campaign),
             'linkableTrackCampaigns' => $this->adSpendService->linkableTrackCampaigns(),

@@ -49,8 +49,13 @@ test('campaign show renders Campaigns/Show with campaign, summary, paginated spe
             ->where('campaign.name', 'Google Ads')
             ->where('summary.campaign_id', $this->campaign->id)
             ->where('summary.spend', 5000)
+            ->where('summary.spend_total', 5000)
             ->where('summary.net', 0)
             ->where('summary.net_profit', -5000)
+            ->where('summary.cost_per_visitor', null)
+            ->where('traffic.page_views', false)
+            ->where('traffic.bounce_rate', null)
+            ->has('traffic.sources', 0)
             ->has('adSpends.data', 1, fn ($spend) => $spend
                 ->where('amount', 5000)
                 ->etc()

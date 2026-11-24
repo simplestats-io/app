@@ -21,7 +21,7 @@ class GetCampaignPerformance extends Tool
 {
     use ResolvesStatsFilters;
 
-    private const array MONEY_KEYS = ['net', 'spend', 'net_profit', 'cac'];
+    private const array MONEY_KEYS = ['net', 'spend', 'spend_total', 'net_profit', 'cac', 'cost_per_visitor'];
 
     /**
      * Mirrors campaignMetricInfo in resources/js/Data/CampaignMetricInfo.js,
@@ -31,7 +31,9 @@ class GetCampaignPerformance extends Tool
         'visitors' => 'Unique visitors the campaign brought in during the range',
         'reg' => 'New registrations attributed to the campaign during the range',
         'net' => 'Net revenue (after fees) to date from the customers this campaign acquired during the range, including payments made after the range',
-        'spend' => 'Ad spend paid for this campaign during the range (entered manually by the user)',
+        'spend' => 'The share of the ad spend that falls into the range: each entry (entered manually by the user) is spread evenly across its days',
+        'spend_total' => 'Sum of all ad spend entries of the campaign, independent of the range',
+        'cost_per_visitor' => 'Ad spend / visitors in the range. Null without spend or visitors',
         'net_profit' => 'Revenue minus ad spend; positive means the campaign earned more than it cost',
         'roas' => 'Return on ad spend: revenue / spend. 2.0 means 2 earned per 1 spent; above 1.0 is profitable. Recently acquired customers have had little time to pay yet',
         'cac' => 'Customer acquisition cost: spend / registrations, the average cost of one new sign-up. Null without spend in the range',
