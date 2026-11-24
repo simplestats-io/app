@@ -2,6 +2,20 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.7.0 - 2026-11-24
+
+### Added
+
+- **Campaign traffic quality:** the campaign page shows visitors, cost per visitor, registrations and bounce rate for the selected period, plus a breakdown by utm_source.
+- **Total spend:** when the selected period covers only part of a campaign, the Spend card also shows the campaign's total spend.
+- The MCP server and Ask AI report the total spend and the cost per visitor of a campaign.
+
+### Changed
+
+- Visitors from paid ads (`utm_medium=paid`) that link to `#pricing` now land at the top of the landing page.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.6.1...v7.7.0
+
 ## v7.6.1 - 2026-11-24
 
 ### Fixed
