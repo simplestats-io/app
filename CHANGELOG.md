@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.6.1 - 2026-11-24
+
+### Fixed
+
+- MCP clients can request write access again: the OAuth discovery metadata lists the `mcp:write` scope in production too, so the "Also allow changes" option shows up on the consent screen. Reconnect your MCP client to get it.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.6.0...v7.6.1
+
 ## v7.6.0 - 2026-11-24
 
 ### Upgrade notes
