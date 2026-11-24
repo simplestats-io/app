@@ -133,12 +133,6 @@ parameters:
 			path: app/Actions/UpdateProject.php
 
 		-
-			message: '#^Method App\\Ai\\Agents\\StatsAssistant\:\:tools\(\) should return iterable\<Laravel\\Ai\\Contracts\\Tool\> but returns array\<int, App\\Mcp\\Tools\\GetCampaignPerformance\|App\\Mcp\\Tools\\GetGroupedBreakdown\|App\\Mcp\\Tools\\GetKpiStats\|App\\Mcp\\Tools\\GetRecurringRevenueStats\|App\\Mcp\\Tools\\GetRetentionCohorts\|App\\Mcp\\Tools\\ListAppPages\|App\\Mcp\\Tools\\ListStatsCapabilities\|App\\Mcp\\Tools\\SearchDocs\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Ai/Agents/StatsAssistant.php
-
-		-
 			message: '#^Method App\\Builder\\BaseSqlBuilder\:\:activeSubscriptionsFrom\(\) has parameter \$extraColumns with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1045,6 +1039,12 @@ parameters:
 			path: app/Http/Requests/AiChatRequest.php
 
 		-
+			message: '#^Access to property \$options on an unknown class Spark\\Plan\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Requests/AiPendingActionRequest.php
+
+		-
 			message: '#^Method App\\Http\\Requests\\Api\\StatsCustomEventRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1313,6 +1313,18 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Mcp/Tools/GetRetentionCohorts.php
+
+		-
+			message: '#^Access to property \$name on an unknown class Spark\\Plan\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Mcp/Tools/GetTeam.php
+
+		-
+			message: '#^Access to property \$options on an unknown class Spark\\Plan\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Mcp/Tools/GetTeam.php
 
 		-
 			message: '#^Method App\\Mcp\\Tools\\SearchDocs\:\:schema\(\) should return array\<string, Illuminate\\Contracts\\JsonSchema\\JsonSchema\> but returns array\<string, Illuminate\\JsonSchema\\Types\\StringType\>\.$#'
@@ -2017,12 +2029,6 @@ parameters:
 			path: app/Policies/DataImportPolicy.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Policies/ProjectPolicy.php
-
-		-
 			message: '#^Call to static method fallbackUsing\(\) on an unknown class Spatie\\OgImage\\Facades\\OgImage\.$#'
 			identifier: class.notFound
 			count: 1
@@ -2043,7 +2049,7 @@ parameters:
 		-
 			message: '#^Instanceof between App\\Models\\User\|null and App\\Models\\Project will always evaluate to false\.$#'
 			identifier: instanceof.alwaysFalse
-			count: 2
+			count: 1
 			path: app/Providers/RouteServiceProvider.php
 
 		-
