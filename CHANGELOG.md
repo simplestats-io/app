@@ -2,6 +2,26 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.6.0 - 2026-11-24
+
+### Upgrade notes
+
+- The MCP server now signs in with OAuth. Project API tokens no longer work on `/mcp`: reconnect your MCP client once, it opens the browser for the sign-in. See the [MCP server docs](https://simplestats.io/docs/mcp-server.html) for every client.
+- Self-hosted: nothing to configure. The OAuth key pair is generated in `storage/` on first use. For several app servers without shared storage, set `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY`.
+
+### Added
+
+- **Manage SimpleStats from your AI agent:** the MCP server can now create and update campaigns, record ad spend, create projects (returns the API token), change tracking settings, read and update team settings, list team members and invite editors or viewers.
+- **Read-only by default:** a new MCP connection only reads. Changes need the "Also allow changes" opt-in on the consent screen.
+- **Ask AI can make changes:** the in-app chat uses the same tools. Every change is shown as a card and only runs after you confirm it.
+- **Team-wide campaigns:** a campaign can apply to all projects of a team, e.g. one campaign running on several shops.
+
+### Fixed
+
+- OpenCode setup instructions match the current OpenCode config format.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.5.3...v7.6.0
+
 ## v7.5.3 - 2026-11-23
 
 ### Added
