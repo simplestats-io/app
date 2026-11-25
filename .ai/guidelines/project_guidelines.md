@@ -682,6 +682,16 @@ The `laravel-best-practices` skill is the yardstick for these steps, not a separ
 - Test API rate limiting behavior
 - Ensure tracking works across Laravel versions
 
+## Lifecycle Mails
+
+Automated mails to team owners (onboarding reminders, feedback questions, re-engagement) run through one system, `app:send-lifecycle-mails` (daily, SaaS only, `--pretend` lists what is due without sending):
+
+- Each mail is a class under `app/Notifications/Lifecycle/` extending `LifecycleNotification`: `key()` (stored, renaming it sends the mail again), `audience()` (query on `Team` for who is due now) and `compose()`. Register it in `LifecycleMailService::MAILS`.
+- Every mail goes **once per team**, recorded in `lifecycle_mails` (unique `team_id` + `mail`, the row is claimed before sending). Owners need a verified email, soft-deleted owners and owners who opted out (`users.lifecycle_mails_opted_out_at`, signed link + `List-Unsubscribe` one-click) are skipped.
+- An audience without an upper age limit also reaches existing accounts on the first run (intended for `no_data_feedback`). Run `--pretend` against a production clone before deploying a new mail.
+- `isPersonal()` mails (questions that invite a reply) are signed by the founder with Reply-To to them (`config('mail.founder')`, hardcoded since they only go out on the SaaS). Instructions and reminders stay non-personal.
+- Transactional mails (welcome, deletion warnings, invitations, billing, reports, alerts) stay outside this system and ignore the opt-out.
+
 ## Announcements
 
 Announcement drafts live in `notes/announcements/*.md` and are sent via the Filament Announcements page (`App\Mail\AnnouncementMail`). The mail already opens with "Hey {name}," (`resources/views/emails/announcement.blade.php`) and the title is sent as the mail subject. Therefore:

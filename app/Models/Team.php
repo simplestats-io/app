@@ -30,7 +30,6 @@ class Team extends JetstreamTeam
         'events_count_monthly',
         'events_count_overall',
         'id',
-        'installation_reminder_sent_at',
         'user_id',
     ];
 
@@ -80,6 +79,14 @@ class Team extends JetstreamTeam
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * @return HasMany<LifecycleMail, $this>
+     */
+    public function lifecycleMails(): HasMany
+    {
+        return $this->hasMany(LifecycleMail::class);
     }
 
     public function hasReceivedData(): bool
@@ -133,7 +140,6 @@ class Team extends JetstreamTeam
         return [
             'personal_team' => 'boolean',
             'events_reset_at' => 'datetime',
-            'installation_reminder_sent_at' => 'datetime',
             'ai_api_key' => 'encrypted',
         ];
     }

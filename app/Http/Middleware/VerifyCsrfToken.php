@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        // One-click unsubscribe (RFC 8058): mail clients POST without a session, the signed URL authorizes it.
+        'lifecycle-mails/opt-out/*',
     ];
 }

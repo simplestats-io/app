@@ -338,6 +338,7 @@ abstract class UserBase extends Authenticatable implements MustVerifyEmail, OAut
             'email_verified_at' => 'datetime',
             'previous_login_at' => 'immutable_datetime',
             'login_summary_pending' => 'boolean',
+            'lifecycle_mails_opted_out_at' => 'datetime',
             'settings' => 'array',
         ];
     }

@@ -104,6 +104,13 @@ return [
         'name' => env('MAIL_FROM_NAME', 'SimpleStats'),
     ],
 
+    // Personal lifecycle mails (feedback questions) are signed by and reply to the
+    // founder. Not env based: they only go out on the SaaS.
+    'founder' => [
+        'address' => 'zacharias@laracraft.tech',
+        'name' => 'Zacharias',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Markdown Mail Settings

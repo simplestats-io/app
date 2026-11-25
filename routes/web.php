@@ -17,6 +17,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\ImprintController;
+use App\Http\Controllers\LifecycleMailOptOutController;
 use App\Http\Controllers\LoginSummaryController;
 use App\Http\Controllers\PowerUserController;
 use App\Http\Controllers\ProjectController;
@@ -88,6 +89,12 @@ Route::get('/dpa', [DpaController::class, 'show'])->name('dpa');
 Route::get('/trademark', [TrademarkController::class, 'show'])->name('trademark');
 Route::get('/compliance/{page?}', [ComplianceController::class, 'show'])->whereIn('page', array_diff(array_keys(ComplianceController::PAGES), ['index']))->name('compliance');
 Route::get('/security', [SecurityController::class, 'show'])->name('security');
+
+// Both verbs share the signed URL: mail clients POST to the List-Unsubscribe header URL (RFC 8058).
+Route::middleware('signed')->group(function (): void {
+    Route::get('/lifecycle-mails/opt-out/{user:uuid}', [LifecycleMailOptOutController::class, 'create'])->name('lifecycle-mails.opt-out.create');
+    Route::post('/lifecycle-mails/opt-out/{user:uuid}', [LifecycleMailOptOutController::class, 'store'])->name('lifecycle-mails.opt-out.store');
+});
 Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog');
 
 // Blog (not localized)
