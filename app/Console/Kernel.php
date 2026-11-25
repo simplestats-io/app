@@ -9,6 +9,7 @@ use App\Models\StatsViewPending;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Artisan;
+use Spatie\DeletedModels\Models\DeletedModel;
 use Spatie\Health\Commands\RunHealthChecksCommand;
 use Spatie\Health\Commands\ScheduleCheckHeartbeatCommand;
 use Spatie\Health\Models\HealthCheckResultHistoryItem;
@@ -52,8 +53,8 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('app:recalc-stats-starting-at')->daily()->at('01:45');
             $schedule->command('app:check-logins-and-payments-counter')->daily()->at('04:00');
-            // the history model lives in the vendor package, so the default model:prune discovery never finds it
-            $schedule->command('model:prune', ['--model' => [HealthCheckResultHistoryItem::class]])->daily()->at('04:15');
+            // both models live in vendor packages, so the default model:prune discovery never finds them
+            $schedule->command('model:prune', ['--model' => [HealthCheckResultHistoryItem::class, DeletedModel::class]])->daily()->at('04:15');
 
             // Self-hosted runs without plans, and its operators decide on their own when an account goes away.
             if (config('app.app_type') === 'saas') {

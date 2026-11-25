@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Laravel\Jetstream\Contracts\DeletesUsers;
+use Throwable;
 
 class PurgePendingDeletedUsers extends Command
 {
@@ -20,6 +21,21 @@ class PurgePendingDeletedUsers extends Command
     {
         User::onlyTrashed()
             ->where('deleted_at', '<', now()->subMonths(self::PURGE_AFTER_MONTHS))
-            ->each(fn (User $user) => $deletesUsers->delete($user));
+            // lazyById, not each: deleting rows while paging by offset would skip users.
+            ->lazyById()
+            ->each(function (User $user) use ($deletesUsers): void {
+                // Only accounts removed for inactivity stay reachable for announcements.
+                // A trashed user without inactive_since was deleted on request (e.g. an
+                // admin deletion whose queued job failed) and is erased completely.
+                if ($user->inactive_since !== null) {
+                    $user->archiveOnForceDelete();
+                }
+
+                try {
+                    $deletesUsers->delete($user);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            });
     }
 }

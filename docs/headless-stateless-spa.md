@@ -58,7 +58,7 @@ The middleware accepts the following values from the request itself (in addition
 
 | Field        | Query / Body                              | Header                       | Notes                                                |
 |--------------|-------------------------------------------|------------------------------|------------------------------------------------------|
-| UTM source   | `utm_source`, `ref`, `referer`, `referrer`| `X-Utm-Source` (or aliases)  | Aliases configurable in `simplestats-client.tracking_codes` |
+| UTM source   | `utm_source`, `ref`                       | `X-Utm-Source` (or aliases)  | Aliases configurable in `simplestats-client.tracking_codes` |
 | UTM medium   | `utm_medium`, `adGroup`, `adGroupId`      | `X-Utm-Medium` (or aliases)  |                                                      |
 | UTM campaign | `utm_campaign`                            | `X-Utm-Campaign`             |                                                      |
 | UTM term     | `utm_term`                                | `X-Utm-Term`                 |                                                      |

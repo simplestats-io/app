@@ -44,12 +44,11 @@ abstract class UserBase extends Authenticatable implements MustVerifyEmail, OAut
     use Impersonate;
 
     // SoftDeletes and KeepsDeletedModels both declare restore()/restoreQuietly();
-    // let SoftDeletes win (un-trash) and keep the archive-restore under an alias.
+    // SoftDeletes wins (un-trash). The archive cannot restore a user anyway, their
+    // teams and stats are gone by then, recovery works through app:dump-user-recovery.
     use KeepsDeletedModels, SoftDeletes {
         SoftDeletes::restore insteadof KeepsDeletedModels;
         SoftDeletes::restoreQuietly insteadof KeepsDeletedModels;
-        KeepsDeletedModels::restore as restoreFromArchive;
-        KeepsDeletedModels::restoreQuietly as restoreQuietlyFromArchive;
     }
     use Notifiable;
     use PasskeyAuthenticatable;
@@ -89,11 +88,44 @@ abstract class UserBase extends Authenticatable implements MustVerifyEmail, OAut
      */
     protected array $accessibleProjectIdsByTeam = [];
 
-    // Archive into deleted_models only on the final forceDelete (the purge job),
-    // not on the soft delete that opens the grace window.
+    /**
+     * Fields that survive in deleted_models, the address list for announcements to
+     * former users. Never secrets like the password hash or 2FA codes.
+     *
+     * @var list<string>
+     */
+    public const array ARCHIVED_ATTRIBUTES = ['name', 'email', 'created_at'];
+
+    protected bool $archiveOnForceDelete = false;
+
+    /**
+     * Only users purged after inactivity are archived. Users who asked for their
+     * deletion (profile, admin panel) are erased completely (GDPR Art. 17).
+     */
+    public function archiveOnForceDelete(): static
+    {
+        $this->archiveOnForceDelete = true;
+
+        return $this;
+    }
+
+    // Archive only on the final forceDelete, not on the soft delete that opens the grace window.
     public function shouldKeep(): bool
     {
-        return $this->isForceDeleting();
+        return $this->archiveOnForceDelete && $this->isForceDeleting();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function attributesToKeep(): array
+    {
+        return [
+            'name' => $this->name,
+            'email' => $this->email,
+            // UTC like the rows archived before, the default timezone may be a team's.
+            'created_at' => $this->created_at?->utc()->toIso8601String(),
+        ];
     }
 
     // Hex instead of the package's raw binary HMAC: iOS Safari mangles binary

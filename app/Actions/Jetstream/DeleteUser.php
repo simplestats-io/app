@@ -41,8 +41,8 @@ class DeleteUser implements DeletesUsers
             }
 
             // forceDelete (not soft): this is the real, irreversible removal used by
-            // both self-serve account deletion and the post-grace purge job. It also
-            // triggers the KeepsDeletedModels archival (guarded by shouldKeep()).
+            // self-serve deletion, the admin panel and the post-grace purge job. Only
+            // the purge archives the user, see UserBase::archiveOnForceDelete().
             $user->forceDelete();
         });
     }
