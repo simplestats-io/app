@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Resources\Users\Actions\DeactivateAction;
+use App\Filament\Resources\Users\Actions\DeletePermanentlyAction;
 use App\Filament\Resources\Users\Actions\ImpersonateAction;
 use App\Models\User;
 use App\Services\SubscriptionService;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -129,12 +130,11 @@ class UsersTable
                 //
             ])
             ->recordActions([
-                ImpersonateAction::make(),
-                EditAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                ActionGroup::make([
+                    ImpersonateAction::make(),
+                    EditAction::make(),
+                    DeactivateAction::make(),
+                    DeletePermanentlyAction::make(),
                 ]),
             ]);
     }
