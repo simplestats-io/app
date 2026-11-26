@@ -2,6 +2,19 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.9.0 - 2026-11-26
+
+### Added
+
+- **Ad spend per source:** ad spend entries get an optional name (e.g. "Reddit") and the `utm_source` of their ads. The campaign page then shows spend and cost per visitor per source in the "By source" table. The MCP tools `record-ad-spend`, `update-ad-spend` and `list-campaigns` support both fields.
+
+### Fixed
+
+- Editing or deleting an ad spend entry, editing or deleting a custom date range preset, and cancelling or rolling back a data import did nothing in the browser.
+- Deploys no longer trigger a false "schedule did not run" health check mail.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.8.1...v7.9.0
+
 ## v7.8.1 - 2026-11-26
 
 ### Fixed
