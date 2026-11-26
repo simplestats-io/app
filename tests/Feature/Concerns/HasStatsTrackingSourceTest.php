@@ -88,3 +88,9 @@ test('an external referer is kept', function (): void {
 
     expect($visitor->statsTrackReferer?->name)->toBe('news.ycombinator.com');
 });
+
+test('a www. inside the host does not make a foreign domain look like the own one', function (): void {
+    $visitor = makeVisitor(['track_referer' => 'https://my-www.app.test']);
+
+    expect($visitor->statsTrackReferer?->name)->toBe('my-www.app.test');
+});

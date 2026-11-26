@@ -113,6 +113,45 @@ A few Statamic specifics worth knowing:
 - **The nginx rewrite rules take care of themselves.** They fall back to `index.php` whenever no static file matches, which is always the case for the beacon path.
 - **`{{ nocache }}` is not an alternative.** Statamic's nocache endpoint is a POST route, which is not tracked.
 
+## Marketing site outside Laravel
+
+If your landing page, blog and pricing page live on Next.js, Nuxt, Astro, Webflow, Framer or WordPress while signup, login and payments run in Laravel, the same beacon counts the marketing traffic. The visitors then show up under their real source (Google, Reddit, your newsletter), and their later registrations and payments in the app are attributed to that visit.
+
+1. Enable the beacon as described above.
+2. List the marketing domain in `own_domains`, otherwise the beacon ignores requests from it and the app records it as a referer:
+
+```php
+// config/simplestats-client.php
+
+'own_domains' => [
+    'www.my-app.com',
+],
+```
+
+3. Add the script that the package serves next to the beacon to every page of the marketing site:
+
+```html
+<script src="https://app.my-app.com/assets/v.js" defer></script>
+```
+
+In Next.js, put it into the root layout with `next/script`:
+
+```tsx
+import Script from 'next/script'
+
+<Script src="https://app.my-app.com/assets/v.js" strategy="afterInteractive" />
+```
+
+The script forwards the page, the campaign parameters and the original referrer, and it also reports client-side navigations of single page apps, which never reach a server on their own. Changes of only the query string or the hash do not count as a new page.
+
+Sibling subdomains like `www.my-app.com` and `app.my-app.com` work with the default `session` storage. If the marketing site and the app run on **different registrable domains** (`my-app.com` and `my-app.io`, or a `*.vercel.app` preview), the browser does not send the app's session cookie with the beacon request, so the package ignores these requests in `session` mode. Set `tracking_storage` to `cache` for this setup, see [Headless, SPA & Stateless](./headless-stateless-spa.md).
+
+Keep the default `Referrer-Policy` on the marketing site, or at least `origin`. The package identifies the site by the origin the browser sends with the request, and a request from another site without one is ignored, so `no-referrer` there means no visitors are counted.
+
+Pages on your `except` list are not counted through the script either, so `admin*` also covers `/admin` on the marketing site.
+
+If your web server answers `.js` requests from disk without falling back to `index.php`, add an exception for the script path, otherwise it returns a 404.
+
 ## Headless and SPA setups
 
 If your frontend is a separate application rather than a cached version of your Laravel app, the beacon is not what you want. See [Headless, SPA & Stateless](./headless-stateless-spa.md) instead, it covers the same context forwarding with headers and the `cache` tracking storage.

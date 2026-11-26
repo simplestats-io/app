@@ -243,7 +243,7 @@ trait HasStatsTracking
             ?? parse_url('https://'.$value, PHP_URL_HOST)
             ?? '';
 
-        return (string) str($host)->lower()->replaceFirst('www.', '');
+        return (string) str($host)->lower()->replaceStart('www.', '');
     }
 
     /**

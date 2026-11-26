@@ -324,7 +324,6 @@ Because it is kept in sync by hand, **treat every item below as a contract: chan
 | **tracking_codes config** | `config/simplestats-client.php` (app's own dogfood copy) | `config/simplestats-client.php` (package default) | – | See also "Keep Client Config in Sync (Three Places)". |
 
 **Known current drifts (fix opportunistically, don't let them grow):**
-- **Host extraction:** B's `extractHost()` does **not** lowercase the host, while A/C do. Mixed-case referers can compare differently.
 - **tracking_codes `source`:** the app copy still lists `['utm_source', 'ref', 'referer', 'referrer']`; the package (correct current design) is `['utm_source', 'ref']` (URL `?referer=` params are intentionally no longer tracked). The app dogfood copy is stale.
 
 ## Page Views
