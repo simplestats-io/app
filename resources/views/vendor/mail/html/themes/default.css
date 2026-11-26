@@ -39,23 +39,25 @@ a img {
 
 h1 {
     color: #3d4852;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     margin-top: 0;
     text-align: left;
 }
 
 h2 {
-    font-size: 16px;
+    color: #3d4852;
+    font-size: 19px;
     font-weight: bold;
-    margin-top: 0;
+    margin-top: 28px;
     text-align: left;
 }
 
 h3 {
-    font-size: 14px;
+    color: #3d4852;
+    font-size: 17px;
     font-weight: bold;
-    margin-top: 0;
+    margin-top: 24px;
     text-align: left;
 }
 
