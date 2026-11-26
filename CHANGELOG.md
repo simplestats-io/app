@@ -2,6 +2,30 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.8.0 - 2026-11-26
+
+### Upgrade notes
+
+- Set `ADMIN_MAIL` in your `.env` to your own address. It receives health check, queue (Horizon) and backup alerts as well as user feedback. Without it these mails are not sent, and the feedback entry is hidden.
+- Two new migrations run automatically on start of the Docker `app` container (otherwise run `php artisan migrate --force`).
+
+### Added
+
+- Users purged for inactivity are archived with name, email and creation date only, and the archive is pruned after 365 days (`model:prune`). A migration strips existing archive entries down to these fields.
+- Docs: tracking a marketing site outside Laravel (Next.js, Nuxt, Astro, Webflow, Framer, WordPress) with the beacon script of laravel-client v6.3.0.
+
+### Fixed
+
+- Admin and alert mails no longer fall back to a default recipient when `ADMIN_MAIL` is not set.
+- The app's built-in self-tracking only runs when `SIMPLESTATS_API_TOKEN` is set (or `SIMPLESTATS_ENABLED` is set explicitly).
+- The support chat entry is only shown on the hosted version.
+- A `www.` inside a referer host is no longer stripped, so a host like `my-www.app.com` is no longer mistaken for the project's own domain.
+- The hosted docs route only serves files from the built docs folder (self-hosted installs redirect docs urls to the public docs and were not affected).
+- Requests for a directory below `/docs/` return 404 instead of a server error.
+- Requests to `/oauth/<unknown provider>` return 404 instead of a server error.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.7.0...v7.8.0
+
 ## v7.7.0 - 2026-11-24
 
 ### Added
