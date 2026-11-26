@@ -24,11 +24,14 @@ class DocsController extends Controller
 
         $filePath = $distPath.$path;
 
-        if (File::extension($filePath) === '' && File::exists($filePath.'.html')) {
+        if (File::extension($filePath) === '' && File::isFile($filePath.'.html')) {
             $filePath .= '.html';
         }
 
-        if (! File::exists($filePath)) {
+        // The router decodes %2F and %2E, so "../" can reach this point. Only files inside the build are served.
+        $filePath = realpath($filePath);
+
+        if ($filePath === false || ! File::isFile($filePath) || ! str_starts_with($filePath, realpath($distPath).DIRECTORY_SEPARATOR)) {
             abort(404);
         }
 

@@ -127,3 +127,10 @@ test('users can register using socialite providers', function (string $socialite
     [Providers::twitterOAuth1()],
     [Providers::twitterOAuth2()],
 ]);
+
+test('unknown providers return 404', function (string $uri): void {
+    get($uri)->assertNotFound();
+})->with([
+    'redirect' => '/oauth/authorize',
+    'callback' => '/oauth/authorize/callback',
+]);
