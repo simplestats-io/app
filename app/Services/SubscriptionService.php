@@ -67,7 +67,10 @@ class SubscriptionService
         // sometimes when I work on it, I put the ttl in local mode to 0
         $ttl = (app()->isProduction()) ? 86400 : 86400;
 
-        return Cache::remember('paddle-prices', $ttl, fn () => Cashier::previewPrices($planIds, [
+        // Keyed by the plan ids: deploys keep the cache, so changed plans must not hit stale prices.
+        $cacheKey = 'paddle-prices:'.md5($planIds->sort()->implode(','));
+
+        return Cache::remember($cacheKey, $ttl, fn () => Cashier::previewPrices($planIds, [
             'customer_ip_address' => request()->ip(),
         ])->mapWithKeys(fn ($item): array => [$item->price['id'] => $item]));
     }

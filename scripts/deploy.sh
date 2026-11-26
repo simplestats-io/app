@@ -153,8 +153,10 @@ if [ -f artisan ]; then
   printf '\nℹ️ Link ./public/storage\n'
   $FORGE_PHP artisan storage:link
 
-  printf '\nℹ️ Clear and cache routes, config, views, events\n'
-  $FORGE_PHP artisan optimize:clear
+  printf '\nℹ️ Clear cached routes, config, views, events\n'
+  # The application cache is shared by all releases: clearing it would drop the schedule
+  # heartbeat (health check mail on every deploy), the warmed blog cache and rate limiters.
+  $FORGE_PHP artisan optimize:clear --except=cache
 
   printf '\nℹ️ Publish Filament assets\n'
   $FORGE_PHP artisan filament:assets

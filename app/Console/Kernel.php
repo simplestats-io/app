@@ -35,8 +35,10 @@ class Kernel extends ConsoleKernel
 
         if (app()->isProduction()) {
             // MINUTELY
-            $schedule->command(RunHealthChecksCommand::class)->everyMinute();
+            // Heartbeat first: after an emptied cache the check would otherwise run before the
+            // first heartbeat and report "The schedule did not run yet".
             $schedule->command(ScheduleCheckHeartbeatCommand::class)->everyMinute();
+            $schedule->command(RunHealthChecksCommand::class)->everyMinute();
 
             // HOURLY
             $schedule->command(ResetEventsCounter::class)->hourly();
