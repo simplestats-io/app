@@ -131,10 +131,10 @@ class UsersTable
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ImpersonateAction::make(),
                     EditAction::make(),
-                    DeactivateAction::make(),
                     DeletePermanentlyAction::make(),
+                    DeactivateAction::make(),
+                    ImpersonateAction::make(),
                 ]),
             ]);
     }

@@ -24,10 +24,10 @@ it('deletes a user with their teams and projects after confirming email and pass
 
     Livewire::test(ListUsers::class)
         ->callAction(TestAction::make('deletePermanently')->table($this->user), [
-            'email' => $this->user->email,
+            'user' => $this->user->uuid,
             'password' => 'password',
         ])
-        ->assertHasNoFormErrors();
+        ->callMountedAction();
 
     expect(User::withTrashed()->find($this->user->id))->toBeNull()
         ->and($team->fresh())->toBeNull()
@@ -39,30 +39,46 @@ it('soft-deletes right away and queues the permanent deletion on the low queue',
 
     Livewire::test(ListUsers::class)
         ->callAction(TestAction::make('deletePermanently')->table($this->user), [
-            'email' => $this->user->email,
+            'user' => $this->user->uuid,
             'password' => 'password',
-        ]);
+        ])
+        ->callMountedAction();
 
     expect($this->user->fresh()->trashed())->toBeTrue();
     Queue::assertPushedOn('low', DeleteUserPermanently::class);
 });
 
-it('refuses the permanent deletion with a wrong email or password', function (string $email, string $password, string $field): void {
+it('refuses the permanent deletion with another user or a wrong password', function (bool $otherUser, string $password, string $field): void {
     Queue::fake();
 
     Livewire::test(ListUsers::class)
         ->callAction(TestAction::make('deletePermanently')->table($this->user), [
-            'email' => $email === 'user' ? $this->user->email : $email,
+            'user' => $otherUser ? $this->admin->uuid : $this->user->uuid,
             'password' => $password,
         ])
-        ->assertHasFormErrors([$field]);
+        ->assertHasFormErrors([$field])
+        ->assertActionNotMounted(TestAction::make('confirmDeletePermanently'));
 
     expect($this->user->fresh()->trashed())->toBeFalse();
     Queue::assertNothingPushed();
 })->with([
-    'wrong email' => ['someone@example.com', 'password', 'email'],
-    'wrong password' => ['user', 'wrong-password', 'password'],
+    'other user' => [true, 'password', 'user'],
+    'wrong password' => [false, 'wrong-password', 'password'],
 ]);
+
+it('asks a second time before deleting and keeps the user when that is cancelled', function (): void {
+    Queue::fake();
+
+    Livewire::test(ListUsers::class)
+        ->callAction(TestAction::make('deletePermanently')->table($this->user), [
+            'user' => $this->user->uuid,
+            'password' => 'password',
+        ])
+        ->assertActionMounted(TestAction::make('confirmDeletePermanently'));
+
+    expect($this->user->fresh()->trashed())->toBeFalse();
+    Queue::assertNothingPushed();
+});
 
 it('deactivates a user without deleting their data', function (): void {
     $team = $this->user->ownedTeams()->first();

@@ -18,7 +18,7 @@ class ImpersonateAction extends Action
         parent::setUp();
 
         $this
-            ->label('Imp.')
+            ->label('Impersonate')
             ->icon(Heroicon::OutlinedArrowRightOnRectangle)
             ->color('warning')
             ->hidden(fn (User $record): bool => $record->id === auth()->id())
