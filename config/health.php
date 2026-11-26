@@ -40,7 +40,7 @@ return [
         /*
          * Notifications will only get sent if this option is set to `true`.
          */
-        'enabled' => true,
+        'enabled' => filled(env('ADMIN_MAIL')),
 
         'notifications' => [
             CheckFailedNotification::class => ['mail'],
@@ -63,7 +63,7 @@ return [
         'throttle_notifications_key' => 'health:latestNotificationSentAt:',
 
         'mail' => [
-            'to' => env('ADMIN_MAIL', 'admin@laracraft.tech'),
+            'to' => env('ADMIN_MAIL'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),

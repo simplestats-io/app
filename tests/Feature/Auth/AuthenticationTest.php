@@ -47,6 +47,7 @@ test('users marked for deletion cannot authenticate', function (): void {
 
 test('users marked for deletion learn that their account is restorable', function (): void {
     $user = User::factory()->create();
+    config(['app.app_mail' => 'support@example.com']);
     $user->delete();
 
     $response = $this->from('/login')->post('/login', [
@@ -57,7 +58,7 @@ test('users marked for deletion learn that their account is restorable', functio
     $response->assertSessionHasErrors('email');
     expect(session('errors')->first('email'))
         ->toContain('deactivated')
-        ->toContain(config('app.app_mail'));
+        ->toContain('support@example.com');
 });
 
 test('the deactivation notice is not exposed to someone without the password', function (): void {

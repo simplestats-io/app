@@ -4,7 +4,6 @@ namespace App\Http;
 
 use App\Http\Middleware\AbTestHeroVariant;
 use App\Http\Middleware\Admin;
-use App\Http\Middleware\AllowIframeEmbedding;
 use App\Http\Middleware\Api\CheckClientVersion;
 use App\Http\Middleware\Api\SetProjectContext;
 use App\Http\Middleware\Api\SetRequestContext;
@@ -84,7 +83,6 @@ class Kernel extends HttpKernel
             EnsureValidTeamOwner::class, // Must be listed before HandleInertiaRequests
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            AllowIframeEmbedding::class,
             SetTeamContext::class,
             AutoLoginInDemoEnv::class,
             DisableMutateRequestsInDemoEnv::class,

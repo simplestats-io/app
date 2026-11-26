@@ -39,7 +39,7 @@ curl -fsSL -o .env https://raw.githubusercontent.com/simplestats-io/app/main/.en
 mkdir docker && curl -fsSL -o docker/Caddyfile https://raw.githubusercontent.com/simplestats-io/app/main/docker/Caddyfile
 ```
 
-2. Fill in `.env`. Only `APP_URL`, `APP_KEY`, `DB_PASSWORD` and the mail settings are required. Generate the key once and never change it afterwards:
+2. Fill in `.env`. Only `APP_URL`, `APP_KEY`, `DB_PASSWORD` and the mail settings are required. Set `ADMIN_MAIL` to your own address: it receives health check, queue and backup alerts as well as user feedback, and without it these mails are not sent. Generate the key once and never change it afterwards:
 
 ```bash
 echo "base64:$(openssl rand -base64 32)"

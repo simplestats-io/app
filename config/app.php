@@ -26,8 +26,8 @@ return [
     |
     */
 
-    'app_mail' => env('APP_MAIL', 'simplestats@laracraft.tech'),
-    'admin_mail' => env('ADMIN_MAIL', 'admin@laracraft.tech'),
+    'app_mail' => env('APP_MAIL'),
+    'admin_mail' => env('ADMIN_MAIL'),
 
     /*
     |--------------------------------------------------------------------------

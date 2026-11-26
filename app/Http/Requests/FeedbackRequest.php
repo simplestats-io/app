@@ -10,7 +10,7 @@ class FeedbackRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return filled(config('app.admin_mail'));
     }
 
     public function rules(): array

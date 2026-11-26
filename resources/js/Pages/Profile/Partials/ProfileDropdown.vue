@@ -128,13 +128,15 @@ const appType = import.meta.env.VITE_APP_TYPE;
                 </DropdownLink>
             </template>
 
-            <div class="border-t border-gray-200 dark:border-dark-600" />
+            <template v-if="$page.props.feedbackTypes?.length || appType === 'saas'">
+                <div class="border-t border-gray-200 dark:border-dark-600" />
 
-            <div class="px-4 pt-2 pb-1 text-xs text-gray-400">
-                Help
-            </div>
+                <div class="px-4 pt-2 pb-1 text-xs text-gray-400">
+                    Help
+                </div>
+            </template>
 
-            <DropdownLink as="button" @click="$emit('feedback')">
+            <DropdownLink v-if="$page.props.feedbackTypes?.length" as="button" @click="$emit('feedback')">
                 <div class="flex items-center gap-2">
                     <div>
                         <LightBulbIcon class="size-4" />
@@ -143,7 +145,7 @@ const appType = import.meta.env.VITE_APP_TYPE;
                 </div>
             </DropdownLink>
 
-            <DropdownLink as="button" @click="supportAction">
+            <DropdownLink v-if="appType === 'saas'" as="button" @click="supportAction">
                 <div class="flex items-center gap-2">
                     <div>
                         <QuestionMarkCircleIcon class="size-4" />

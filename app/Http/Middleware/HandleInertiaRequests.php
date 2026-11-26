@@ -67,7 +67,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()) {
             $merge['isAdmin'] = auth()->user()->isAdmin();
             $merge['loginSummaryEligible'] = resolve(LoginSummaryService::class)->isEligible($request->user());
-            $merge['feedbackTypes'] = FeedbackType::toOptions();
+            $merge['feedbackTypes'] = filled(config('app.admin_mail')) ? FeedbackType::toOptions() : [];
 
             if ($currentTeam = auth()->user()->currentTeam) {
                 $merge['onboardingPassed'] = $currentTeam->projects()->first()?->name;

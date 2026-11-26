@@ -223,7 +223,8 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => config('app.admin_mail'),
+            // spatie/laravel-backup rejects null at boot, an empty list just sends nothing
+            'to' => array_filter([env('ADMIN_MAIL')]),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),

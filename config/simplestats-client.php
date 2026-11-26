@@ -18,7 +18,7 @@ return [
      | You can provide an array of URI's that must be ignored (eg. 'api/*')
      */
 
-    'enabled' => env('SIMPLESTATS_ENABLED', true),
+    'enabled' => env('SIMPLESTATS_ENABLED', filled(env('SIMPLESTATS_API_TOKEN'))),
 
     'except' => [
         'docs/assets*',

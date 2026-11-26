@@ -129,7 +129,7 @@ class FortifyServiceProvider extends ServiceProvider
     private function deactivatedAccountException(string $field): ValidationException
     {
         return ValidationException::withMessages([
-            $field => __('This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.', ['email' => config('app.app_mail')]),
+            $field => __('This account was deactivated because it was unused for a long time. Its data can still be restored, please contact :email.', ['email' => config('app.app_mail') ?: config('mail.from.address')]),
         ]);
     }
 }
