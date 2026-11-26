@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User as UserModel;
 use Illuminate\Support\Facades\Session;
 use JoelButcher\Socialstream\Providers;
 use Laravel\Fortify\Features as FortifyFeatures;
@@ -127,6 +128,47 @@ test('users can register using socialite providers', function (string $socialite
     [Providers::twitterOAuth1()],
     [Providers::twitterOAuth2()],
 ]);
+
+test('existing users can log in using a connected socialite provider', function (): void {
+    $socialiteProvider = Providers::github();
+
+    if (! Providers::enabled($socialiteProvider)) {
+        $this->markTestSkipped("Login support with the $socialiteProvider provider is not enabled.");
+    }
+
+    $existingUser = UserModel::factory()->withPersonalTeam()->create(['email' => 'janedoe@example.com']);
+    $existingUser->connectedAccounts()->create([
+        'provider' => $socialiteProvider,
+        'provider_id' => 'abcdefgh',
+        'email' => 'janedoe@example.com',
+        'token' => 'user-token',
+    ]);
+
+    $user = (new User)
+        ->map([
+            'id' => 'abcdefgh',
+            'nickname' => 'Jane',
+            'name' => 'Jane Doe',
+            'email' => 'janedoe@example.com',
+            'avatar' => null,
+            'avatar_original' => null,
+        ])
+        ->setToken('user-token')
+        ->setRefreshToken('refresh-token')
+        ->setExpiresIn(3600);
+
+    $provider = Mockery::mock('Laravel\\Socialite\\Two\\'.$socialiteProvider.'Provider');
+    $provider->shouldReceive('user')->once()->andReturn($user);
+
+    Socialite::shouldReceive('driver')->once()->with($socialiteProvider)->andReturn($provider);
+
+    Session::put('socialstream.previous_url', route('login'));
+
+    $response = get("/oauth/$socialiteProvider/callback");
+
+    $this->assertAuthenticatedAs($existingUser);
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
 
 test('unknown providers return 404', function (string $uri): void {
     get($uri)->assertNotFound();
