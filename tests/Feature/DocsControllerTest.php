@@ -6,6 +6,9 @@ use function Pest\Laravel\get;
 
 // CI does not build the VitePress docs, so the tests create the files they need and only remove what they created.
 beforeEach(function (): void {
+    // Self-hosted installs redirect every docs url to the public docs (CheckAppType).
+    $this->skipUnlessSaas();
+
     $this->distPath = base_path('docs/.vitepress/dist');
     $this->createdDist = ! File::isDirectory($this->distPath);
     $this->fixturePath = $this->distPath.'/__test-fixture';
@@ -15,6 +18,10 @@ beforeEach(function (): void {
 });
 
 afterEach(function (): void {
+    if (! isset($this->fixturePath)) {
+        return;
+    }
+
     File::deleteDirectory($this->createdDist ? $this->distPath : $this->fixturePath);
 });
 
