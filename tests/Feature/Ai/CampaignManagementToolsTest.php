@@ -168,6 +168,8 @@ it('records ad spend per platform in cents and lists it in major units', functio
 
     campaignTool('record-ad-spend', [
         'campaign_id' => $campaign->uuid,
+        'name' => ' X  Ads ',
+        'utm_source' => 'x',
         'amount' => 115,
         'starts_on' => '2026-11-23',
         'ends_on' => '2026-11-30',
@@ -189,16 +191,22 @@ it('records ad spend per platform in cents and lists it in major units', functio
     campaignTool('list-campaigns')
         ->assertJsonPath('result.structuredContent.campaigns.0.name', 'Black Week 2026')
         ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.0.amount', 115)
-        ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.0.starts_on', '2026-11-23');
+        ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.0.starts_on', '2026-11-23')
+        ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.0.name', 'X Ads')
+        ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.0.utm_source', 'x')
+        ->assertJsonPath('result.structuredContent.campaigns.0.ad_spends.1.utm_source', null);
 });
 
 it('updates only the given ad spend fields', function (): void {
     $campaign = campaignWithSpend($this->project);
     $adSpend = $campaign->adSpends()->withoutGlobalScopes()->sole();
+    $adSpend->update(['name' => 'Reddit', 'utm_source' => 'reddit']);
 
-    campaignTool('update-ad-spend', ['ad_spend_id' => $adSpend->uuid, 'amount' => 62.5]);
+    campaignTool('update-ad-spend', ['ad_spend_id' => $adSpend->uuid, 'amount' => 62.5, 'utm_source' => '']);
 
     expect($adSpend->fresh())
+        ->name->toBe('Reddit')
+        ->utm_source->toBeNull()
         ->amount->toBe(6250)
         ->currency->toBe('EUR')
         ->starts_on->toDateString()->toBe('2026-03-01')

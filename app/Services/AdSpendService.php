@@ -17,6 +17,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdSpendService
 {
@@ -82,13 +83,13 @@ class AdSpendService
      * and revenue. Bounce rates divide by viewers, never by visitors, and are only
      * computed for scopes that receive page views (same gate as the dashboard).
      *
-     * @return array{page_views: bool, bounce_rate: float|null, sources: array<int, array{name: string|null, visitors: int, reg: int, bounce_rate: float|null, net: int}>}
+     * @return array{page_views: bool, bounce_rate: float|null, spend_by_source: bool, spend_unassigned: int, sources: array<int, array{name: string|null, visitors: int, reg: int, bounce_rate: float|null, net: int, spend: int|null, cost_per_visitor: int|null}>}
      */
     public function campaignTraffic(StatsFilterDto $filters, Campaign $campaign, int $sourceLimit = 10): array
     {
         [$windowStart, $windowEnd] = $this->resolveWindow($filters);
 
-        $campaign->loadMissing(['statsTrackCampaigns:id,uuid,campaign_id,name', 'project:id,uuid,name,usage,page_views_seen_at']);
+        $campaign->loadMissing(['statsTrackCampaigns:id,uuid,campaign_id,name', 'project:id,uuid,name,usage,page_views_seen_at', 'adSpends']);
 
         $spansAllProjects = $campaign->spansAllProjects();
         $pageViews = $spansAllProjects
@@ -100,33 +101,71 @@ class AdSpendService
 
         $bounceRate = fn (int $bounces, int $viewers): ?float => $pageViews && $viewers > 0 ? round($bounces * 100 / $viewers, 1) : null;
 
-        $bySource = $rows->groupBy(fn (array $row): string => (string) $row['source_id'])
+        [$taggedSpends, $untaggedSpends] = $campaign->adSpends->partition(fn (AdSpend $spend): bool => $spend->utm_source !== null);
+        $spendBySource = $this->spendBySource($taggedSpends, $windowStart, $windowEnd);
+
+        $sourceNames = StatsTrackSource::query()
+            ->whereKey($rows->pluck('source_id')->filter()->unique()->all())
+            ->pluck('name', 'id');
+
+        // Grouped by the lowercased name, so tracked "X" and "x" add up and match a spend entry's "x".
+        $sources = $rows->groupBy(fn (array $row): string => Str::lower((string) $sourceNames->get($row['source_id'] ?? 0)))
             ->map(fn (Collection $group): array => [
-                'source_id' => $group->first()['source_id'],
+                'name' => $sourceNames->get($group->first()['source_id'] ?? 0),
                 'visitors' => $group->sum('visitors'),
                 'reg' => $group->sum('reg'),
                 'net' => $group->sum('net'),
                 'viewers' => $group->sum('viewers'),
                 'bounces' => $group->sum('bounces'),
-            ])
-            ->sortByDesc(fn (array $source): array => [$source['visitors'], $source['reg'], $source['net'], $source['source_id'] ?? 0])
-            ->take($sourceLimit);
+            ]);
 
-        $sourceNames = StatsTrackSource::query()
-            ->whereKey($bySource->pluck('source_id')->filter()->all())
-            ->pluck('name', 'id');
+        // Spend on a source that brought no visitor in the range still belongs in the table.
+        foreach ($spendBySource as $key => $spend) {
+            $sources->put($key, $sources->get($key) ?? ['name' => $spend['name'], 'visitors' => 0, 'reg' => 0, 'net' => 0, 'viewers' => 0, 'bounces' => 0]);
+        }
+
+        $rank = fn (array $source, int|string $key): array => [$source['visitors'], $source['reg'], $source['net'], $spendBySource[$key]['spend'] ?? 0, $key];
+
+        $sources = $sources->sortByDesc($rank)->take($sourceLimit)
+            ->union($sources->filter(fn (array $source, int|string $key): bool => $spendBySource->has($key)))
+            ->sortByDesc($rank);
 
         return [
             'page_views' => $pageViews,
             'bounce_rate' => $bounceRate($rows->sum('bounces'), $rows->sum('viewers')),
-            'sources' => $bySource->map(fn (array $source): array => [
-                'name' => $source['source_id'] === null ? null : $sourceNames->get($source['source_id']),
-                'visitors' => $source['visitors'],
-                'reg' => $source['reg'],
-                'bounce_rate' => $bounceRate($source['bounces'], $source['viewers']),
-                'net' => $source['net'],
-            ])->values()->all(),
+            'spend_by_source' => $taggedSpends->isNotEmpty(),
+            'spend_unassigned' => $untaggedSpends->sum(fn (AdSpend $spend): int => $spend->allocatedFor($windowStart, $windowEnd)),
+            'sources' => $sources->map(function (array $source, int|string $key) use ($bounceRate, $spendBySource): array {
+                $spend = $spendBySource[$key]['spend'] ?? null;
+
+                return [
+                    'name' => $source['name'],
+                    'visitors' => $source['visitors'],
+                    'reg' => $source['reg'],
+                    'bounce_rate' => $bounceRate($source['bounces'], $source['viewers']),
+                    'net' => $source['net'],
+                    'spend' => $spend,
+                    'cost_per_visitor' => $spend !== null && $source['visitors'] > 0 ? (int) round($spend / $source['visitors']) : null,
+                ];
+            })->values()->all(),
         ];
+    }
+
+    /**
+     * Keyed by the lowercased source, like the tracked sources in campaignTraffic().
+     *
+     * @param  Collection<int, AdSpend>  $spends
+     * @return Collection<array-key, array{name: string|null, spend: positive-int}>
+     */
+    private function spendBySource(Collection $spends, CarbonImmutable $windowStart, CarbonImmutable $windowEnd): Collection
+    {
+        return $spends
+            ->groupBy(fn (AdSpend $spend): string => Str::lower($spend->utm_source))
+            ->map(fn (Collection $group): array => [
+                'name' => $group->first()->utm_source,
+                'spend' => $group->sum(fn (AdSpend $spend): int => $spend->allocatedFor($windowStart, $windowEnd)),
+            ])
+            ->filter(fn (array $source): bool => $source['spend'] > 0);
     }
 
     /**
@@ -142,6 +181,8 @@ class AdSpendService
                 'uuid' => $spend->uuid,
                 'amount' => $spend->amount,
                 'currency' => $spend->currency,
+                'name' => $spend->name,
+                'utm_source' => $spend->utm_source,
                 'starts_on' => $spend->starts_on->toDateString(),
                 'ends_on' => $spend->ends_on->toDateString(),
             ]);

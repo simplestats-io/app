@@ -8,7 +8,10 @@ use App\Models\Project;
 use App\Models\StatsTrackCampaign;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Contracts\Routing\UrlRoutable;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Tighten\Ziggy\Ziggy;
 
 use function Pest\Laravel\actingAs;
 
@@ -31,6 +34,22 @@ test('all user-facing models get a v4 uuid on creation', function (): void {
             ->and(Str::isUuid($model->uuid, version: 4))->toBeTrue()
             ->and($model->getRouteKey())->toBe($model->uuid);
     }
+});
+
+test('ziggy knows the route key of every model bound in a route', function (): void {
+    // Ziggy only reads a binding when the route parameter and the controller argument share the
+    // exact name ({ad_spend} vs $adSpend does not match), and route() in the browser then fails silently.
+    $bindings = collect((new Ziggy)->toArray()['routes'])->map(fn (array $route): array => $route['bindings'] ?? []);
+
+    $missing = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn ($route): bool => $route->getName() !== null && $bindings->has($route->getName()))
+        ->flatMap(fn ($route): array => collect($route->signatureParameters(UrlRoutable::class))
+            ->reject(fn (ReflectionParameter $parameter): bool => array_key_exists($parameter->getName(), $bindings[$route->getName()]))
+            ->map(fn (ReflectionParameter $parameter): string => $route->getName().': $'.$parameter->getName())
+            ->all())
+        ->values();
+
+    expect($missing->all())->toBe([]);
 });
 
 test('a team resolves via its uuid and its numeric id redirects', function (): void {

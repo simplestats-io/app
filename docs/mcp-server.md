@@ -23,7 +23,7 @@ Prefer chatting inside the app? The same assistant powers the **Ask AI** panel o
 | `list-campaigns` | Lists your campaigns with their linked `utm_campaign` values and ad spend entries |
 | `create-campaign` | Creates a campaign and links the tracked `utm_campaign` values that belong to it |
 | `update-campaign` | Renames a campaign or links more `utm_campaign` values |
-| `record-ad-spend` | Records the ad spend of a campaign for a date range |
+| `record-ad-spend` | Records the ad spend of a campaign for a date range, optionally with a name and the `utm_source` of the ads |
 | `update-ad-spend` | Corrects an existing ad spend entry |
 | `search-docs` | Searches this documentation |
 | `list-app-pages` | Lists the in-app pages with descriptions and links |

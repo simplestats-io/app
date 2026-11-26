@@ -19,7 +19,7 @@ class DataImportController extends Controller
 {
     public function __construct()
     {
-        $this->authorizeResource(DataImport::class, 'data_import');
+        $this->authorizeResource(DataImport::class, 'dataImport');
     }
 
     public function index(DataImportIndexDataProvider $dataProvider): Response

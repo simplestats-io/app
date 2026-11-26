@@ -17,7 +17,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
-#[Description('Correct an existing ad spend entry, e.g. when the final invoice differs or the campaign ran longer. Look up the ad_spend_id with list-campaigns. Only the given fields change.')]
+#[Description('Correct an existing ad spend entry, e.g. when the final invoice differs or the campaign ran longer. Look up the ad_spend_id with list-campaigns. Only the given fields change, an empty string clears name or utm_source.')]
 #[IsReadOnly(false)]
 #[IsDestructive]
 #[IsIdempotent]
@@ -38,6 +38,8 @@ class UpdateAdSpend extends Tool
             $adSpend = $this->writableAdSpend($request->get('ad_spend_id'));
 
             $adSpend->update($this->validatedAdSpend($adSpend->campaign, [
+                'name' => $request->get('name') ?? $adSpend->name,
+                'utm_source' => $request->get('utm_source') ?? $adSpend->utm_source,
                 'amount' => $request->get('amount') ?? $adSpend->amount / 100,
                 'currency' => $request->get('currency') ?? $adSpend->currency,
                 'starts_on' => $request->get('starts_on') ?? $adSpend->starts_on->toDateString(),

@@ -6,6 +6,7 @@ use App\Helpers\AppHelper;
 use App\Models\AdSpend;
 use App\Models\Campaign;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 
@@ -18,7 +19,7 @@ class AdSpendRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $adSpend = $this->route('ad_spend');
+        $adSpend = $this->route('adSpend');
 
         if ($adSpend instanceof AdSpend && $this->user()->cannot('update', $adSpend)) {
             return false;
@@ -40,8 +41,24 @@ class AdSpendRequest extends FormRequest
         }
 
         $this->merge([
+            'name' => self::normalizeLabel($this->input('name')),
+            'utm_source' => self::normalizeLabel($this->input('utm_source')),
             'campaign_id' => AppHelper::resolvePublicId(Campaign::class, $this->input('campaign_id') ?? 0),
         ]);
+    }
+
+    /**
+     * Non-strings pass through untouched so the string rule rejects them with a 422.
+     */
+    public static function normalizeLabel(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = Str::squish($value);
+
+        return $value === '' ? null : $value;
     }
 
     /**
@@ -60,6 +77,8 @@ class AdSpendRequest extends FormRequest
                     ->where('team_id', $teamId)
                     ->when($accessibleProjectIds !== null, fn (Exists $rule): Exists => $rule->whereIn('project_id', $accessibleProjectIds)),
             ],
+            'name' => ['nullable', 'string', 'max:60'],
+            'utm_source' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'integer', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
             'starts_on' => ['required', 'date'],

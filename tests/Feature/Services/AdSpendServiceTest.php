@@ -12,6 +12,7 @@ use App\Services\MrrAggregationService;
 use Carbon\CarbonImmutable;
 use Database\Seeders\TestUserSeeder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -578,9 +579,42 @@ it('splits the campaign cohort per utm_source with bounce rates over viewers', f
     expect($traffic['page_views'])->toBeTrue()
         ->and($traffic['bounce_rate'])->toBe(66.7)
         ->and($traffic['sources'])->toBe([
-            ['name' => 'google', 'visitors' => 2, 'reg' => 1, 'bounce_rate' => 50.0, 'net' => 5000],
-            ['name' => 'meta', 'visitors' => 1, 'reg' => 0, 'bounce_rate' => 100.0, 'net' => 0],
-            ['name' => null, 'visitors' => 1, 'reg' => 0, 'bounce_rate' => null, 'net' => 0],
+            ['name' => 'google', 'visitors' => 2, 'reg' => 1, 'bounce_rate' => 50.0, 'net' => 5000, 'spend' => null, 'cost_per_visitor' => null],
+            ['name' => 'meta', 'visitors' => 1, 'reg' => 0, 'bounce_rate' => 100.0, 'net' => 0, 'spend' => null, 'cost_per_visitor' => null],
+            ['name' => null, 'visitors' => 1, 'reg' => 0, 'bounce_rate' => null, 'net' => 0, 'spend' => null, 'cost_per_visitor' => null],
+        ])
+        ->and($traffic['spend_by_source'])->toBeFalse();
+});
+
+it('splits the spend per utm_source and keeps sources that got spend but no visitors', function (): void {
+    $campaign = makeCampaign($this->team->id, $this->pid, 'Black Week');
+    $utm = makeTrackCampaign($this->team->id, 'black_week', $campaign);
+    $reddit = makeCampaignSource($this->team->id, 'Reddit');
+    $x = makeCampaignSource($this->team->id, 'x');
+
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $reddit, '2026-06-18 10:00:00');
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $reddit, '2026-06-19 10:00:00');
+    makeCampaignVisitor($this->team->id, $this->pid, $utm, $x, '2026-06-19 11:00:00');
+
+    foreach ([['reddit', 7000], ['facebook', 1400], [null, 700]] as [$source, $amount]) {
+        AdSpend::factory()->create([
+            'team_id' => $this->team->id,
+            'campaign_id' => $campaign,
+            'utm_source' => $source,
+            'amount' => $amount,
+            'starts_on' => '2026-06-15',
+            'ends_on' => '2026-06-21',
+        ]);
+    }
+
+    $traffic = $this->service->campaignTraffic(rangeFilter($this->pid, 7, '2026-06-21'), Campaign::findOrFail($campaign));
+
+    expect($traffic['spend_by_source'])->toBeTrue()
+        ->and($traffic['spend_unassigned'])->toBe(700)
+        ->and(collect($traffic['sources'])->map(fn (array $source): array => Arr::only($source, ['name', 'visitors', 'spend', 'cost_per_visitor']))->all())->toBe([
+            ['name' => 'Reddit', 'visitors' => 2, 'spend' => 7000, 'cost_per_visitor' => 3500],
+            ['name' => 'x', 'visitors' => 1, 'spend' => null, 'cost_per_visitor' => null],
+            ['name' => 'facebook', 'visitors' => 0, 'spend' => 1400, 'cost_per_visitor' => null],
         ]);
 });
 

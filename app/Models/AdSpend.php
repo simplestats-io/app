@@ -18,6 +18,8 @@ class AdSpend extends Model
     protected $fillable = [
         'team_id',
         'campaign_id',
+        'name',
+        'utm_source',
         'amount',
         'currency',
         'starts_on',

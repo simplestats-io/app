@@ -106,13 +106,18 @@ test('update changes an ad spend', function (): void {
 
     $this->put(route('ad-spends.update', $spend), [
         'campaign_id' => $campaign->id,
+        'name' => '  Reddit   Ads ',
+        'utm_source' => '',
         'amount' => '99',
         'currency' => 'EUR',
         'starts_on' => '2026-06-01',
         'ends_on' => '2026-06-30',
     ])->assertRedirect();
 
-    expect($spend->fresh()->amount)->toBe(9900);
+    expect($spend->fresh())
+        ->amount->toBe(9900)
+        ->name->toBe('Reddit Ads')
+        ->utm_source->toBeNull();
 });
 
 test('destroy deletes an ad spend', function (): void {
@@ -153,4 +158,14 @@ test('cannot delete an ad spend of another team', function (): void {
     $this->delete(route('ad-spends.destroy', $foreignUuid))->assertNotFound();
 
     $this->assertDatabaseHas('ad_spends', ['id' => $foreignId]);
+});
+
+test('store rejects a non-string utm_source and keeps "0" as a source', function (): void {
+    $campaign = campaignFor($this->project);
+    $attributes = ['campaign_id' => $campaign->id, 'amount' => '10', 'currency' => 'EUR', 'starts_on' => '2026-06-01', 'ends_on' => '2026-06-30'];
+
+    $this->post(route('ad-spends.store'), [...$attributes, 'utm_source' => ['x']])->assertSessionHasErrors('utm_source');
+    $this->post(route('ad-spends.store'), [...$attributes, 'utm_source' => '0'])->assertSessionHasNoErrors();
+
+    expect(AdSpend::withoutGlobalScopes()->sole()->utm_source)->toBe('0');
 });

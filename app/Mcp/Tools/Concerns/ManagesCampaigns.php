@@ -131,11 +131,15 @@ trait ManagesCampaigns
         $teamCurrency = $campaign->team->currency;
         $attributes = [
             ...$attributes,
+            'name' => AdSpendRequest::normalizeLabel($attributes['name'] ?? null),
+            'utm_source' => AdSpendRequest::normalizeLabel($attributes['utm_source'] ?? null),
             'campaign_id' => $campaign->id,
             'currency' => strtoupper((string) ($attributes['currency'] ?? $teamCurrency)),
         ];
 
         Validator::make($attributes, [
+            'name' => ['nullable', 'string', 'max:60'],
+            'utm_source' => ['nullable', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0', 'max:100000000'],
             'currency' => ['required', Rule::in([$teamCurrency])],
             'starts_on' => ['required', 'date_format:Y-m-d'],
@@ -156,6 +160,10 @@ trait ManagesCampaigns
     protected function adSpendSchema(JsonSchema $schema): array
     {
         return [
+            'name' => $schema->string()
+                ->description('Optional label for the entry, e.g. the ad platform ("X", "Reddit"). Max 60 characters.'),
+            'utm_source' => $schema->string()
+                ->description('Optional utm_source the ads of this entry use (e.g. "reddit"). Links the spend to that source, so cost per visitor is shown per source. Matched case-insensitively.'),
             'amount' => $schema->number()
                 ->description('Total spend of this entry in major currency units (e.g. 115 or 49.90, not cents). It is spread evenly across starts_on..ends_on.'),
             'currency' => $schema->string()
@@ -185,6 +193,8 @@ trait ManagesCampaigns
                 ->sortBy('starts_on')
                 ->map(fn (AdSpend $adSpend): array => [
                     'ad_spend_id' => $adSpend->getRouteKey(),
+                    'name' => $adSpend->name,
+                    'utm_source' => $adSpend->utm_source,
                     'amount' => round($adSpend->amount / 100, 2),
                     'currency' => $adSpend->currency,
                     'starts_on' => $adSpend->starts_on->toDateString(),

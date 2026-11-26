@@ -2101,7 +2101,7 @@ parameters:
 			path: app/Services/AdSpendService.php
 
 		-
-			message: '#^Method App\\Services\\AdSpendService\:\:paginatedForCampaign\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<int, array\<string, mixed\>\> but returns Illuminate\\Pagination\\LengthAwarePaginator\<int, array\{uuid\: mixed, amount\: int, currency\: string, starts_on\: string, ends_on\: string\}\>\.$#'
+			message: '#^Method App\\Services\\AdSpendService\:\:paginatedForCampaign\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<int, array\<string, mixed\>\> but returns Illuminate\\Pagination\\LengthAwarePaginator\<int, array\{uuid\: mixed, amount\: int, currency\: string, name\: string\|null, utm_source\: string\|null, starts_on\: string, ends_on\: string\}\>\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Services/AdSpendService.php

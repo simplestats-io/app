@@ -162,7 +162,7 @@ Route::middleware([
     Route::patch('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
     Route::post('campaigns/{campaign}/track-campaigns', [CampaignController::class, 'linkTrackCampaign'])->name('campaigns.track-campaigns.link');
     Route::delete('campaigns/{campaign}/track-campaigns/{trackCampaign}', [CampaignController::class, 'unlinkTrackCampaign'])->name('campaigns.track-campaigns.unlink');
-    Route::resource('ad-spends', AdSpendController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('ad-spends', AdSpendController::class)->only(['store', 'update', 'destroy'])->parameters(['ad-spends' => 'adSpend']);
     Route::get('stats/grouped', [StatsController::class, 'groups'])->name('stats.grouped');
     Route::get('stats/status', [StatsController::class, 'status'])->name('stats.status');
 
@@ -174,13 +174,13 @@ Route::middleware([
     Route::delete('ai/pending-actions/{pendingAction}', [AiPendingActionController::class, 'destroy'])->whereUuid('pendingAction')->middleware('throttle:30,1')->name('ai.pending-actions.destroy');
     Route::post('stats/hide-free-plan-warning', [StatsController::class, 'hideFreePlanWarning'])->name('stats.hide-free-plan-warning');
 
-    Route::resource('custom-presets', CustomStatsRangePresetController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('custom-presets', CustomStatsRangePresetController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['custom-presets' => 'customPreset']);
     Route::post('custom-presets/builtin-visibility', [CustomStatsRangePresetController::class, 'updateBuiltinVisibility'])->name('custom-presets.builtin-visibility');
 
     // Data Import
     Route::resource('data-import', DataImportController::class)->only(['index', 'store']);
-    Route::post('data-import/{data_import}/cancel', [DataImportController::class, 'cancel'])->name('data-import.cancel');
-    Route::post('data-import/{data_import}/rollback', [DataImportController::class, 'rollback'])->name('data-import.rollback');
+    Route::post('data-import/{dataImport}/cancel', [DataImportController::class, 'cancel'])->name('data-import.cancel');
+    Route::post('data-import/{dataImport}/rollback', [DataImportController::class, 'rollback'])->name('data-import.rollback');
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['edit', 'create']);

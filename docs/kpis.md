@@ -105,7 +105,7 @@ A campaign belongs to one project, or to **all projects** of your team. Pick "Al
 
 | Key            | Short                    | Description                                                                                                                                                  |
 |----------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **SPEND**      | Ad Spend                 | What you paid for ads on this campaign during the selected period. Entered manually; days outside the period are prorated.                                    |
+| **SPEND**      | Ad Spend                 | What you paid for ads on this campaign during the selected period. Entered manually; days outside the period are prorated. Give an entry the `utm_source` of its ads to see spend and cost per visitor per source on the campaign page. |
 | **NET PROFIT** | Net Profit               | Net revenue from the campaign minus its ad spend. Positive means the campaign earned more than it cost, negative means it cost more than it earned.           |
 | **ROAS**       | Return On Ad Spend       | Revenue divided by spend. `2.00×` means you earned 2 € back for every 1 € spent. Above `1.00×` is profitable, below it the campaign loses money.              |
 | **CAC**        | Customer Acquisition Cost | Ad spend divided by new registrations from the campaign. The average cost of acquiring one new sign-up.                                                       |

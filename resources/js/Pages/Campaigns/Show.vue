@@ -41,7 +41,7 @@ const props = defineProps({
     usageBits: Object,
     campaign: Object,
     summary: Object,
-    traffic: {type: Object, default: () => ({page_views: false, bounce_rate: null, sources: []})},
+    traffic: {type: Object, default: () => ({page_views: false, bounce_rate: null, spend_by_source: false, spend_unassigned: 0, sources: []})},
     adSpends: Object,
     linkedTrackCampaigns: {type: Array, default: () => []},
     linkableTrackCampaigns: {type: Array, default: () => []},
@@ -275,11 +275,13 @@ const unlink = (trackCampaign) => {
                 </div>
             </div>
 
-            <div v-if="traffic.sources.length > 1" class="bg-white dark:bg-dark-800 border dark:border-dark-700 rounded-md">
+            <div v-if="traffic.sources.length > 1 || traffic.spend_by_source" class="bg-white dark:bg-dark-800 border dark:border-dark-700 rounded-md">
                 <div class="px-4 py-3 border-b dark:border-dark-700">
                     <h2 class="font-semibold">By source</h2>
                     <p class="text-sm text-gray-500 dark:text-dark-400">
-                        This campaign's traffic per <span class="font-mono">utm_source</span> in the selected period. Spend is not split per source.
+                        This campaign's traffic per <span class="font-mono">utm_source</span> in the selected period.
+                        <template v-if="!traffic.spend_by_source">Give an ad spend entry its <span class="font-mono">utm_source</span> to see spend and cost per visitor per source.</template>
+                        <template v-else-if="traffic.spend_unassigned > 0">{{ currency(traffic.spend_unassigned) }} of the spend has no <span class="font-mono">utm_source</span> and is not split.</template>
                     </p>
                 </div>
                 <div class="overflow-x-auto">
@@ -291,6 +293,8 @@ const unlink = (trackCampaign) => {
                                 <th v-if="showsRegistrations" class="px-4 py-2 font-semibold text-right">Registrations</th>
                                 <th v-if="traffic.page_views" class="px-4 py-2 font-semibold text-right">Bounce rate</th>
                                 <th v-if="showsRevenue" class="px-4 py-2 font-semibold text-right">Revenue</th>
+                                <th v-if="traffic.spend_by_source" class="px-4 py-2 font-semibold text-right">Spend</th>
+                                <th v-if="traffic.spend_by_source" class="px-4 py-2 font-semibold text-right">Cost per visitor</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -301,6 +305,8 @@ const unlink = (trackCampaign) => {
                                 <td v-if="showsRegistrations" class="px-4 py-2 text-right tabular-nums">{{ number(source.reg) }}</td>
                                 <td v-if="traffic.page_views" class="px-4 py-2 text-right tabular-nums">{{ percent(source.bounce_rate) }}</td>
                                 <td v-if="showsRevenue" class="px-4 py-2 text-right tabular-nums">{{ currency(source.net) }}</td>
+                                <td v-if="traffic.spend_by_source" class="px-4 py-2 text-right tabular-nums">{{ source.spend === null ? '–' : currency(source.spend) }}</td>
+                                <td v-if="traffic.spend_by_source" class="px-4 py-2 text-right tabular-nums">{{ source.cost_per_visitor === null ? '–' : currency(source.cost_per_visitor) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -366,6 +372,8 @@ const unlink = (trackCampaign) => {
 
                 <template #content>
                     <tr class="text-left font-bold text-gray-700 dark:text-dark-300">
+                        <th class="pb-4 pt-6 px-6">Name</th>
+                        <th class="pb-4 pt-6 px-6">Source</th>
                         <th class="pb-4 pt-6 px-6">Amount</th>
                         <th class="pb-4 pt-6 px-6">Period</th>
                         <th class="pb-4 pt-6 px-6"></th>
@@ -376,6 +384,8 @@ const unlink = (trackCampaign) => {
                         class="cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-700 text-gray-700 dark:text-dark-300"
                         @click="openEdit(spend)"
                     >
+                        <td class="border-t px-6 py-4">{{ spend.name ?? '–' }}</td>
+                        <td class="border-t px-6 py-4 font-mono">{{ spend.utm_source ?? '–' }}</td>
                         <td class="border-t px-6 py-4 tabular-nums">{{ currency(spend.amount, spend.currency) }}</td>
                         <td class="border-t px-6 py-4 text-gray-500 dark:text-dark-400">{{ spend.starts_on }} → {{ spend.ends_on }}</td>
                         <td class="w-px border-t px-6 py-4">
@@ -390,7 +400,7 @@ const unlink = (trackCampaign) => {
                         </td>
                     </tr>
                     <tr v-if="!adSpends.data.length">
-                        <td class="border-t px-6 py-8 text-center text-gray-500 dark:text-dark-400" colspan="3">
+                        <td class="border-t px-6 py-8 text-center text-gray-500 dark:text-dark-400" colspan="5">
                             No ad spend yet. Add a budget to track this campaign's profitability.
                         </td>
                     </tr>
@@ -403,6 +413,7 @@ const unlink = (trackCampaign) => {
             :editSpend="editSpend"
             :campaign="campaign"
             :teamCurrency="page.props.teamCurrency"
+            :sourceOptions="traffic.sources.map((source) => source.name).filter((name) => name !== null)"
             @close="showModal = false"
         />
 

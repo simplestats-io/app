@@ -17,7 +17,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
-#[Description('Record an ad spend entry for a campaign: the total amount paid for a date range (e.g. 115 EUR on X from 2026-11-23 to 2026-11-30). The amount is spread evenly across the days. Every call adds a new entry, so check list-campaigns first and use update-ad-spend to correct an existing entry instead of recording it twice. One entry per ad platform keeps the numbers traceable.')]
+#[Description('Record an ad spend entry for a campaign: the total amount paid for a date range (e.g. 115 EUR on X from 2026-11-23 to 2026-11-30). The amount is spread evenly across the days. Every call adds a new entry, so check list-campaigns first and use update-ad-spend to correct an existing entry instead of recording it twice. Record one entry per ad platform with its utm_source, so the campaign page shows spend and cost per visitor per source.')]
 #[IsReadOnly(false)]
 #[IsDestructive(false)]
 class RecordAdSpend extends Tool
@@ -37,6 +37,8 @@ class RecordAdSpend extends Tool
             $campaign = $this->writableCampaign($request->get('campaign_id'));
 
             $adSpend = AdSpend::create($this->validatedAdSpend($campaign, [
+                'name' => $request->get('name'),
+                'utm_source' => $request->get('utm_source'),
                 'amount' => $request->get('amount'),
                 'currency' => $request->get('currency'),
                 'starts_on' => $request->get('starts_on'),
@@ -69,6 +71,8 @@ class RecordAdSpend extends Tool
             'campaign_id' => $schema->string()
                 ->description('The campaign_id from list-campaigns or create-campaign.')
                 ->required(),
+            'name' => $fields['name'],
+            'utm_source' => $fields['utm_source'],
             'amount' => $fields['amount']->required(),
             'currency' => $fields['currency'],
             'starts_on' => $fields['starts_on']->required(),
