@@ -2,6 +2,14 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.8.1 - 2026-11-26
+
+### Fixed
+
+- Existing users can log in with Google and GitHub again. The social login was rejected and redirected back to the provider.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.8.0...v7.8.1
+
 ## v7.8.0 - 2026-11-26
 
 ### Upgrade notes
