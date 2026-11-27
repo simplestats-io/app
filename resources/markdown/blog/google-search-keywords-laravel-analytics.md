@@ -1,7 +1,7 @@
 ---
 title: "Which Google Keywords Bring Paying Customers to Your Laravel App?"
 slug: "google-search-keywords-laravel-analytics"
-date: "2026-11-27"
+date: "2026-11-30"
 excerpt: "Google hides the search term of every visitor. SimpleStats now connects to Google Search Console and shows your keywords next to your other channels: clicks, ranking, and an estimate of the revenue each keyword brings."
 tags:
   - SEO
@@ -60,15 +60,16 @@ Your keywords are also available to the **Ask AI** assistant in your dashboard a
 
 If a project is not connected yet, the assistant tells you where to connect it and walks you through the setup.
 
-## Setup in two minutes
+## Setup in one click
 
 You need a verified property for your site in [Google Search Console](https://search.google.com/search-console). Then:
 
 1. Open **Projects**, pick your project and find **Google Search Console**.
 2. Click **Connect Google Search Console** and sign in with a Google account that has access to the property. SimpleStats only asks for read access.
-3. Pick the property and click **Link property**.
 
-That's it. SimpleStats imports up to **16 months of history** right away and then updates your keywords every day. Search Console data is about two days behind, so the newest days follow a little later.
+That's it. SimpleStats finds the property that matches your project's domain and links it for you. Your next project connects with a single click, no second Google sign-in.
+
+SimpleStats imports up to **16 months of history** right away and then updates your keywords every day. Search Console data is about two days behind, so the newest days follow a little later.
 
 The Google account does not have to be the one you sign in to SimpleStats with. A shared webmaster account works just as well. Admins and editors of your team can connect it, everyone in the team sees the keywords.
 

@@ -40,8 +40,9 @@ Use it to compare keywords with each other, not as exact revenue.
 You need a verified property in [Google Search Console](https://search.google.com/search-console) for your site. Administrators and editors of a team can connect it:
 
 1. Open **Projects**, then your project, and find the **Google Search Console** section.
-2. Click **Connect Google Search Console** and sign in with a Google account that has access to the property. _SimpleStats_ only asks for read access to your Search Console data.
-3. Pick the property of this project and click **Link property**.
+2. Click **Connect Google Search Console** and sign in with a Google account that has access to the property. On the Google screen, tick **View Search Console data for your verified sites**. _SimpleStats_ only asks for read access to your Search Console data.
+
+The property matching your project's domain is linked automatically. If there is none, or several fit, you pick it from a list. For another project, connect the same Google account with one click, no second Google sign-in needed.
 
 _SimpleStats_ then imports up to 16 months of history (this takes a few minutes) and updates the keywords once a day.
 
