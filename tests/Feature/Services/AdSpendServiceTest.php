@@ -658,3 +658,70 @@ it('reports the total recorded spend and the cost per visitor next to the range 
         'cost_per_visitor' => 7219.0,
     ]);
 });
+
+it('totals the range spend of all campaigns against all revenue received in the range', function (): void {
+    $google = makeCampaign($this->team->id, $this->pid, 'Google Ads');
+    $meta = makeCampaign($this->team->id, $this->pid, 'Meta Ads');
+    $otherProject = Project::factory()->create(['team_id' => $this->team->id]);
+    $foreign = makeCampaign($this->team->id, $otherProject->id, 'Other project');
+
+    foreach ([$google, $meta, $foreign] as $campaign) {
+        AdSpend::factory()->create([
+            'team_id' => $this->team->id,
+            'campaign_id' => $campaign,
+            'amount' => 3000,
+            'starts_on' => '2026-06-01',
+            'ends_on' => '2026-06-30',
+        ]);
+    }
+
+    $utm = makeTrackCampaign($this->team->id, 'unlinked');
+    makeCampaignUser('u1', $this->team->id, $this->pid, $utm, '2026-05-01 10:00:00');
+    makeCampaignPayment('p1', 'u1', $this->team->id, $this->pid, 7000, '2026-06-15 10:00:00');
+    makeCampaignPayment('p2', 'u1', $this->team->id, $this->pid, 9000, '2026-05-15 10:00:00');
+
+    // 10 of 30 days of each project campaign, organic revenue of a user acquired before the range
+    expect($this->service->rangeTotals(rangeFilter($this->pid, 10, '2026-06-20'), withRevenue: true))
+        ->toBe(['spend' => 2000, 'net' => 7000, 'shared_excluded' => false])
+        ->and($this->service->rangeTotals(rangeFilter($this->pid, 10, '2026-06-20'), withRevenue: false))
+        ->toBe(['spend' => 2000, 'net' => null, 'shared_excluded' => false])
+        ->and($this->service->rangeTotals(rangeFilter(StatsFilterDto::TRACK_ALL, 10, '2026-06-20'), withRevenue: false)['spend'])
+        ->toBe(3000);
+});
+
+it('leaves campaigns for all projects out of a project view and flags it', function (): void {
+    $shared = makeCampaign($this->team->id, null, 'Black Friday');
+
+    AdSpend::factory()->create([
+        'team_id' => $this->team->id,
+        'campaign_id' => $shared,
+        'amount' => 3000,
+        'starts_on' => '2026-06-01',
+        'ends_on' => '2026-06-30',
+    ]);
+
+    expect($this->service->rangeTotals(rangeFilter($this->pid, 10, '2026-06-20'), withRevenue: false))
+        ->toBe(['spend' => 0, 'net' => null, 'shared_excluded' => true])
+        ->and($this->service->rangeTotals(rangeFilter(StatsFilterDto::TRACK_ALL, 10, '2026-06-20'), withRevenue: false))
+        ->toBe(['spend' => 1000, 'net' => null, 'shared_excluded' => false]);
+});
+
+it('counts spend of a running period only up to today', function (): void {
+    $campaign = makeCampaign($this->team->id, $this->pid, 'Google Ads');
+
+    AdSpend::factory()->create([
+        'team_id' => $this->team->id,
+        'campaign_id' => $campaign,
+        'amount' => 3000,
+        'starts_on' => '2026-06-01',
+        'ends_on' => '2026-06-30',
+    ]);
+
+    $thisMonth = new StatsFilterDto(
+        projectId: $this->pid, rangeAmount: 1, rangeType: StatsRangeType::MONTH,
+        rangeStart: CarbonImmutable::parse('2026-06-21'), comparison: '0',
+    );
+
+    // today is June 21: 21 of 30 days
+    expect($this->service->rangeTotals($thisMonth, withRevenue: false)['spend'])->toBe(2100);
+});

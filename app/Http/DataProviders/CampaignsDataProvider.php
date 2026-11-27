@@ -4,6 +4,7 @@ namespace App\Http\DataProviders;
 
 use App\DTOs\StatsFilterDto;
 use App\Http\Requests\StatsFilterRequest;
+use App\Models\Project;
 use App\Models\Team;
 use App\Services\AdSpendService;
 use App\Services\RefererService;
@@ -37,6 +38,7 @@ class CampaignsDataProvider extends AbstractStatsDataProvider
             // consuming the same service; the page works with the uuids.
             'campaigns' => $this->adSpendService->getCampaignProfitability($filters)
                 ->through(fn (array $row) => Arr::except($row, ['campaign_id', 'project_id'])),
+            'totals' => $this->adSpendService->rangeTotals($filters, $this->projectTracksBit($teamStats, $filters, Project::USAGE_PAYMENTS)),
             'projects' => $this->projectOptions($teamStats),
             'canCreateForAllProjects' => ! $user->hasRestrictedProjectAccess($user->currentTeam),
         ]);

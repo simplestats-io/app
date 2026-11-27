@@ -34,6 +34,7 @@ test('campaigns renders Campaigns/Index with the shared filter and profitability
             ->has('rangeTypes')
             ->has('usageBits')
             ->has('campaigns')
+            ->has('totals', fn ($totals) => $totals->has('spend')->has('net')->has('shared_excluded'))
             ->has('projects')
             ->missing('adSpends')
             ->missing('availableCampaigns')

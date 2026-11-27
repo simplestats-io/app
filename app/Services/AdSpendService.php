@@ -64,6 +64,57 @@ class AdSpendService
     }
 
     /**
+     * Blended view across all channels: the ad spend of every campaign in the range
+     * versus all revenue received in it (cash basis, organic included). Unlike the
+     * per-campaign rows this is no attribution, just "what went out vs. what came in".
+     * Revenue is null when the scope does not track payments.
+     *
+     * Spend stops at today: revenue of the rest of a running bucket has not arrived
+     * yet, so a whole month of budget against a few days of revenue would read as a loss.
+     * Campaigns for all projects cannot be split per project, so a project view leaves
+     * them out and reports that via shared_excluded.
+     *
+     * @return array{spend: int, net: int|null, shared_excluded: bool}
+     */
+    public function rangeTotals(StatsFilterDto $filters, bool $withRevenue): array
+    {
+        [$windowStart, $windowEnd] = $this->resolveWindow($filters);
+        $windowEnd = $windowEnd->min(now());
+
+        $adSpends = AdSpend::query()
+            ->with('campaign:id,project_id')
+            ->whereHas('campaign')
+            ->where('starts_on', '<=', $windowEnd->toDateString())
+            ->where('ends_on', '>=', $windowStart->toDateString())
+            ->get()
+            ->filter(fn (AdSpend $adSpend): bool => $adSpend->allocatedFor($windowStart, $windowEnd) > 0);
+
+        $inScope = $filters->projectId === StatsFilterDto::TRACK_ALL
+            ? $adSpends
+            : $adSpends->filter(fn (AdSpend $adSpend): bool => $adSpend->campaign->project_id === $filters->projectId);
+
+        $spend = $inScope->sum(fn (AdSpend $adSpend): int => $adSpend->allocatedFor($windowStart, $windowEnd));
+        $sharedExcluded = $filters->projectId !== StatsFilterDto::TRACK_ALL
+            && $adSpends->contains(fn (AdSpend $adSpend): bool => $adSpend->campaign->spansAllProjects());
+
+        $net = null;
+
+        if ($withRevenue) {
+            // Only project and range: other dimension filters must not narrow the total.
+            $rows = $this->statsDetailsService->getRaw(new StatsFilterDto(
+                projectId: $filters->projectId,
+                rangeAmount: $filters->rangeAmount,
+                rangeType: $filters->rangeType,
+                rangeStart: $filters->rangeStart,
+                comparison: '0',
+            ));
+            $net = (int) round(array_sum(array_column($rows, 'pd_net')));
+        }
+
+        return ['spend' => (int) $spend, 'net' => $net, 'shared_excluded' => $sharedExcluded];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function campaignSummary(StatsFilterDto $filters, Campaign $campaign): array

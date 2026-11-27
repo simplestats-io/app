@@ -33,6 +33,7 @@ const props = defineProps({
     subscriptionPlanAlarm: Array,
     usageBits: Object,
     campaigns: {type: Object, default: () => ({data: [], links: []})},
+    totals: {type: Object, default: () => ({spend: 0, net: null, shared_excluded: false})},
     projects: {type: Array, default: () => []},
     canCreateForAllProjects: Boolean,
 });
@@ -53,20 +54,17 @@ const defaultProjectId = props.projects.find(project => project.uuid === props.f
 
 const columnCount = 3 + (showProjectColumn ? 1 : 0) + (showsRevenue ? 3 : 0) + (showsRegistrations ? 1 : 0) + (showsSubscription ? 2 : 0);
 
+const neutralText = 'text-gray-950 dark:text-white';
 const currency = (cents, code = page.props.teamCurrency) => formatMap.currency(cents, {notation: 'standard'}, code);
 const rangeCurrency = (row, cents) => row.has_activity ? currency(cents) : '–';
 
 // UTC because the backend sends plain dates, which `new Date()` parses as UTC midnight.
 const dateFormatter = new Intl.DateTimeFormat('en-US', {year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'});
-const formatRuns = (row) => {
-    if (!row.runs_from) {
-        return 'No spend yet';
-    }
+const formatDate = (date) => dateFormatter.format(new Date(date));
 
-    const from = dateFormatter.format(new Date(row.runs_from));
-
-    return row.runs_from === row.runs_until ? from : `${from} – ${dateFormatter.format(new Date(row.runs_until))}`;
-};
+const totalsShowRevenue = props.totals.net !== null;
+const totalsBalance = totalsShowRevenue ? props.totals.net - props.totals.spend : null;
+const blendedRoas = totalsShowRevenue && props.totals.spend > 0 ? props.totals.net / props.totals.spend : null;
 
 const showCampaignModal = ref(false);
 
@@ -130,6 +128,41 @@ const analyzeCampaignRetention = (row) => {
                 </p>
             </div>
 
+            <div class="space-y-2">
+                <div class="text-sm font-medium text-gray-500 dark:text-dark-400">
+                    All channels in the selected period, up to today
+                    <span v-if="totals.shared_excluded" class="font-normal">(campaigns for all projects only count in the all-projects view)</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3" :class="totalsShowRevenue ? 'lg:grid-cols-4' : 'lg:grid-cols-1 max-w-xs'">
+                    <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                        <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                            Ad spend <InfoTooltip :title="metricInfo.totalSpend.title" :text="metricInfo.totalSpend.text" />
+                        </div>
+                        <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white tabular-nums">{{ currency(totals.spend) }}</div>
+                    </div>
+                    <template v-if="totalsShowRevenue">
+                        <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                            <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                                Revenue <InfoTooltip :title="metricInfo.totalRevenue.title" :text="metricInfo.totalRevenue.text" />
+                            </div>
+                            <div class="mt-1 text-xl font-semibold tracking-tight text-gray-950 dark:text-white tabular-nums">{{ currency(totals.net) }}</div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                            <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                                After ad spend <InfoTooltip :title="metricInfo.totalBalance.title" :text="metricInfo.totalBalance.text" />
+                            </div>
+                            <div class="mt-1 text-xl font-semibold tracking-tight tabular-nums" :class="profitClass(totalsBalance, neutralText)">{{ currency(totalsBalance) }}</div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-800 border rounded-md py-3 px-4">
+                            <div class="flex items-center gap-1 text-sm font-medium tracking-wider text-gray-700 dark:text-dark-400">
+                                Blended ROAS <InfoTooltip :title="metricInfo.blendedRoas.title" :text="metricInfo.blendedRoas.text" />
+                            </div>
+                            <div class="mt-1 text-xl font-semibold tracking-tight tabular-nums" :class="roasClass(blendedRoas, neutralText)">{{ roas(blendedRoas) }}</div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <ActionTable :links="campaigns.links" maxWidth="max-w-none">
                 <template #title>Campaign profitability</template>
                 <template #description>Spend in the selected range versus everything the customers it acquired have paid so far. Click a campaign to manage its ad spend.</template>
@@ -172,7 +205,7 @@ const analyzeCampaignRetention = (row) => {
                         :key="row.campaign_uuid + '-' + row.name"
                         class="hover:bg-gray-50 dark:hover:bg-dark-700 text-gray-700 dark:text-dark-300"                    >
                         <td class="border-t px-6 py-4 font-medium">
-                            <button type="button" class="text-left text-indigo-600 dark:text-indigo-400 hover:underline" v-tooltip="'Manage ad spend'" @click="manageCampaign(row)">
+                            <button type="button" class="block max-w-56 truncate text-left text-indigo-600 dark:text-indigo-400 hover:underline" v-tooltip="`Manage ad spend for ${row.name}`" @click="manageCampaign(row)">
                                 {{ row.name }}
                             </button>
                             <div v-if="!row.has_activity" class="mt-1 flex items-center gap-1 text-xs font-normal text-amber-600 dark:text-amber-400">
@@ -181,7 +214,14 @@ const analyzeCampaignRetention = (row) => {
                             </div>
                         </td>
                         <td v-if="showProjectColumn" class="border-t px-6 py-4 text-gray-500 dark:text-dark-400">{{ row.project_name }}</td>
-                        <td class="border-t px-6 py-4 whitespace-nowrap text-gray-500 dark:text-dark-400">{{ formatRuns(row) }}</td>
+                        <td class="border-t px-6 py-4 whitespace-nowrap text-gray-500 dark:text-dark-400">
+                            <template v-if="!row.runs_from">No spend yet</template>
+                            <template v-else-if="row.runs_from === row.runs_until">{{ formatDate(row.runs_from) }}</template>
+                            <template v-else>
+                                <div>{{ formatDate(row.runs_from) }} –</div>
+                                <div>{{ formatDate(row.runs_until) }}</div>
+                            </template>
+                        </td>
                         <td class="border-t px-6 py-4 text-right tabular-nums">{{ rangeCurrency(row, row.spend) }}</td>
                         <td v-if="showsRevenue" class="border-t px-6 py-4 text-right tabular-nums">{{ rangeCurrency(row, row.net) }}</td>
                         <td
