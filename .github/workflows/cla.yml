@@ -26,4 +26,4 @@ jobs:
           path-to-signatures: 'signatures/cla.json'
           path-to-document: 'https://github.com/simplestats-io/app/blob/main/CLA.md'
           branch: 'cla-signatures'
-          allowlist: sairahcaz,bot*,dependabot*
+          allowlist: Sairahcaz,sairahcaz,bot*,dependabot*
