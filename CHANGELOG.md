@@ -2,6 +2,18 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.11.0 - 2026-11-27
+
+### Added
+
+- Campaigns page: totals for the selected period across all channels (ad spend, net revenue, revenue after ad spend and blended ROAS) above the campaign table.
+
+### Changed
+
+- Campaigns table: long campaign names are truncated and the run dates are shown on two lines.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.10.0...v7.11.0
+
 ## v7.10.0 - 2026-11-27
 
 ### Added
