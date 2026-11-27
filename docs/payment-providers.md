@@ -35,7 +35,7 @@ use SimpleStatsIo\LaravelClient\PaymentProviders\CashierStripe;
     ],
 ```
 
-Two things are needed for every provider:
+Three things are needed for every provider:
 
 - **Your user model implements `TrackablePerson`**, as described in [How to track a new user](how-to-track-a-new-user.md). Payments are linked to the paying user, which is what attributes revenue to the channel the user came from. If your billable model is not a user (for example a team), use [your own payment model](how-to-track-a-new-payment.md) instead.
 - **A queue worker runs**, because the payments of some providers (and Paddle refunds) are processed as queued jobs. See [Queue](queue.md).

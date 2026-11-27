@@ -130,6 +130,17 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
         return true;
     }
 
+    /**
+     * @return list<string>
+     */
+    public function trackedUsageKeys(): array
+    {
+        return self::getUsages()
+            ->filter(fn (array $usage): bool => $this->hasUsages([$usage['bit']]))
+            ->keys()
+            ->all();
+    }
+
     public function hasFlags(array $bits): bool
     {
         foreach ($bits as $bit) {

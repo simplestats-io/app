@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import CodeSlashIcon from "bootstrap-icons/icons/code-slash.svg?component";
 import { paymentProviders } from "@/Pages/Home/Partials/Integration/paymentProviders.js";
 
@@ -7,6 +7,10 @@ import { paymentProviders } from "@/Pages/Home/Partials/Integration/paymentProvi
 const selected = defineModel({ type: Object, default: null });
 
 const options = [...paymentProviders, null];
+
+const docsUrl = computed(() => selected.value
+    ? `/docs/payment-providers.html#${selected.value.anchor}`
+    : '/docs/how-to-track-a-new-payment.html#payment-tracking');
 const optionButtons = ref([]);
 
 // On narrow screens the snippet sits above the tiles and changes its height, so the page is
@@ -32,7 +36,10 @@ const tile = (active) => [
 
 <template>
     <div class="mt-4">
-        <p id="payment-provider-label" class="text-sm font-semibold text-gray-900 dark:text-white">{{ $t('Pick your payment provider') }}</p>
+        <div class="flex items-baseline justify-between gap-4">
+            <p id="payment-provider-label" class="text-sm font-semibold text-gray-900 dark:text-white">{{ $t('Pick your payment provider') }}</p>
+            <a :href="docsUrl" target="_blank" class="simpleLink text-sm">{{ $t('How it works') }}</a>
+        </div>
         <div
             role="radiogroup"
             aria-labelledby="payment-provider-label"

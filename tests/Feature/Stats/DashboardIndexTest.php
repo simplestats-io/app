@@ -571,10 +571,13 @@ test('metric route does not build revenue_churn for a non-churn kpi', function (
 
 test('dashboard shows the installation steps with the token until the team receives data', function (): void {
     $project = $this->user->currentTeam->projects()->first();
+    $project->update(['usage' => Project::USAGE_VISITORS | Project::USAGE_PAYMENTS]);
 
     $this->get(route('dashboard'))
         ->assertInertia(fn ($page) => $page
             ->where('awaitingFirstData.project.uuid', $project->uuid)
+            ->where('awaitingFirstData.project.domain', $project->domain)
+            ->where('awaitingFirstData.project.tracking', ['visitors', 'payments'])
             ->where('awaitingFirstData.token', $project->tokens()->first()->token_plain_part)
         );
 });

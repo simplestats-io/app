@@ -15,6 +15,10 @@ defineProps({
         type: String,
         default: '',
     },
+    wide: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const goBack = () => window.history.back();
@@ -37,7 +41,7 @@ const logout = () => router.post(route('logout'));
         </div>
     </div>
     <div class="w-full min-h-screen flex items-center">
-        <div class="mx-auto w-full sm:max-w-lg p-1.5 rounded-lg bg-gray-200/50 dark:bg-dark-600/50 fade-in-bottom">
+        <div class="mx-auto w-full p-1.5 rounded-lg bg-gray-200/50 dark:bg-dark-600/50 fade-in-bottom" :class="wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'">
         <div class="relative p-10 border rounded-md bg-white dark:bg-dark-800">
                 <h2 v-if="title" class="text-xl font-semibold">{{ title }}</h2>
                 <p v-if="description" class="mb-6">{{ description }}</p>

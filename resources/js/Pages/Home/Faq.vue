@@ -39,6 +39,12 @@ const questions = ref([
         'active': false,
     },
     {
+        'id': 'marketing-site',
+        'title': () => trans('My marketing site isn\'t built with Laravel. Does it still work?'),
+        'answer': () => trans('Yes! Add one script tag from your Laravel app to your marketing site, no matter if it runs on Next.js, Nuxt, Astro, Webflow, Framer or WordPress. Its visitors are tracked, and their later signups and payments in your Laravel app are attributed to where they came from. Check out our <a href="/docs/frontend-frameworks.html" target="_blank" class="simpleLink">documentation</a> to get started.'),
+        'active': false,
+    },
+    {
         'id': 'open-source',
         'title': () => trans('Is SimpleStats open source?'),
         'answer': () => trans('Yes! SimpleStats is open source under the AGPL-3.0 license. The code is on <a href="https://github.com/simplestats-io/app" target="_blank" class="simpleLink">GitHub</a>, so you can verify exactly how your data is handled.'),

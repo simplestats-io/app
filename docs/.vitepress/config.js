@@ -79,6 +79,19 @@ export default defineConfig({
                 ]
             },
             {
+                text: 'Frontend Frameworks',
+                collapsed: true,
+                items: [
+                    {text: 'Overview', link: '/frontend-frameworks'},
+                    {text: 'Next.js', link: '/nextjs'},
+                    {text: 'Nuxt', link: '/nuxt'},
+                    {text: 'Astro', link: '/astro'},
+                    {text: 'Webflow', link: '/webflow'},
+                    {text: 'Framer', link: '/framer'},
+                    {text: 'WordPress', link: '/wordpress'},
+                ]
+            },
+            {
                 text: 'Integrations',
                 collapsed: false,
                 items: [

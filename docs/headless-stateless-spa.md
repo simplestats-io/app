@@ -50,7 +50,40 @@ In a headless / SPA setup, the browser hits your **frontend** first (separate do
 - The request path is something like `/api/me`, not the landing page the visitor actually saw.
 - UTM parameters from the landing URL are lost unless the frontend forwards them explicitly.
 
-To make attribution work, your frontend must send **one initial tracking request** to any GET endpoint behind the `CheckTracking` middleware as soon as the page loads, and forward the original context as headers or query parameters. The middleware caches that context for the rest of the day, so later events (registrations, logins, payments) are automatically attributed to the same visit. **One call is enough**, you do not need to repeat the headers on every subsequent request.
+## The beacon script (recommended)
+
+Since version 6.4 of the client, the easiest way is the script the client package serves next to its [beacon](./static-caching.md#marketing-site-outside-laravel). Add it to the HTML of your frontend and it forwards the landing page, the referrer and the UTM parameters for you. It also reports every client-side route change, so you get page views and Top Pages without any extra code:
+
+```dotenv
+# .env of your Laravel app
+SIMPLESTATS_BEACON_ENABLED=true
+```
+
+```php
+// config/simplestats-client.php
+'middleware_groups' => ['api'],
+'tracking_storage' => 'cache',
+
+'own_domains' => [
+    'www.my-app.com', // the domain your frontend runs on
+],
+```
+
+```html
+<script src="https://api.my-app.com/assets/v.js" defer></script>
+```
+
+Replace `api.my-app.com` with the domain of your Laravel app. The script is loaded once and follows route changes made with the History API (`pushState`), which every SPA router uses.
+
+Your app can call the API right away: as long as the script is enabled, an API call from the browser (a `fetch` or XHR request) only starts a visit when it forwards the page itself, so the script's ping always sets the entry page and the campaign, whichever request arrives first.
+
+::: warning Calls from your frontend server
+The visitor is recognized by IP and User-Agent. When signup or checkout runs through your frontend's server (Next.js server actions, Nuxt server routes, SSR data fetching) instead of the browser, Laravel sees the server's IP and the registration cannot be linked to the visit. Call the Laravel API from the browser for these requests, or forward the visitor manually as described below.
+:::
+
+## Forwarding manually
+
+Without the script, your frontend must send **one initial tracking request** to any GET endpoint behind the `CheckTracking` middleware as soon as the page loads, and forward the original context as headers or query parameters. The middleware caches that context for the rest of the day, so later events (registrations, logins, payments) are automatically attributed to the same visit. **One call is enough**, you do not need to repeat the headers on every subsequent request.
 
 ## What to forward
 

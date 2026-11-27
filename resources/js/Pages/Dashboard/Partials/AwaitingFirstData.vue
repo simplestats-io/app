@@ -1,11 +1,12 @@
 <script setup>
 import {onBeforeUnmount, onMounted, ref} from "vue";
 import {router} from "@inertiajs/vue3";
-import axios from "axios";
 import Modal from "@/Components/Modal.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import InstallationSteps from "@/Components/Project/InstallationSteps.vue";
+import NoDataYetHint from "@/Components/Project/NoDataYetHint.vue";
+import {useFirstDataPolling} from "@/Composables/useFirstDataPolling.js";
 import CheckCircleFillIcon from "bootstrap-icons/icons/check-circle-fill.svg?component";
 
 defineProps({
@@ -16,46 +17,25 @@ defineProps({
 
 const emit = defineEmits(['done', 'tour']);
 
-const POLL_INTERVAL_MS = 5000;
 // Lets the empty dashboard register before the modal covers it.
 const MODAL_DELAY_MS = 600;
 
 const appName = import.meta.env.VITE_APP_NAME;
 
 const showModal = ref(false);
-const received = ref(false);
 
-let pollTimer = null;
+const {received, takingLong} = useFirstDataPolling(() => {
+    showModal.value = true;
+    router.reload();
+});
+
 let delayTimer = null;
-
-async function checkForData() {
-    if (document.hidden) {
-        return;
-    }
-
-    try {
-        const {data} = await axios.get(route('stats.status'));
-
-        if (data.hasData) {
-            clearInterval(pollTimer);
-            received.value = true;
-            showModal.value = true;
-            router.reload();
-        }
-    } catch {
-        // A failed check is retried on the next tick.
-    }
-}
 
 onMounted(() => {
     delayTimer = setTimeout(() => showModal.value = true, MODAL_DELAY_MS);
-    pollTimer = setInterval(checkForData, POLL_INTERVAL_MS);
 });
 
-onBeforeUnmount(() => {
-    clearTimeout(delayTimer);
-    clearInterval(pollTimer);
-});
+onBeforeUnmount(() => clearTimeout(delayTimer));
 </script>
 
 <template>
@@ -99,11 +79,13 @@ onBeforeUnmount(() => {
                     <h2 class="text-lg font-semibold">Almost there! Waiting for your first data</h2>
                 </div>
                 <p class="text-sm text-gray-600 dark:text-dark-400 mb-8">
-                    <strong>{{ project.name }}</strong> has not received any data yet. Install the client in your Laravel app and open the app in a browser.
+                    <strong>{{ project.name }}</strong> has not received any data yet. Install the client in your Laravel app and open your site in a browser.
                     This window updates automatically as soon as the first data arrives.
                 </p>
 
-                <InstallationSteps :apiToken="token" />
+                <InstallationSteps :apiToken="token" :domain="project.domain" :tracking="project.tracking" show-variants />
+
+                <NoDataYetHint v-if="takingLong" class="mt-4" />
 
                 <div class="mt-8 text-right">
                     <button type="button" class="text-sm text-gray-500 dark:text-dark-400 underline hover:text-gray-700 dark:hover:text-dark-300" @click="showModal = false">

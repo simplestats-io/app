@@ -9,8 +9,12 @@ class SetupInstallController extends Controller
 {
     public function index(Request $request)
     {
+        $project = $request->user()->currentTeam->projects()->first();
+
         return Inertia::render('Setup/Installation', [
-            'apiToken' => $request->user()->currentTeam->projects()->first()->tokens->first()->token_plain_part,
+            'apiToken' => $project->tokens->first()->token_plain_part,
+            'domain' => $project->domain,
+            'tracking' => $project->trackedUsageKeys(),
         ]);
     }
 }

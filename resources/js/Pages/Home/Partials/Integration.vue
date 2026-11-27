@@ -13,6 +13,7 @@ import trackUserHtml from "@/Pages/Home/Partials/Integration/Snippets/track_user
 import PaymentSnippet from "@/Pages/Home/Partials/Integration/PaymentSnippet.vue";
 import { paymentProviders } from "@/Pages/Home/Partials/Integration/paymentProviders.js";
 import PaymentProviderCloud from "@/Pages/Home/Partials/Integration/PaymentProviderCloud.vue";
+import FrontendFrameworkCloud from "@/Pages/Home/Partials/Integration/FrontendFrameworkCloud.vue";
 
 const appName = import.meta.env.VITE_APP_NAME;
 // shallowRef: the cloud compares the options by identity, a deep ref would wrap them in proxies.
@@ -39,7 +40,10 @@ const paymentProvider = shallowRef(paymentProviders[0]);
 
                     <StaticCodeBlock :title="$t('Install :appName', { appName })" :html="installHtml" />
                     <GridPlaceholder />
-                    <StepText :content="$t('In your Laravel project, you just need to <b>install</b> the :appName <b>client</b>. Congrats, the tool is now already tracking your visitors!', { appName })" />
+                    <div class="self-start">
+                        <StepText :content="$t('In your Laravel project, you just need to <b>install</b> the :appName <b>client</b>. Congrats, the tool is now already tracking your visitors!', { appName })" />
+                        <FrontendFrameworkCloud />
+                    </div>
 
                     <GridPlaceholder />
                     <BigStepBullet content="2" />

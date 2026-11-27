@@ -65,7 +65,7 @@ class StatsIndexDataProvider extends AbstractStatsDataProvider
      * steps instead of empty charts. The token is only included for members allowed to
      * read it, everybody else is pointed to an administrator.
      *
-     * @return array{project: array{uuid: string, name: string}, token: string|null}|null
+     * @return array{project: array{uuid: string, name: string, domain: string|null, tracking: list<string>}, token: string|null}|null
      */
     private function awaitingFirstData(User $user): ?array
     {
@@ -88,7 +88,12 @@ class StatsIndexDataProvider extends AbstractStatsDataProvider
             : null;
 
         return [
-            'project' => ['uuid' => $project->uuid, 'name' => $project->name],
+            'project' => [
+                'uuid' => $project->uuid,
+                'name' => $project->name,
+                'domain' => $project->domain,
+                'tracking' => $project->trackedUsageKeys(),
+            ],
             'token' => $token?->token_plain_part,
         ];
     }

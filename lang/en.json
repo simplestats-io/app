@@ -111,6 +111,8 @@
     "We track unique visitors in a GDPR-compliant way by generating a unique visitor hash each time a new visitor accesses your site. This hash is derived from a combination of the visitor's User-Agent, IP address, and a daily salt. This method enables unique visitor tracking without storing personally identifiable information such as cookies, ensuring privacy and data protection.": "We track unique visitors in a GDPR-compliant way by generating a unique visitor hash each time a new visitor accesses your site. This hash is derived from a combination of the visitor's User-Agent, IP address, and a daily salt. This method enables unique visitor tracking without storing personally identifiable information such as cookies, ensuring privacy and data protection.",
     "Do you support custom events?": "Do you support custom events?",
     "Yes! You can track custom events to measure any activity that matters to your application. Check out our <a href=\"/docs/how-to-track-a-custom-event.html\" target=\"_blank\" class=\"simpleLink\">documentation</a> to get started.": "Yes! You can track custom events to measure any activity that matters to your application. Check out our <a href=\"/docs/how-to-track-a-custom-event.html\" target=\"_blank\" class=\"simpleLink\">documentation</a> to get started.",
+    "My marketing site isn't built with Laravel. Does it still work?": "My marketing site isn't built with Laravel. Does it still work?",
+    "Yes! Add one script tag from your Laravel app to your marketing site, no matter if it runs on Next.js, Nuxt, Astro, Webflow, Framer or WordPress. Its visitors are tracked, and their later signups and payments in your Laravel app are attributed to where they came from. Check out our <a href=\"/docs/frontend-frameworks.html\" target=\"_blank\" class=\"simpleLink\">documentation</a> to get started.": "Yes! Add one script tag from your Laravel app to your marketing site, no matter if it runs on Next.js, Nuxt, Astro, Webflow, Framer or WordPress. Its visitors are tracked, and their later signups and payments in your Laravel app are attributed to where they came from. Check out our <a href=\"/docs/frontend-frameworks.html\" target=\"_blank\" class=\"simpleLink\">documentation</a> to get started.",
     "If you need more help, check out our": "If you need more help, check out our",
     "Troubleshooting": "Troubleshooting",
     "page!": "page!",
@@ -174,6 +176,8 @@
     "Any other": "Any other",
     "your own model": "your own model",
     "via Cashier": "via Cashier",
+    "Works with any frontend": "Works with any frontend",
+    "How it works": "How it works",
     "You're all set! <b>:appName</b> is now tracking your data. Head over to your <b>dashboard</b> and discover what's happening in your app - in real time.": "You're all set! <b>:appName</b> is now tracking your data. Head over to your <b>dashboard</b> and discover what's happening in your app - in real time.",
 
     "Secure Area": "Secure Area",
