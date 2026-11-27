@@ -2,6 +2,15 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.9.1 - 2026-11-27
+
+### Fixed
+
+- Ask AI and the MCP `search-docs` tool find the right documentation page more reliably: rare, specific terms count more than common words, results show up to two excerpts per page, and the assistant can now read a whole doc page.
+- Mails: code blocks wrap and get a light background, section headings are larger and stand out from bold text.
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.9.0...v7.9.1
+
 ## v7.9.0 - 2026-11-26
 
 ### Added
