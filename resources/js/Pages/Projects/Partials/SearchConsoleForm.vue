@@ -106,11 +106,9 @@ const disconnect = () => {
                     <span>Google no longer grants access to this Search Console data. Reconnect to resume the daily import.</span>
                 </div>
 
-                <div v-else-if="connection.site_url" class="flex items-start gap-2">
-                    <CheckIcon class="size-4 mt-0.5 shrink-0 text-green-500" />
-                    <span>
-                        Linked to <strong class="text-gray-900 dark:text-white">{{ connection.site_url }}</strong>{{ linkedDetails }}
-                    </span>
+                <div v-else-if="connection.site_url">
+                    Linked to <strong class="text-gray-900 dark:text-white">{{ connection.site_url }}</strong>{{ linkedDetails }}
+                    <CheckIcon class="inline size-4 ml-1 -mt-0.5 text-green-500" />
                 </div>
 
                 <div v-else-if="connection.connected_by_user">
