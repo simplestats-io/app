@@ -2,6 +2,16 @@
 
 All notable changes to `simplestats-io/app` will be documented in this file.
 
+## v7.10.0 - 2026-11-27
+
+### Added
+
+- **Simpler installation step:** three numbered steps, a live status that shows when the first data arrives, and a link to the troubleshooting guide when nothing arrives after a few minutes. Setups whose landing page is not rendered by Laravel (marketing site or separate frontend app) sit behind a disclosure.
+- **Install with your AI agent:** a prefilled prompt for Claude Code, Cursor, Codex and other coding agents installs the client, picks the setup for your frontend and adds registration and payment tracking, following the new [agent install guide](https://simplestats.io/docs/agent-install.md).
+- **Setup guides per frontend:** Next.js, Nuxt, Astro, Webflow, Framer and WordPress, plus the beacon based setup for single page apps on another domain (requires laravel-client 6.4).
+
+**Full Changelog**: https://github.com/simplestats-io/app/compare/v7.9.1...v7.10.0
+
 ## v7.9.1 - 2026-11-27
 
 ### Fixed
