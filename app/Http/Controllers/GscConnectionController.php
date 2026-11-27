@@ -60,7 +60,7 @@ class GscConnectionController extends Controller
 
         if (! $googleUser instanceof GoogleUser || ! in_array(GscApiService::SCOPE, $googleUser->approvedScopes, true)) {
             return to_route('projects.show', $project)
-                ->dangerBanner('Please allow access to your Search Console data to connect it.');
+                ->dangerBanner('Search Console was not connected. On the Google screen, tick "View Search Console data for your verified sites" and connect again.');
         }
 
         $connection = $connections->connect($project, $request->user(), $googleUser);

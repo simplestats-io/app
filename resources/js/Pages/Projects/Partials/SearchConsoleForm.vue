@@ -49,6 +49,12 @@ const lastSynced = computed(() => props.connection?.last_synced_at
     ? new Date(props.connection.last_synced_at).toLocaleString()
     : null);
 
+// One string, so the optional parts keep their spaces (separate template blocks collapse them).
+const linkedDetails = computed(() => [
+    props.connection?.google_email ? ` via ${props.connection.google_email}.` : '.',
+    lastSynced.value ? ` Last import: ${lastSynced.value}.` : ' Importing up to 16 months of keywords, this takes a few minutes.',
+].join(''));
+
 const linkSite = () => {
     form.put(route('gsc-connections.update', props.project), {preserveScroll: true});
 };
@@ -103,10 +109,7 @@ const disconnect = () => {
                 <div v-else-if="connection.site_url" class="flex items-start gap-2">
                     <CheckIcon class="size-4 mt-0.5 shrink-0 text-green-500" />
                     <span>
-                        Linked to <strong class="text-gray-900 dark:text-white">{{ connection.site_url }}</strong>
-                        <template v-if="connection.google_email">via {{ connection.google_email }}.</template>
-                        <template v-if="lastSynced">Last import: {{ lastSynced }}.</template>
-                        <template v-else>Importing up to 16 months of keywords, this takes a few minutes.</template>
+                        Linked to <strong class="text-gray-900 dark:text-white">{{ connection.site_url }}</strong>{{ linkedDetails }}
                     </span>
                 </div>
 
