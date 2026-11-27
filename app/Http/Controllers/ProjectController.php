@@ -6,7 +6,9 @@ use App\Actions\CheckPasswordConfirmation;
 use App\Actions\CreateProject;
 use App\Actions\UpdateProject;
 use App\Http\Requests\ProjectRequest;
+use App\Models\GscConnection;
 use App\Models\Project;
+use App\Services\Gsc\GscConnectionService;
 use App\Services\StatsAggregationsService;
 use Closure;
 use Illuminate\Contracts\Auth\StatefulGuard;
@@ -48,14 +50,30 @@ class ProjectController extends Controller
             ]);
     }
 
-    public function show(Request $request, Project $project): Response
+    public function show(Request $request, Project $project, GscConnectionService $connections): Response
     {
         if (Gate::check('viewProjectToken', $project)) {
             $project->load('tokens');
         }
 
+        $gscConnection = $project->gscConnection;
+        $canUpdate = Gate::check('update', $project);
+        $connectedByUser = $gscConnection?->user()->is($request->user()) ?? false;
+
         return Inertia::render('Projects/Show', [
             'project' => $project,
+            'searchConsole' => [
+                'available' => GscConnection::isAvailable(),
+                'connection' => $gscConnection ? [
+                    ...$gscConnection->only(['site_url', 'last_synced_at', 'reconnect_required_at']),
+                    'google_email' => $canUpdate ? $gscConnection->google_email : null,
+                    'connected_by_user' => $connectedByUser,
+                ] : null,
+                'reusable_accounts' => $canUpdate && ! $gscConnection ? $connections->reusableAccounts($request->user(), $project) : [],
+            ],
+            'gscSites' => Inertia::defer(fn (): array => $connectedByUser && $canUpdate && $gscConnection->needsSiteSelection()
+                ? $connections->sitesWithSuggestion($gscConnection, $project)
+                : ['sites' => [], 'suggested' => null, 'error' => null]),
             'usages' => Project::getUsages(),
             'flags' => Project::getFlags(),
             'permissions' => [

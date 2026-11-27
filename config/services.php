@@ -43,6 +43,13 @@ return [
         'redirect' => '/oauth/google/callback',
     ],
 
+    // Own OAuth client for the Search Console scope, so its Google verification can never
+    // affect "Login with Google". Self-hosted setups without social login may reuse GOOGLE_*.
+    'google_search_console' => [
+        'client_id' => env('GSC_GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
+        'client_secret' => env('GSC_GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET')),
+    ],
+
     'deepl' => [
         'auth_key' => env('DEEPL_AUTH_KEY'),
     ],

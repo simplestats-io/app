@@ -4,6 +4,7 @@ use App\Mcp\Servers\SimpleStatsServer;
 use App\Mcp\Tools\GetGroupedBreakdown;
 use App\Mcp\Tools\GetKpiStats;
 use App\Mcp\Tools\ListStatsCapabilities;
+use App\Models\GscConnection;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\StatsViewIngestService;
@@ -256,5 +257,35 @@ it('lists top pages as a breakdown dimension and flags projects with page views'
         ->assertStructuredContent(fn ($json) => $json
             ->where('rows.0.name', 'pricing/')
             ->where('rows.0.views', 4)
+            ->etc());
+});
+
+it('offers the Google keywords breakdown and links the setup page until Search Console is connected', function (): void {
+    config(['services.google_search_console.client_id' => 'client-id', 'services.google_search_console.client_secret' => 'client-secret']);
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(ListStatsCapabilities::class)
+        ->assertOk()
+        ->assertSee('"search_console_connected":false')
+        ->assertSee('search-console');
+
+    GscConnection::factory()->create(['project_id' => $this->project->id]);
+    DB::table('stats_keyword_daily')->insert([
+        'team_id' => $this->project->team_id, 'project_id' => $this->project->id, 'date' => now()->subDays(3)->toDateString(),
+        'stats_track_keyword_id' => DB::table('stats_track_keywords')->insertGetId(['team_id' => $this->project->team_id, 'name' => 'laravel analytics']),
+        'stats_page_id' => DB::table('stats_pages')->insertGetId(['team_id' => $this->project->team_id, 'name' => '/']),
+        'clicks' => 12, 'impressions' => 300, 'position' => 4.2,
+    ]);
+
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(GetGroupedBreakdown::class, [
+            'dimension' => 'keywords',
+            'preset' => 'last_7_days',
+            'project_id' => $this->project->id,
+        ])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json
+            ->where('rows.0.name', 'laravel analytics')
+            ->where('rows.0.clicks', 12)
             ->etc());
 });

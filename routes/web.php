@@ -14,6 +14,7 @@ use App\Http\Controllers\DataImportController;
 use App\Http\Controllers\DocsController;
 use App\Http\Controllers\DpaController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\GscConnectionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\ImprintController;
@@ -187,6 +188,13 @@ Route::middleware([
     Route::get('projects/{project}/token-view', [ProjectController::class, 'tokenView'])->name('projects.token-view');
     Route::get('projects/{project}/token-regenerate', [ProjectController::class, 'tokenRegenerate'])->name('projects.token-regenerate');
     Route::put('projects/{project}/user-link-url', [ProjectController::class, 'updateUserLinkUrl'])->name('projects.user-link-url.update');
+
+    // Google Search Console (one connection per project; the callback url is registered at Google)
+    Route::get('projects/{project}/search-console/connect', [GscConnectionController::class, 'create'])->name('gsc-connections.create');
+    Route::get('search-console/callback', [GscConnectionController::class, 'store'])->name('gsc-connections.store');
+    Route::post('projects/{project}/search-console/existing', [GscConnectionController::class, 'storeFromExisting'])->name('gsc-connections.store-from-existing');
+    Route::put('projects/{project}/search-console', [GscConnectionController::class, 'update'])->name('gsc-connections.update');
+    Route::delete('projects/{project}/search-console', [GscConnectionController::class, 'destroy'])->name('gsc-connections.destroy');
 
     // User Settings
     Route::post('user-settings/dashboard-preset', [UserSettingsController::class, 'setDashboardPreset'])->name('user-settings.set-dashboard-preset');

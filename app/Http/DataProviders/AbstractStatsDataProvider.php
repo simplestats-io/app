@@ -8,6 +8,7 @@ use App\Http\Requests\StatsFilterRequest;
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Gsc\GscConnectionService;
 use App\Services\RefererService;
 use App\Services\StatsCustomEventService;
 use App\Services\StatsCustomPropertyService;
@@ -58,6 +59,7 @@ abstract class AbstractStatsDataProvider extends AbstractDataProvider
             'flagBits' => Project::getFlags()->mapWithKeys(fn ($item, $key): array => [$key => $item['bit']]),
             'comparisonTypes' => StatsService::getComparisonTypes(),
             'pageViews' => $this->statsDetailsService->getPageViewsState($filters),
+            'searchConsole' => resolve(GscConnectionService::class)->dashboardState($filters, $this->statsDetailsService->hasSearchConsole($filters)),
         ];
     }
 

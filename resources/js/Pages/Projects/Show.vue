@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import DeleteProjectForm from '@/Pages/Projects/Partials/DeleteProjectForm.vue';
 import SectionBorder from '@/Components/SectionBorder.vue';
 import UpdateProjectForm from '@/Pages/Projects/Partials/UpdateProjectForm.vue';
+import SearchConsoleForm from '@/Pages/Projects/Partials/SearchConsoleForm.vue';
 import ActionSection from "@/Components/ActionSection.vue";
 import {copyToClipboard} from "@/Helpers/ClipboardHelpers.js";
 import DangerButton from "@/Components/DangerButton.vue";
@@ -23,6 +24,8 @@ defineProps({
     permissions: Object,
     usages: Object,
     flags: Object,
+    searchConsole: Object,
+    gscSites: Object,
 });
 
 const page = usePage();
@@ -77,6 +80,12 @@ const regenerateApiToken = () => {
 
         <div>
             <UpdateProjectForm :project="project" :permissions="permissions" :usages="usages" :flags="flags" />
+
+            <template v-if="searchConsole.available">
+                <SectionBorder />
+
+                <SearchConsoleForm class="mt-10 sm:mt-0" :project="project" :connection="searchConsole.connection" :reusable-accounts="searchConsole.reusable_accounts" :sites="gscSites" :can-update="permissions.canUpdateProject" />
+            </template>
 
             <div v-if="project.tokens && project.tokens.length > 0">
                 <SectionBorder />

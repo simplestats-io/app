@@ -16,15 +16,17 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
-#[Description('Break down stats by a dimension (e.g. track_referer, track_source, track_campaign, location_country, device_platform) for a date range. Answers questions like "which referrer brings the most revenue". Returns the top entries sorted by the given metric.')]
+#[Description('Break down stats by a dimension (e.g. track_referer, track_source, track_campaign, location_country, device_platform, keywords) for a date range. Answers questions like "which referrer brings the most revenue" or "which Google keywords bring visitors". Returns the top entries sorted by the given metric.')]
 #[IsReadOnly]
 class GetGroupedBreakdown extends Tool
 {
     use ResolvesStatsFilters;
 
-    private const array SORTS = ['net', 'visitors', 'reg', 'cr', 'dau', 'arpu', 'views', 'vpv', 'bounce_rate'];
+    private const array SORTS = ['net', 'visitors', 'reg', 'cr', 'dau', 'arpu', 'views', 'vpv', 'bounce_rate', 'clicks', 'impressions', 'ctr', 'position', 'est_net'];
 
-    private const array MONEY_KEYS = ['net', 'gross', 'arpu', 'arpv', 'arps', 'arpdau', 'mrr'];
+    private const array MONEY_KEYS = ['net', 'gross', 'arpu', 'arpv', 'arps', 'arpdau', 'mrr', 'est_net'];
+
+    private const array DEFAULT_SORTS = [StatsService::TOP_PAGES_TYPE => 'views', StatsService::KEYWORDS_TYPE => 'clicks'];
 
     public function __construct(protected StatsDetailsService $statsDetailsService) {}
 
@@ -45,7 +47,7 @@ class GetGroupedBreakdown extends Tool
                 $filters,
                 $dimension,
                 (int) ($request->get('limit') ?? 10),
-                $request->get('sort') ?? ($dimension === StatsService::TOP_PAGES_TYPE ? 'views' : 'net'),
+                $request->get('sort') ?? self::DEFAULT_SORTS[$dimension] ?? 'net',
                 withViews: true,
             ), self::MONEY_KEYS);
 
@@ -55,7 +57,8 @@ class GetGroupedBreakdown extends Tool
                 'rows' => $rows,
                 'note' => $rows === []
                     ? 'No data for this range/filter.'
-                    : 'Monetary values are in the scope currency, per-range. A name of "Direct / Unknown" means no referrer was recorded. If the requested sort is not available for this project, results fall back to sorting by net revenue. views are all pages viewed by the visitors of a row (for page_entry: by visitors who entered there, not views of that page); views of a single page are in the top_pages dimension.',
+                    : 'Monetary values are in the scope currency, per-range. A name of "Direct / Unknown" means no referrer was recorded. If the requested sort is not available for this project, results fall back to sorting by net revenue. views are all pages viewed by the visitors of a row (for page_entry: by visitors who entered there, not views of that page); views of a single page are in the top_pages dimension.'
+                        .($dimension === StatsService::KEYWORDS_TYPE ? ' keywords come from Google Search Console: clicks and impressions in Google search, ctr in %, position is the average ranking (lower is better), est_net is an estimate (the keyword\'s share of its landing pages\' traffic times their revenue), say so when quoting it. Search Console data lags about two days and other filters do not apply to it.' : ''),
             ]);
         } catch (ValidationException $e) {
             return Response::error('Invalid arguments: '.collect($e->errors())->flatten()->implode(' '));
@@ -71,7 +74,7 @@ class GetGroupedBreakdown extends Tool
      */
     private function dimensions(): array
     {
-        return [...StatsService::getStatsTypesFlat()->all(), StatsService::TOP_PAGES_TYPE];
+        return [...StatsService::getStatsTypesFlat()->all(), StatsService::TOP_PAGES_TYPE, StatsService::KEYWORDS_TYPE];
     }
 
     /**
@@ -86,7 +89,7 @@ class GetGroupedBreakdown extends Tool
                 ->description('The dimension to group by. Use list-stats-capabilities to see all dimensions with titles.'),
             'sort' => $schema->string()
                 ->enum(self::SORTS)
-                ->description('Metric to sort by: net (net revenue, default), visitors, reg (registrations), cr (conversion rate), dau (active users), arpu, views, vpv (views per visitor), bounce_rate. top_pages sorts by views or visitors.'),
+                ->description('Metric to sort by: net (net revenue, default), visitors, reg (registrations), cr (conversion rate), dau (active users), arpu, views, vpv (views per visitor), bounce_rate. top_pages sorts by views or visitors, keywords by clicks (default), impressions, ctr, position or est_net.'),
             'limit' => $schema->integer()
                 ->description('Number of top entries to return (1-25, default 10).'),
             ...$this->rangeSchema($schema),

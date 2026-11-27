@@ -7,6 +7,7 @@ use App\Builder\StatsAggregationsGroupedPropertiesSqlBuilder;
 use App\Builder\StatsAggregationsGroupedSqlBuilder;
 use App\Builder\StatsAggregationsSqlBuilder;
 use App\Builder\StatsFilterConditionsBuilder;
+use App\Builder\StatsKeywordsSqlBuilder;
 use App\Builder\StatsTopPagesSqlBuilder;
 use App\Concerns\RunsFilteredStatsQueries;
 use App\DTOs\StatsFilterDto;
@@ -14,6 +15,7 @@ use App\Enums\StatsRangeType;
 use App\Enums\TrackablePerson;
 use App\Helpers\AppHelper;
 use App\Models\BaseStat;
+use App\Models\GscConnection;
 use App\Models\Project;
 use App\Models\StatsAggregation;
 use App\Models\StatsCustomPropertyName;
@@ -159,6 +161,24 @@ class StatsAggregationsService
         $sql = strtr($sql, $this->formatFilter($this->getFilterConditions($filters)));
 
         return collect($this->fixRtlPageNames($this->getDataArray($sql)));
+    }
+
+    /**
+     * @return Collection<int, non-empty-array<string, mixed>>
+     */
+    public function getKeywordsData(StatsFilterDto $filters, string $statsSort = 'clicks', int $limit = 9): Collection
+    {
+        $sql = (new StatsKeywordsSqlBuilder($statsSort, $limit, $filters->pageEntry))->build();
+        $sql = strtr($sql, $this->formatFilter($this->getFilterConditions($filters)));
+
+        return collect($this->getDataArray($sql))->map(fn (array $row): array => [
+            ...$row,
+            'clicks' => (int) $row['clicks'],
+            'impressions' => (int) $row['impressions'],
+            'ctr' => (float) $row['ctr'],
+            'position' => (float) $row['position'],
+            'est_net' => (float) $row['est_net'],
+        ]);
     }
 
     /**
@@ -695,6 +715,22 @@ class StatsAggregationsService
                 && ($project === null || $project->hasUsages([Project::USAGE_VISITORS]))
                 && StatsVisitor::query()->when($project, fn ($query) => $query->whereBelongsTo($project))->exists(),
         ];
+    }
+
+    /**
+     * The Keywords tab shows once a Search Console property is linked to the project
+     * (or to any accessible project for the "All projects" view).
+     */
+    public function hasSearchConsole(StatsFilterDto $filters): bool
+    {
+        if (! GscConnection::isAvailable()) {
+            return false;
+        }
+
+        return GscConnection::query()
+            ->whereNotNull('site_url')
+            ->when($filters->projectId, fn (Builder $query) => $query->where('project_id', $filters->projectId))
+            ->exists();
     }
 
     /**
