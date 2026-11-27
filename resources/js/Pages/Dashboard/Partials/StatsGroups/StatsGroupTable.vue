@@ -18,7 +18,7 @@ const props = defineProps({
     loading: Boolean,
     data: Array,
     dataPrevious: Array,
-    // [{key, label, labelSmall?, format: 'number'|'optionalNumber'|'percent'|'currency'|'days', width, visible?}]
+    // [{key, label, labelSmall?, format: 'number'|'optionalNumber'|'percent'|'currency'|'days', width, visible?, compare?}]
     columns: Array,
     sort: String,
     // key of the column to visually emphasise (the metric detail view's active KPI)
@@ -129,7 +129,7 @@ const gradientColor = (isDarkMode.value) ? '46, 89, 113' : '220, 236, 254';
                             </td>
                             <td v-for="column in visibleColumns" :key="column.key" class="p-1.5 text-right">
                                 <span :class="column.key === emphasizedColumn ? 'font-semibold text-gray-900 dark:text-white' : ''">{{ formatValue(column, item) }}</span>
-                                <span v-if="comparisonChange(item, column.key) !== null" class="block text-xs font-semibold leading-tight" :class="comparisonClass(comparisonChange(item, column.key))">{{ formatComparison(comparisonChange(item, column.key)) }}</span>
+                                <span v-if="column.compare !== false && comparisonChange(item, column.key) !== null" class="block text-xs font-semibold leading-tight" :class="comparisonClass(comparisonChange(item, column.key))">{{ formatComparison(comparisonChange(item, column.key)) }}</span>
                             </td>
                         </tr>
                         <tr v-if="! data.length && emptyText">

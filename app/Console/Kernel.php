@@ -57,6 +57,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('app:check-logins-and-payments-counter')->daily()->at('04:00');
             // both models live in vendor packages, so the default model:prune discovery never finds them
             $schedule->command('model:prune', ['--model' => [HealthCheckResultHistoryItem::class, DeletedModel::class]])->daily()->at('04:15');
+            $schedule->command('app:sync-gsc-data')->daily()->at('04:30');
 
             // Self-hosted runs without plans, and its operators decide on their own when an account goes away.
             if (config('app.app_type') === 'saas') {

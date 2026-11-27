@@ -72,6 +72,9 @@ class DatabaseSeeder extends Seeder
         // stats just created.
         $this->call(CampaignSeeder::class);
 
+        // Keywords sit on the entry pages the historical stats created.
+        $this->call(SearchConsoleSeeder::class);
+
         StatsUser::$cacheTrackingLookups = false;
         StatsUser::flushTrackingLookupCache();
         StatsVisitor::$cacheTrackingLookups = false;

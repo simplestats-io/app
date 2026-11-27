@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -70,6 +71,14 @@ class Project extends Model implements AuthenticatableContract, NotifiableToUser
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * @return HasOne<GscConnection, $this>
+     */
+    public function gscConnection(): HasOne
+    {
+        return $this->hasOne(GscConnection::class);
     }
 
     public function projectAccessColumn(): string

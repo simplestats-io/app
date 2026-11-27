@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\DTOs\StatsFilterDto;
 use App\Enums\StatsRangePreset;
+use App\Models\GscConnection;
 use App\Models\Project;
 use App\Services\StatsService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -28,6 +29,7 @@ class ListStatsCapabilities extends Tool
                     ->map(fn (array $type): array => ['dimension' => $type['type'], 'title' => $type['title']])
                     ->values()
                     ->push(['dimension' => StatsService::TOP_PAGES_TYPE, 'title' => 'Top Pages (only when the project tracks_page_views)'])
+                    ->push(['dimension' => StatsService::KEYWORDS_TYPE, 'title' => 'Google search keywords (only when the project has search_console_connected)'])
                     ->all(),
                 'presets' => collect(StatsRangePreset::cases())
                     ->reject(fn (StatsRangePreset $preset): bool => $preset === StatsRangePreset::CUSTOM)
@@ -68,14 +70,22 @@ class ListStatsCapabilities extends Tool
      */
     private function projects(): array
     {
+        $searchConsoleAvailable = GscConnection::isAvailable();
+
         $rows = Project::query()
-            ->get(['id', 'name', 'usage', 'page_views_seen_at'])
+            ->with('gscConnection:id,project_id,site_url')
+            ->get(['id', 'uuid', 'name', 'usage', 'page_views_seen_at'])
             ->map(fn (Project $project): array => [
                 'id' => $project->id,
                 'name' => $project->name,
                 'tracks_registrations' => $project->hasUsages([Project::USAGE_USERS]),
                 'tracks_subscriptions' => $project->hasUsages([Project::USAGE_SUBSCRIPTION]),
                 'tracks_page_views' => $project->hasRecentPageViews(),
+                'search_console_connected' => $searchConsoleAvailable && $project->gscConnection?->site_url !== null,
+                // Connecting needs the Google consent screen in the browser, the assistant can only link there.
+                ...($searchConsoleAvailable && $project->gscConnection?->site_url === null
+                    ? ['search_console_setup_url' => route('projects.show', $project).'#search-console']
+                    : []),
             ])
             ->all();
 

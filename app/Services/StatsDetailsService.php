@@ -145,6 +145,10 @@ class StatsDetailsService
         bool $withNau = false,
         bool $withViews = false,
     ): array {
+        if ($statsType === StatsService::KEYWORDS_TYPE) {
+            return $this->statsAggregationsService->getKeywordsData($filters, $sort ?? 'clicks', $limit)->values()->all();
+        }
+
         if ($statsType === StatsService::TOP_PAGES_TYPE) {
             return $this->statsAggregationsService->getTopPagesData($filters, $sort ?? 'views', $limit)->values()->all();
         }
@@ -239,6 +243,11 @@ class StatsDetailsService
     public function getPageViewsState(StatsFilterDto $filters): array
     {
         return $this->statsAggregationsService->pageViewsState($filters);
+    }
+
+    public function hasSearchConsole(StatsFilterDto $filters): bool
+    {
+        return $this->statsAggregationsService->hasSearchConsole($filters);
     }
 
     public function getRangeTypes(): Collection

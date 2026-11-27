@@ -53,6 +53,11 @@ class StatsService
      */
     public const string TOP_PAGES_TYPE = 'top_pages';
 
+    /**
+     * The Search Console "Keywords" tab, kept out of $statsTypes for the same reason.
+     */
+    public const string KEYWORDS_TYPE = 'keywords';
+
     protected static array $statsModels = [
         StatsVisitor::class,
         StatsUser::class,

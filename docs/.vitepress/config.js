@@ -95,6 +95,7 @@ export default defineConfig({
                 text: 'Integrations',
                 collapsed: false,
                 items: [
+                    {text: 'Google Search Console', link: '/google-search-console'},
                     {text: 'Filament', link: '/filament-plugin'},
                     {text: 'Statamic', link: '/statamic-addon'},
                     {text: 'PHP Client', link: '/php-client'},

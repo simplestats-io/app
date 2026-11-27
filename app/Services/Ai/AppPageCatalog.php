@@ -56,7 +56,7 @@ class AppPageCatalog
             ],
             [
                 'title' => 'Projects',
-                'description' => 'List of all projects. Create a new project here; open a project to edit its settings, tracking configuration and API token.',
+                'description' => 'List of all projects. Create a new project here; open a project to edit its settings, tracking configuration and API token, or to connect Google Search Console (Google search keywords on the dashboard).',
                 'url' => route('projects.index'),
             ],
             [
