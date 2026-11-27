@@ -44,3 +44,33 @@ it('never returns the excluded starter pages', function (): void {
         ->not->toContain('markdown-examples')
         ->not->toContain('index');
 });
+
+it('lists all doc pages next to the results', function (): void {
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(SearchDocs::class, ['query' => 'track a new payment'])
+        ->assertOk()
+        ->assertStructuredContent(function ($json): void {
+            $json->has('all_pages.0.page')
+                ->has('all_pages.0.title')
+                ->etc();
+        });
+});
+
+it('finds the page that explains a rare term despite common words in the query', function (): void {
+    $results = resolve(DocsSearchService::class)->search('are query strings tracked', 3);
+
+    expect(collect($results)->pluck('page')->all())->toContain('how-to-track-page-views');
+});
+
+it('reads a doc page in full', function (): void {
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(SearchDocs::class, ['page' => 'how-to-track-page-views'])
+        ->assertOk()
+        ->assertSee('Query strings are ignored');
+});
+
+it('rejects unknown or path-like page slugs', function (string $page): void {
+    SimpleStatsServer::actingAs($this->user)
+        ->tool(SearchDocs::class, ['page' => $page])
+        ->assertHasErrors();
+})->with(['does-not-exist', '../.env', 'index', 'markdown-examples']);
