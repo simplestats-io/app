@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Gsc\GscApiService;
+use App\Services\Gsc\GscConnectionService;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,7 @@ it('does not resolve projects of other teams', function (): void {
 
 it('stores the connection of the project from the session on the callback', function (): void {
     gscFakeGoogleUser();
+    gscFakeSites(['sc-domain:unrelated.com']);
 
     $this->withSession([GscConnectionController::SESSION_KEY => $this->project->uuid])
         ->get(route('gsc-connections.store', ['code' => 'abc', 'state' => 'xyz']))
@@ -191,4 +193,54 @@ it('keeps the Google grant when another project still uses the same account', fu
     $this->delete(route('gsc-connections.destroy', $this->project))->assertRedirect();
 
     Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'revoke'));
+});
+
+it('links the property of the project domain right after connecting', function (): void {
+    Bus::fake();
+    gscFakeGoogleUser();
+    gscFakeSites(['sc-domain:other.com', 'https://www.shop.example.com/', 'sc-domain:example.com']);
+    $this->project->update(['domain' => 'www.example.com']);
+
+    $this->withSession([GscConnectionController::SESSION_KEY => $this->project->uuid])
+        ->get(route('gsc-connections.store', ['code' => 'abc', 'state' => 'xyz']));
+
+    expect($this->project->gscConnection->site_url)->toBe('sc-domain:example.com');
+    Bus::assertDispatched(SyncGscDataJob::class);
+});
+
+it('matches url prefix properties of the root only, preferring https', function (array $sites, ?string $expected): void {
+    $this->project->update(['domain' => 'example.com']);
+
+    expect(resolve(GscConnectionService::class)->matchingSite($this->project, $sites))->toBe($expected);
+})->with([
+    'https over http' => [['http://example.com/', 'https://www.example.com/'], 'https://www.example.com/'],
+    'subdomain does not match' => [['sc-domain:shop.example.com', 'https://shop.example.com/'], null],
+    'sub path does not match' => [['https://example.com/blog/'], null],
+]);
+
+it('connects another project with a Google account the user already connected', function (): void {
+    Bus::fake();
+    gscFakeSites(['sc-domain:second.com']);
+    GscConnection::factory()->create(['project_id' => $this->project->id, 'user_id' => $this->owner->id, 'google_email' => 'webmaster@example.com']);
+    $second = Project::factory()->create(['team_id' => $this->team->id, 'domain' => 'second.com']);
+
+    $this->post(route('gsc-connections.store-from-existing', $second), ['google_email' => 'webmaster@example.com'])
+        ->assertRedirect();
+
+    expect($second->gscConnection)
+        ->google_email->toBe('webmaster@example.com')
+        ->refresh_token->toBe('refresh-token')
+        ->site_url->toBe('sc-domain:second.com');
+});
+
+it('never reuses the Google account of a colleague', function (): void {
+    $colleague = User::factory()->create();
+    $this->team->users()->attach($colleague, ['role' => 'admin']);
+    GscConnection::factory()->create(['project_id' => $this->project->id, 'user_id' => $colleague->id, 'google_email' => 'colleague@example.com']);
+    $second = Project::factory()->create(['team_id' => $this->team->id]);
+
+    $this->post(route('gsc-connections.store-from-existing', $second), ['google_email' => 'colleague@example.com'])
+        ->assertNotFound();
+
+    expect($second->gscConnection()->exists())->toBeFalse();
 });

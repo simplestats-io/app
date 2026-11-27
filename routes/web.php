@@ -192,6 +192,7 @@ Route::middleware([
     // Google Search Console (one connection per project; the callback url is registered at Google)
     Route::get('projects/{project}/search-console/connect', [GscConnectionController::class, 'create'])->name('gsc-connections.create');
     Route::get('search-console/callback', [GscConnectionController::class, 'store'])->name('gsc-connections.store');
+    Route::post('projects/{project}/search-console/existing', [GscConnectionController::class, 'storeFromExisting'])->name('gsc-connections.store-from-existing');
     Route::put('projects/{project}/search-console', [GscConnectionController::class, 'update'])->name('gsc-connections.update');
     Route::delete('projects/{project}/search-console', [GscConnectionController::class, 'destroy'])->name('gsc-connections.destroy');
 

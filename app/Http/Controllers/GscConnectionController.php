@@ -63,10 +63,28 @@ class GscConnectionController extends Controller
                 ->dangerBanner('Please allow access to your Search Console data to connect it.');
         }
 
-        $connections->connect($project, $request->user(), $googleUser);
+        $connection = $connections->connect($project, $request->user(), $googleUser);
 
         return to_route('projects.show', $project)
-            ->banner('Google Search Console connected.');
+            ->banner($connection->site_url !== null
+                ? "Google Search Console connected with {$connection->site_url}. Keywords are being imported."
+                : 'Google Search Console connected. Pick the property of this project.');
+    }
+
+    public function storeFromExisting(Request $request, Project $project, GscConnectionService $connections): RedirectResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(GscConnection::isAvailable(), 404);
+
+        $validated = $request->validate(['google_email' => ['required', 'string', 'max:255']]);
+
+        $connection = $connections->connectWithExistingAccount($project, $request->user(), $validated['google_email']);
+
+        abort_if($connection === null, 404);
+
+        return back()->banner($connection->site_url !== null
+            ? "Google Search Console connected with {$connection->site_url}. Keywords are being imported."
+            : 'Google Search Console connected. Pick the property of this project.');
     }
 
     public function update(GscConnectionRequest $request, Project $project, GscConnectionService $connections): RedirectResponse

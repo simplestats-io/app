@@ -5,6 +5,7 @@ import {XAU, retentionCheckpointLabels} from "@/Helpers/StringHelpers.js";
 import axios from 'axios';
 import StatsIcon from "@/Components/StatsIcon.vue";
 import StatsGroupTable from "./StatsGroupTable.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {infoTooltipContent} from "@/Helpers/TooltipHelpers.js";
 import {useUsage} from "@/Composables/useUsage.js";
 
@@ -32,7 +33,8 @@ const {currentProjectHasUsages} = useUsage(props.currentProject, props.usageBits
 const filters = Object.assign({}, props.filters);
 
 const pageViewsVisible = !! usePage().props.pageViews?.visible;
-const searchConsoleVisible = !! usePage().props.searchConsole?.visible;
+const searchConsole = usePage().props.searchConsole ?? {};
+const searchConsoleVisible = !! searchConsole.visible;
 const isEventGroup = props.statsGroupType === 'event';
 const isPageGroup = props.statsGroupType === 'page';
 const isTrackGroup = props.statsGroupType === 'track';
@@ -42,7 +44,7 @@ const KEYWORDS = 'keywords';
 // Top Pages and Keywords are extra tabs, not stats types of their own.
 const extraTabs = [
     ...(isPageGroup && pageViewsVisible ? [{type: TOP_PAGES, title: 'Top Pages'}] : []),
-    ...(isTrackGroup && searchConsoleVisible ? [{type: KEYWORDS, title: 'Keywords'}] : []),
+    ...(isTrackGroup && (searchConsoleVisible || searchConsole.suggest) ? [{type: KEYWORDS, title: 'Keywords'}] : []),
 ];
 const tabs = [...props.statsGroup, ...extraTabs];
 
@@ -53,6 +55,8 @@ filters.stats_type = tabs.some((tab) => tab.type === props.statsGroupSelected)
 const statsType = ref(filters.stats_type);
 const isTopPages = computed(() => statsType.value === TOP_PAGES);
 const isKeywords = computed(() => statsType.value === KEYWORDS);
+// Not connected yet, but Google already sends traffic: the tab invites to connect instead of loading data.
+const isKeywordsHint = computed(() => isKeywords.value && ! searchConsoleVisible);
 // Extra tabs have their own columns, sorts and a plain (non-filtering) name cell.
 const isExtraTab = computed(() => isTopPages.value || isKeywords.value);
 const extraTabDefaultSort = {[TOP_PAGES]: 'views', [KEYWORDS]: 'clicks'};
@@ -183,7 +187,11 @@ const columns = computed(() => {
         return topPagesColumns;
     }
 
-    return isKeywords.value ? keywordsColumns : (curatedColumns ?? defaultColumns);
+    if (isKeywords.value) {
+        return isKeywordsHint.value ? [] : keywordsColumns;
+    }
+
+    return curatedColumns ?? defaultColumns;
 });
 const highlightColumn = computed(() => (curatedColumns && ! isExtraTab.value) ? props.breakdownPrimary : undefined);
 const nameWidth = computed(() => {
@@ -252,6 +260,14 @@ if (curatedColumns?.some((col) => col.key === 'nau')) {
 }
 
 const fetchData = async () => {
+    if (isKeywordsHint.value) {
+        data.value = [];
+        dataPrevious.value = [];
+        loading.value = false;
+
+        return;
+    }
+
     try {
         const response = await axios(route('stats.grouped', filters));
         const payload = response.data;
@@ -341,7 +357,7 @@ onMounted(fetchData);
         :columns="columns"
         :sort="filters.stats_sort"
         :highlight-column="highlightColumn"
-        name-label="Name"
+        :name-label="isKeywordsHint ? '' : 'Name'"
         :name-width="nameWidth"
         :percentage="calculatePercentage"
         :empty-text="isEventGroup ? 'No custom events in the selected period.' : undefined"
@@ -349,6 +365,16 @@ onMounted(fetchData);
         @sort="changeSort"
         @load-more="loadMore"
     >
+        <template v-if="isKeywordsHint" #empty>
+            <div class="max-w-sm mx-auto space-y-3 text-gray-600 dark:text-dark-300">
+                <p class="font-medium text-gray-900 dark:text-white">Which Google searches bring these visitors?</p>
+                <p class="text-sm">Connect Google Search Console to see the keywords behind your Google traffic, with clicks, ranking and estimated revenue.</p>
+                <a v-if="searchConsole.canConnect" :href="searchConsole.connectUrl" class="inline-block">
+                    <PrimaryButton type="button">Connect Search Console</PrimaryButton>
+                </a>
+                <p v-else class="text-sm">Ask an administrator or editor of your team to connect it.</p>
+            </div>
+        </template>
         <template #tabs>
             <div class="flex flex-wrap justify-center">
                 <button v-for="stat in tabs" class="flex pb-2 px-2 font-medium text-gray-500 dark:text-dark-300 hover:text-indigo-500 border-b" :class="{'text-indigo-600 border-b-indigo-600': statsType === stat.type}" v-tooltip="tabTooltip(stat)" @click="changeGroup(stat.type, statsGroupType)">

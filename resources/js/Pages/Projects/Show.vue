@@ -84,7 +84,7 @@ const regenerateApiToken = () => {
             <template v-if="searchConsole.available">
                 <SectionBorder />
 
-                <SearchConsoleForm class="mt-10 sm:mt-0" :project="project" :connection="searchConsole.connection" :sites="gscSites" :can-update="permissions.canUpdateProject" />
+                <SearchConsoleForm class="mt-10 sm:mt-0" :project="project" :connection="searchConsole.connection" :reusable-accounts="searchConsole.reusable_accounts" :sites="gscSites" :can-update="permissions.canUpdateProject" />
             </template>
 
             <div v-if="project.tokens && project.tokens.length > 0">

@@ -69,10 +69,11 @@ class ProjectController extends Controller
                     'google_email' => $canUpdate ? $gscConnection->google_email : null,
                     'connected_by_user' => $connectedByUser,
                 ] : null,
+                'reusable_accounts' => $canUpdate && ! $gscConnection ? $connections->reusableAccounts($request->user(), $project) : [],
             ],
             'gscSites' => Inertia::defer(fn (): array => $connectedByUser && $canUpdate && $gscConnection->needsSiteSelection()
-                ? $connections->sites($gscConnection)
-                : ['sites' => [], 'error' => null]),
+                ? $connections->sitesWithSuggestion($gscConnection, $project)
+                : ['sites' => [], 'suggested' => null, 'error' => null]),
             'usages' => Project::getUsages(),
             'flags' => Project::getFlags(),
             'permissions' => [

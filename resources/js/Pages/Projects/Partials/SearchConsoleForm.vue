@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {Deferred, router, useForm} from '@inertiajs/vue3';
 import ActionSection from '@/Components/ActionSection.vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
@@ -15,6 +15,7 @@ import CheckIcon from 'bootstrap-icons/icons/check-circle-fill.svg?component';
 const props = defineProps({
     project: Object,
     connection: Object,
+    reusableAccounts: {type: Array, default: () => []},
     sites: Object,
     canUpdate: Boolean,
 });
@@ -22,6 +23,22 @@ const props = defineProps({
 const appName = import.meta.env.VITE_APP_NAME;
 const confirmingDisconnect = ref(false);
 const form = useForm({site_url: null});
+
+// The deferred sites arrive after mount: preselect the property matching the project domain.
+watch(() => props.sites?.suggested, (suggested) => {
+    if (suggested && ! form.site_url) {
+        form.site_url = suggested;
+    }
+}, {immediate: true});
+
+const reusing = ref(false);
+const connectWithExisting = (googleEmail) => {
+    reusing.value = true;
+    router.post(route('gsc-connections.store-from-existing', props.project), {google_email: googleEmail}, {
+        preserveScroll: true,
+        onFinish: () => reusing.value = false,
+    });
+};
 
 const siteOptions = computed(() => (props.sites?.sites ?? []).map((site) => ({
     id: site,
@@ -62,15 +79,19 @@ const disconnect = () => {
                     {{ appName }} only gets read access to your search data.
                 </p>
 
-                <div class="mt-5">
-                    <a v-if="canUpdate" :href="route('gsc-connections.create', project)">
-                        <PrimaryButton type="button">
-                            <GoogleIcon class="size-4 mr-2" />
-                            Connect Google Search Console
-                        </PrimaryButton>
+                <div v-if="canUpdate" class="mt-5 flex flex-wrap gap-3">
+                    <PrimaryButton v-for="account in reusableAccounts" :key="account" type="button" :disabled="reusing" @click="connectWithExisting(account)">
+                        <GoogleIcon class="size-4 mr-2 shrink-0" />
+                        Connect with {{ account }}
+                    </PrimaryButton>
+                    <a :href="route('gsc-connections.create', project)">
+                        <component :is="reusableAccounts.length ? SecondaryButton : PrimaryButton" type="button">
+                            <GoogleIcon class="size-4 mr-2 shrink-0" />
+                            {{ reusableAccounts.length ? 'Use another Google account' : 'Connect Google Search Console' }}
+                        </component>
                     </a>
-                    <p v-else>Ask an administrator or editor of your team to connect it.</p>
                 </div>
+                <p v-else class="mt-5">Ask an administrator or editor of your team to connect it.</p>
             </div>
 
             <div v-else class="max-w-xl text-sm text-gray-600 dark:text-dark-400 space-y-5">
@@ -111,8 +132,8 @@ const disconnect = () => {
                         This Google account has no verified Search Console property. Add your site in Search Console first or connect another account.
                     </div>
                     <form v-else class="flex flex-col sm:flex-row gap-3 sm:items-start" @submit.prevent="linkSite">
-                        <div class="w-full max-w-md">
-                            <SelectInput v-model="form.site_url" :options="siteOptions" />
+                        <div class="w-full sm:max-w-sm">
+                            <SelectInput v-model="form.site_url" :options="siteOptions" class="w-full" />
                             <InputError :message="form.errors.site_url" class="mt-2" />
                         </div>
                         <PrimaryButton :disabled="form.processing || ! form.site_url">

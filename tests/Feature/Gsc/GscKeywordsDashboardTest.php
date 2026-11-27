@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\StatsPageEntry;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Gsc\GscConnectionService;
 use App\Services\StatsAggregationsService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Context;
@@ -167,4 +168,22 @@ it('serves the keywords tab through the grouped endpoint and shows it only with 
 
     config(['services.google_search_console.client_id' => null]);
     expect($service->hasSearchConsole($filters))->toBeFalse();
+});
+
+it('suggests connecting Search Console only for projects with recent Google traffic', function (): void {
+    $service = resolve(GscConnectionService::class);
+    $filters = fn (Project $project): StatsFilterDto => new StatsFilterDto(projectId: $project->id, rangeAmount: 1, rangeType: StatsRangeType::DAY, rangeStart: today(), comparison: '0');
+
+    expect($service->dashboardState($filters($this->project), false)['suggest'])->toBeFalse();
+
+    $withGoogle = Project::factory()->create(['team_id' => $this->team->id]);
+    DB::table('stats_visitors')->insert([
+        'team_id' => $this->team->id, 'project_id' => $withGoogle->id, 'visitor_hash' => 'g1',
+        'stats_track_referer_id' => gscLookupId('stats_track_referers', $this->team->id, 'google.com'),
+        'time' => now()->subDays(3), 'time_utc' => now()->subDays(3),
+    ]);
+
+    expect($service->dashboardState($filters($withGoogle), false))
+        ->toMatchArray(['suggest' => true, 'canConnect' => true])
+        ->and($service->dashboardState($filters($withGoogle), true)['suggest'])->toBeFalse();
 });
